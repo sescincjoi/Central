@@ -7,10 +7,10 @@ onAuthStateChanged(auth, async (user) => {
 
     if (!user) {
         // Redireciona para login se não estiver em uma página pública
-        const publicPages = ['/Central/login.html', '/login.html', '/index.html', '/'];
+        const publicPages = ['/Central/login.html', '/login.html'];
         const currentPath = window.location.pathname;
 
-        // Se não for uma página pública e não for a raiz/index (que queremos que seja acessível mas protegida via UI)
+        // Redireciona para login se não for uma página pública
         if (!publicPages.some(page => currentPath.endsWith(page))) {
             window.location.href = "/Central/login.html";
         }

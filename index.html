@@ -2485,40 +2485,66 @@
             }
         }
 
+        // Renderizar menu do usuário (Botão de Conta / Logout)
+        function renderizarUserMenu() {
+            const container = document.getElementById('auth-button-container');
+            if (!container) return;
+
+            if (window.SESSION && window.SESSION.uid) {
+                container.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="flex flex-col items-end hidden sm:flex">
+                            <span class="text-xs font-bold text-gray-900">${window.SESSION.matricula}</span>
+                            <span class="text-[10px] text-gray-500 uppercase tracking-wider">${window.SESSION.role}</span>
+                        </div>
+                        <button onclick="handleLogout()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all" title="Sair">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button onclick="window.location.href='/Central/login.html'" class="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
+                        Entrar
+                    </button>
+                `;
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // Função de Logout
+        async function handleLogout() {
+            try {
+                const { auth } = await import('./js/auth/firebase-config.js');
+                const { signOut } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+                await signOut(auth);
+                window.location.href = '/Central/login.html';
+            } catch (error) {
+                console.error("Erro ao sair:", error);
+            }
+        }
+
         // Renderizar botão de criar aviso baseado em autenticação
         function renderizarBotaoCriarAviso() {
             const container = document.getElementById('criar-aviso-container');
-
-            if (!container) {
-                console.warn('Container criar-aviso-container não encontrado');
-                return;
-            }
+            if (!container) return;
 
             const isAuthenticated = window.SESSION && window.SESSION.uid;
-
             if (isAuthenticated) {
-                // Usuário logado - mostrar botão
                 container.innerHTML = `
-                <button class="btn-criar-aviso" onclick="openCriarAviso()">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    <span>Criar Novo Aviso</span>
-                </button>
-            `;
+                    <button class="btn-criar-aviso" onclick="openCriarAviso()">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        <span>Criar Novo Aviso</span>
+                    </button>
+                `;
             } else {
-                // Usuário NÃO logado - mostrar texto
                 container.innerHTML = `
-                <div class="aviso-login-prompt">
-                    <a href="#" onclick="event.preventDefault(); window.location.href='/login.html';">
-                        Faça login para emitir avisos
-                    </a>
-                </div>
-            `;
+                    <div class="aviso-login-prompt">
+                        <a href="/Central/login.html">Faça login para emitir avisos</a>
+                    </div>
+                `;
             }
-
-            // Recriar ícones
-            if (window.lucide) {
-                lucide.createIcons();
-            }
+            if (window.lucide) lucide.createIcons();
         }
 
 
@@ -2645,11 +2671,17 @@
             }
         }
 
-        // Carregar avisos ao iniciar e atualizar a cada 2 minutos
-        document.addEventListener('DOMContentLoaded', function () {
+        // Inicialização e Eventos
+        document.addEventListener('DOMContentLoaded', () => {
             carregarAvisos();
-            renderizarBotaoCriarAviso(); // NOVO
             setInterval(carregarAvisos, 2 * 60 * 1000);
+        });
+
+        // Escutar quando a sessão estiver pronta
+        window.addEventListener('session-ready', () => {
+            console.log("UI: Sessão pronta, atualizando componentes...");
+            renderizarUserMenu();
+            renderizarBotaoCriarAviso();
         });
     </script>
     <!-- FIM SISTEMA DE AVISOS -->
