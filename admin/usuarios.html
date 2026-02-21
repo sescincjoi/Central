@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Central</title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .auth-loading {
+            visibility: hidden;
+        }
+
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+        }
+
+        .nav-bar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0051D5;
+        }
+
+        .btn-danger {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #D62828;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-weight: 600;
+            color: #86868b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button.active {
+            color: #007AFF;
+            border-bottom-color: #007AFF;
+        }
+
+        .tab-button:hover {
+            color: #1d1d1f;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f7;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .badge-admin {
+            background: #FFD60A;
+            color: #1d1d1f;
+        }
+
+        .badge-user {
+            background: #e8e8ed;
+            color: #6b7280;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 9998;
+            display: none;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            z-index: 10001;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 90%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification-success {
+            border-left: 4px solid #10b981;
+        }
+
+        .notification-error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .action-button {
+            background: transparent;
+            border: none;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            color: #6b7280;
+        }
+
+        .action-button:hover {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #02429e 0%, #6992ff 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 14px;
+            filter: saturate(95%);
+        }
+
+        .stats-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stats-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            color: #d1d5db;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box input {
+            padding-left: 50px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        /* AUTH BUTTON */
+        .auth-button {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: transparent;
+        }
+
+        .auth-button svg.lucide.lucide-user.w-4.h-4 {
+            width: 1.2rem;
+            height: 1.2rem;
+            padding-bottom: 0.03rem;
+        }
+
+        .auth-button.login {
+            color: #222222;
+        }
+
+        .auth-button.login:hover {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+        }
+
+        .auth-button.user {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+        }
+
+        .auth-button.user:hover {
+            background: rgba(0, 122, 255, 0.2);
+        }
+
+        .auth-button i {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* RESPONSIVO MOBILE - Apenas ícone */
+        @media (max-width: 640px) {
+            .auth-button {
+                padding: 0;
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                justify-content: center;
+                background: transparent;
+            }
+
+            .auth-button.user {
+                background: transparent;
+            }
+
+            .auth-button span {
+                display: none;
+            }
+
+            .auth-button i {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        .auth-user-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border: 0.5px solid rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .auth-user-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .auth-user-info {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .auth-user-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 2px;
+        }
+
+        .auth-user-matricula {
+            font-size: 12px;
+            color: #86868b;
+        }
+
+        .auth-user-role {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        .auth-user-role.admin {
+            background: #FFD60A;
+            color: #1d1d1f;
+        }
+
+        .auth-user-role.user {
+            background: #e8e8ed;
+            color: #86868b;
+        }
+
+        .auth-menu-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: #1d1d1f;
+            text-decoration: none;
+        }
+
+        .auth-menu-item:hover {
+            background: #f5f5f7;
+        }
+
+        .auth-menu-item i {
+            width: 18px;
+            height: 18px;
+            color: #86868b;
+        }
+
+        .auth-menu-item.logout {
+            color: #FF3B30;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .auth-menu-item.logout i {
+            color: #FF3B30;
+        }
+
+        /* NOTIFICAÇÕES TOAST */
+        .auth-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            z-index: 10001;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 90%;
+            border-left: 4px solid #10b981;
+        }
+
+        .auth-notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .auth-notification-success {
+            border-left-color: #10b981;
+        }
+
+        .auth-notification-error {
+            border-left-color: #ef4444;
+        }
+
+        .auth-notification-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #1d1d1f;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .auth-notification-success i {
+            color: #10b981;
+        }
+
+        .auth-notification-error i {
+            color: #ef4444;
+        }
+
+        @media (max-width: 640px) {
+            .auth-notification {
+                top: 70px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+
+        /* ========================================
+           AUTH LOCK OVERLAY - ESTILO CORRIGIDO
+           ======================================== */
+
+        /* Overlay principal - SEM blur no próprio overlay */
+        .auth-lock-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 80%);
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+            border-radius: inherit;
+            transition: all 0.3s ease;
+            cursor: not-allowed;
+            padding: 13px 20px;
+            align-items: center;
+        }
+
+        /* Mensagem dentro do overlay - CLARA e LEGÍVEL */
+        .auth-lock-message {
+            display: flex;
+            text-align: center;
+            color: #1d1d1f;
+            background: #ffffff;
+            padding: 20px 36px;
+            gap: 6px 16px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            max-width: 80%;
+            width: -webkit-fill-available;
+            max-height: 100%;
+            height: fit-content;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            flex-direction: row;
+        }
+
+        /* Ícone do cadeado */
+        .auth-lock-message>svg {
+            width: 22px;
+            height: 22px;
+            margin: 0 !important;
+            padding: 0;
+        }
+
+        /* Título "Acesso Restrito" */
+        .auth-lock-message>p {
+            margin: 0 !important;
+        }
+
+        .auth-lock-message p:first-of-type {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin: 0 0 8px 0;
+        }
+
+        /* Subtítulo "Faça login para acessar" */
+        .auth-lock-message p:last-of-type {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+
+        /* Botão de login */
+        .auth-lock-message button {
+            width: 100%;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .auth-lock-message button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .auth-lock-message button:active {
+            transform: translateY(0);
+        }
+
+        /* BLUR aplicado APENAS no elemento protegido (não no overlay) */
+        .auth-locked {
+            pointer-events: none;
+            user-select: none;
+            position: relative;
+        }
+
+        /* Blur no conteúdo protegido (filhos diretos, exceto overlay) */
+        .auth-locked>*:not(.auth-lock-overlay) {
+            filter: blur(4px) brightness(98%);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        /* Responsivo para mobile */
+        @media (max-width: 640px) {
+            .auth-lock-overlay {
+                padding: 16px;
+            }
+
+            .auth-lock-message {
+                padding: 24px 20px;
+                max-width: 100%;
+            }
+
+            .auth-lock-message p:first-of-type {
+                font-size: 16px;
+            }
+
+            .auth-lock-message p:last-of-type {
+                font-size: 13px;
+            }
+
+            .auth-lock-message button {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+        }
+
+        /* Para elementos que são botões ou cards */
+        .tool-button.auth-locked,
+        .submenu-button.auth-locked,
+        .card.auth-locked {
+            position: relative;
+        }
+
+        /* Garantir que o overlay cobre toda a área */
+        .tool-button.auth-locked .auth-lock-overlay,
+        .submenu-button.auth-locked .auth-lock-overlay {
+            border-radius: 14px;
+            /* Mesmo raio dos botões */
+        }
+
+        .card.auth-locked .auth-lock-overlay {
+            border-radius: 18px;
+            /* Mesmo raio dos cards */
+        }
+
+        #content-usuarios div {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .search-box svg {
+            position: absolute;
+            margin-left: 11px;
+            padding-right: 8px;
+            border-right: 1px solid rgb(0 0 0 / 15%);
+            height: 70%;
+            width: 28px;
+        }
+    </style>
+
+</head>
+
+<body class="auth-loading">
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar fixed top-0 left-0 right-0 z-50">
+
+        <div class="max-w-7xl mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-3">
+                    <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq" alt="SCI"
+                        class="w-9 h-9 rounded-full" onerror="this.src='https://via.placeholder.com/150x150?text=SCI';">
+                    <span class="text-lg font-semibold text-gray-900">Painel Admin</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="window.location.href='../'" class="btn btn-secondary">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Voltar</span>
+                    </button>
+
+                    <div id="auth-button-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12">
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="stats-card">
+                <div class="stats-number" id="statTotalUsuarios">0</div>
+                <div class="stats-label">Total de Usuários</div>
+            </div>
+
+            <div class="stats-card" style="background: linear-gradient(135deg, #8e0000 0%, #f55757 100%);">
+                <div class="stats-number" id="statMatriculasDisponiveis">0</div>
+                <div class="stats-label">Matrículas Disponíveis</div>
+            </div>
+
+            <div class="stats-card" style="background: linear-gradient(135deg, #eb8d00 0%, #ebeb72 100%);">
+                <div class="stats-number" id="statAdmins">0</div>
+                <div class="stats-label">Administradores</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="card mb-6">
+            <div class="border-b border-gray-200 px-6">
+                <div class="flex gap-2">
+                    <button class="tab-button active" onclick="switchTab('usuarios')" id="tab-usuarios">
+                        <i data-lucide="users" class="w-4 h-4 inline"></i>
+                        Usuários
+                    </button>
+                    <button class="tab-button" onclick="switchTab('matriculas')" id="tab-matriculas">
+                        <i data-lucide="key" class="w-4 h-4 inline"></i>
+                        Matrículas
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Usuários -->
+            <div id="content-usuarios" class="p-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Gerenciar Usuários</h2>
+
+                    <div class="search-box" style="margin-bottom: 0; max-width: 300px;">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                        <input type="text" class="form-input" placeholder="Nome ou Matrícula..." id="searchUsuarios"
+                            oninput="filtrarUsuarios()" />
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="tableUsuarios">
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Nome</th>
+                                <th>Nome de BA</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Cadastro</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyUsuarios">
+                            <tr>
+                                <td colspan="8" class="text-center text-gray-400 py-8">
+                                    Carregando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content: Matrículas -->
+            <div id="content-matriculas" class="p-6" style="display: none;">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Gerenciar Matrículas</h2>
+
+                    <button class="btn btn-primary" onclick="openModalNovaMatricula()">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Nova Matrícula
+                    </button>
+                </div>
+
+                <div class="search-box">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    <input type="text" class="form-input" placeholder="Buscar matrícula..." id="searchMatriculas"
+                        oninput="filtrarMatriculas()" />
+                </div>
+
+                <div class="table-container">
+                    <table id="tableMatriculas">
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Usada</th>
+                                <th>Observação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyMatriculas">
+                            <tr>
+                                <td colspan="6" class="text-center text-gray-400 py-8">
+                                    Carregando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Nova Matrícula -->
+    <div class="modal-overlay" id="modalNovaMatricula">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-bold text-gray-900">Nova Matrícula</h3>
+                <button class="action-button" onclick="closeModalNovaMatricula()">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="formNovaMatricula" onsubmit="criarMatricula(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Matrícula *</label>
+                        <input type="text" class="form-input" id="inputMatricula" placeholder="ABC1234" maxlength="7"
+                            required />
+                        <p class="help-text">3 letras + 4 números (ex: JOI1234)</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Permissão *</label>
+                        <select class="form-select" id="inputRole" required>
+                            <option value="user">Usuário</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Observação</label>
+                        <input type="text" class="form-input" id="inputObservacao"
+                            placeholder="Ex: Bombeiro Fulano de Tal" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModalNovaMatricula()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnCriarMatricula">
+                        Criar Matrícula
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Usuário -->
+    <div class="modal-overlay" id="modalEditarUsuario">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-bold text-gray-900">Editar Usuário</h3>
+                <button class="action-button" onclick="closeModalEditarUsuario()">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="formEditarUsuario" onsubmit="salvarUsuario(event)">
+                <input type="hidden" id="editUserId" />
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Matrícula</label>
+                        <input type="text" class="form-input" id="editMatricula" disabled />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" class="form-input" id="editNomeCompleto" disabled />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nome de BA</label>
+                        <input type="text" class="form-input" id="editDisplayName" disabled />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="editEmail" disabled />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Permissão *</label>
+                        <select class="form-select" id="editRole" required>
+                            <option value="user">Usuário</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Status *</label>
+                        <select class="form-select" id="editAtivo" required>
+                            <option value="true">Ativo</option>
+                            <option value="false">Desativado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModalEditarUsuario()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarUsuario">
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script type="module">
+        import { db } from '/Central/js/auth/firebase-config.js';
+
+        import {
+            collection,
+            getDocs,
+            doc,
+            setDoc,
+            updateDoc,
+            deleteDoc,
+            query,
+            orderBy,
+            Timestamp
+        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        let usuarios = [];
+        let matriculas = [];
+        let currentEditUserId = null;
+
+        // Carregar dados
+        async function carregarDados() {
+            await Promise.all([
+                carregarUsuarios(),
+                carregarMatriculas()
+            ]);
+            atualizarStats();
+        }
+
+        // Carregar usuários
+        async function carregarUsuarios() {
+            showLoadingState();
+            try {
+                const { apiPost } = await import('../js/api/api.js');
+                const data = await apiPost('getUsers');
+
+                if (data.success) {
+                    usuarios = data.users || [];
+                    matriculasAtivas = data.matriculas || {};
+                    renderizarUsuarios();
+                    atualizarEstatisticas();
+                } else {
+                    throw new Error(data.error || 'Erro ao carregar usuários');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+                showNotification('Erro ao carregar usuários: ' + error.message, 'error');
+            }
+        }
+
+        // Renderizar usuários
+        function renderizarUsuarios() {
+            const tbody = document.getElementById('tbodyUsuarios');
+
+            if (usuarios.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i data-lucide="users" class="w-16 h-16"></i>
+                                <p class="font-semibold mb-1">Nenhum usuário cadastrado</p>
+                                <p class="text-sm">Aguardando cadastros...</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = usuarios.map(user => {
+                const cadastroData = user.cadastradoEm?.toDate?.() || new Date(user.cadastradoEm);
+                const cadastroStr = cadastroData.toLocaleDateString('pt-BR');
+
+                return `
+                    <tr data-user-id="${user.id}">
+                        <td><strong>${user.matricula}</strong></td>
+                        <td>${user.nomeCompleto || user.displayName || '-'}</td>
+                        <td>${user.displayName || '-'}</td>
+                        <td>${user.email || '-'}</td>
+                        <td>
+                            <span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">
+                                ${user.role === 'admin' ? 'Admin' : 'Usuário'}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge ${user.ativo ? 'badge-success' : 'badge-danger'}">
+                                ${user.ativo ? 'Ativo' : 'Inativo'}
+                            </span>
+                        </td>
+                        <td>${cadastroStr}</td>
+                        <td>
+                            <button class="action-button" onclick="window.editarUsuario('${user.id}')" title="Editar">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // Filtrar usuários
+        window.filtrarUsuarios = function () {
+            const search = document.getElementById('searchUsuarios').value.toLowerCase();
+            const rows = document.querySelectorAll('#tbodyUsuarios tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        // Editar usuário
+        window.editarUsuario = function (userId) {
+            const user = usuarios.find(u => u.id === userId);
+            if (!user) return;
+
+            currentEditUserId = userId;
+
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editMatricula').value = user.matricula;
+            document.getElementById('editNomeCompleto').value = user.nomeCompleto || user.displayName || '';
+            document.getElementById('editDisplayName').value = user.displayName || '';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editRole').value = user.role || 'user';
+            document.getElementById('editAtivo').value = user.ativo ? 'true' : 'false';
+
+            document.getElementById('modalEditarUsuario').classList.add('active');
+            lucide.createIcons();
+        }
+
+        // Salvar usuário
+        window.salvarUsuario = async function (event) {
+            event.preventDefault();
+
+            const userId = document.getElementById('editUserId').value;
+            const role = document.getElementById('editRole').value;
+            const ativo = document.getElementById('editAtivo').value === 'true';
+
+            const btn = document.getElementById('btnSalvarUsuario');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                await updateDoc(doc(db, 'usuarios', userId), {
+                    role,
+                    ativo
+                });
+
+                showNotification('Usuário atualizado com sucesso!', 'success');
+                closeModalEditarUsuario();
+                await carregarUsuarios();
+
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                showNotification('Erro ao salvar usuário', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar Alterações';
+            }
+        }
+
+        window.closeModalEditarUsuario = function () {
+            document.getElementById('modalEditarUsuario').classList.remove('active');
+            currentEditUserId = null;
+        }
+
+        // Carregar matrículas
+        async function carregarMatriculas() {
+            try {
+                const snapshot = await getDocs(collection(db, 'matriculas'));
+
+                matriculas = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                renderizarMatriculas();
+            } catch (error) {
+                console.error('Erro ao carregar matrículas:', error);
+                showNotification('Erro ao carregar matrículas', 'error');
+            }
+        }
+
+        // Renderizar matrículas
+        function renderizarMatriculas() {
+            const tbody = document.getElementById('tbodyMatriculas');
+
+            if (matriculas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i data-lucide="key" class="w-16 h-16"></i>
+                                <p class="font-semibold mb-1">Nenhuma matrícula cadastrada</p>
+                                <p class="text-sm">Crie uma nova matrícula acima</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = matriculas.map(mat => `
+                <tr data-matricula-id="${mat.id}">
+                    <td><strong>${mat.matricula}</strong></td>
+                    <td>
+                        <span class="badge ${mat.role === 'admin' ? 'badge-admin' : 'badge-user'}">
+                            ${mat.role === 'admin' ? 'Admin' : 'Usuário'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${mat.habilitada ? 'badge-success' : 'badge-danger'}">
+                            ${mat.habilitada ? 'Habilitada' : 'Desabilitada'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${mat.usada ? 'badge-warning' : 'badge-success'}">
+                            ${mat.usada ? 'Sim' : 'Disponível'}
+                        </span>
+                    </td>
+                    <td>${mat.observacao || '-'}</td>
+                    <td>
+                        <button 
+                            class="action-button" 
+                            onclick="window.toggleMatricula('${mat.id}', ${!mat.habilitada})" 
+                            title="${mat.habilitada ? 'Desabilitar' : 'Habilitar'}"
+                        >
+                            <i data-lucide="${mat.habilitada ? 'lock' : 'unlock'}" class="w-4 h-4"></i>
+                        </button>
+                        <button 
+                            class="action-button" 
+                            onclick="window.deletarMatricula('${mat.id}')" 
+                            title="Deletar"
+                            ${mat.usada ? 'disabled' : ''}
+                        >
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        // Filtrar matrículas
+        window.filtrarMatriculas = function () {
+            const search = document.getElementById('searchMatriculas').value.toLowerCase();
+            const rows = document.querySelectorAll('#tbodyMatriculas tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        // Toggle matrícula
+        window.toggleMatricula = async function (matriculaId, novoEstado) {
+            try {
+                await updateDoc(doc(db, 'matriculas', matriculaId), {
+                    habilitada: novoEstado
+                });
+
+                showNotification(
+                    `Matrícula ${novoEstado ? 'habilitada' : 'desabilitada'} com sucesso!`,
+                    'success'
+                );
+                await carregarMatriculas();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showNotification('Erro ao atualizar matrícula', 'error');
+            }
+        }
+
+        // Deletar matrícula
+        window.deletarMatricula = async function (matriculaId) {
+            const mat = matriculas.find(m => m.id === matriculaId);
+
+            if (mat.usada) {
+                showNotification('Não é possível deletar matrícula já utilizada', 'error');
+                return;
+            }
+
+            if (!confirm(`Deletar matrícula ${mat.matricula}?`)) return;
+
+            try {
+                await deleteDoc(doc(db, 'matriculas', matriculaId));
+                showNotification('Matrícula deletada com sucesso!', 'success');
+                await carregarMatriculas();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showNotification('Erro ao deletar matrícula', 'error');
+            }
+        }
+
+        // Excluir usuário (novo)
+        window.excluirUsuario = async function (matricula) {
+            if (!confirm(`Tem certeza que deseja excluir o usuário ${matricula}?`)) return;
+
+            try {
+                const { apiPost } = await import('../js/api/api.js');
+                const result = await apiPost('deleteUser', { matricula });
+
+                if (result.success) {
+                    showNotification('Usuário excluído com sucesso!');
+                    setTimeout(() => carregarUsuarios(), 500);
+                } else {
+                    throw new Error(result.error || 'Erro ao excluir usuário');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir usuário:', error);
+                showNotification('Erro ao excluir usuário: ' + error.message, 'error');
+            }
+        };
+
+        // Nova matrícula
+        window.openModalNovaMatricula = function () {
+            document.getElementById('modalNovaMatricula').classList.add('active');
+            document.getElementById('formNovaMatricula').reset();
+            lucide.createIcons();
+        }
+
+        window.closeModalNovaMatricula = function () {
+            document.getElementById('modalNovaMatricula').classList.remove('active');
+        }
+
+        window.criarMatricula = async function (event) {
+            event.preventDefault();
+
+            const matricula = document.getElementById('inputMatricula').value.toUpperCase().trim();
+            const role = document.getElementById('inputRole').value;
+            const observacao = document.getElementById('inputObservacao').value.trim();
+
+            // Validar formato
+            const regex = /^[A-Z]{3}\d{4}$/;
+            if (!regex.test(matricula)) {
+                showNotification('Matrícula inválida. Use 3 letras + 4 números', 'error');
+                return;
+            }
+
+            // Verificar se já existe
+            if (matriculas.find(m => m.matricula === matricula)) {
+                showNotification('Matrícula já existe', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnCriarMatricula');
+            btn.disabled = true;
+            btn.textContent = 'Criando...';
+
+            try {
+                await setDoc(doc(db, 'matriculas', matricula), {
+                    matricula,
+                    role,
+                    habilitada: true,
+                    usada: false,
+                    observacao: observacao || ''
+                });
+
+                showNotification('Matrícula criada com sucesso!', 'success');
+                closeModalNovaMatricula();
+                await carregarMatriculas();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showNotification('Erro ao criar matrícula', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Criar Matrícula';
+            }
+        }
+
+        // Auto-uppercase no input
+        document.getElementById('inputMatricula').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Switch tabs
+        window.switchTab = function (tab) {
+            // Atualizar botões
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            // Mostrar conteúdo
+            document.getElementById('content-usuarios').style.display = tab === 'usuarios' ? 'block' : 'none';
+            document.getElementById('content-matriculas').style.display = tab === 'matriculas' ? 'block' : 'none';
+
+            lucide.createIcons();
+        }
+
+        // Atualizar stats
+        function atualizarEstatisticas() {
+            document.getElementById('statTotalUsuarios').textContent = usuarios.length;
+
+            // Exemplo: total de matriculas conhecidas menos as matriculas no registration
+            // (Isso depende de como o backend retorna as matriculas disponíveis)
+            const matriculasDisponiveis = Object.keys(matriculasAtivas || {}).length;
+            document.getElementById('statMatriculasDisponiveis').textContent = matriculasDisponiveis;
+
+            const admins = usuarios.filter(u => u.role === 'admin' || u.role === 'super-admin').length;
+            document.getElementById('statAdmins').textContent = admins;
+        }
+
+        // Notificação
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" 
+                   class="w-5 h-5" 
+                   style="color: ${type === 'success' ? '#10b981' : '#ef4444'}"></i>
+                <span style="color: #1d1d1f; font-weight: 500;">${message}</span>
+            `;
+
+            lucide.createIcons();
+
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        window.showNotification = showNotification;
+
+        // Inicializar
+        window.addEventListener('load', () => {
+            // Verificar se é super-admin
+            authCore.addAuthListener((event, user) => {
+                if (event === 'login') {
+                    if (user.role !== 'super-admin') {
+                        showNotification('Acesso negado. Apenas Super administradores.', 'error');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        carregarDados();
+                    }
+                }
+            });
+
+            // Monitorar prontidão da sessão
+            window.addEventListener('session-ready', (e) => {
+                const session = e.detail;
+                if (session.role !== 'admin' && session.role !== 'super-admin') {
+                    alert('Acesso negado.');
+                    window.location.href = '../';
+                    return;
+                }
+                carregarUsuarios();
+            });
+            lucide.createIcons();
+        });
+    </script>
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- New Auth System -->
+    <script type="module" src="../js/auth/auth.js"></script>
+
+</body>
+
+</html>
