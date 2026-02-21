@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Acesso - Central</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="/Central/pwa/lucide.min.js"></script>
+
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            width: 100%;
+            height: 52px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1.5px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            padding: 0 16px 0 44px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1d1d1f;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .input-field:focus {
+            background: #ffffff;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #86868b;
+            transition: color 0.2s ease;
+        }
+
+        .input-field:focus+.input-icon {
+            color: #007AFF;
+        }
+
+        .btn-primary {
+            width: 100%;
+            height: 52px;
+            background: #007AFF;
+            color: #ffffff;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #0066cc;
+            transform: scale(1.01);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            background: #d2d2d7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #error-message {
+            background: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            border: 1px solid rgba(255, 59, 48, 0.2);
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 16px rgba(0, 122, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: #86868b;
+            font-size: 15px;
+        }
+
+        /* Keyboard-friendly layout on mobile */
+        @media (max-height: 500px) {
+            .glass-card {
+                padding: 24px;
+            }
+
+            .logo-area {
+                margin-bottom: 16px;
+            }
+
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="glass-card">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+            </div>
+            <h1>Bem-vindo</h1>
+            <p class="subtitle">Acesse sua conta da Central</p>
+        </div>
+
+        <div id="error-message"></div>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <input type="text" id="matricula" class="input-field" placeholder="Matrícula (ex: ABC1234)"
+                    autocomplete="username" required>
+                <i data-lucide="user" class="input-icon w-5 h-5"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="password" class="input-field" placeholder="Senha"
+                    autocomplete="current-password" required>
+                <i data-lucide="lock" class="input-icon w-5 h-5"></i>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-primary">
+                <span id="btnText">Entrar</span>
+                <div id="btnLoader" class="loader hidden"></div>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-[13px] text-gray-400 font-medium">© 2026 Central - SCI JOI</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './js/auth/firebase-config.js';
+        import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import matriculaHandler from './js/auth/matricula-handler.js';
+
+        const loginForm = document.getElementById('loginForm');
+        const matriculaInput = document.getElementById('matricula');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+        const errorMessage = document.getElementById('error-message');
+
+        // Aplicar máscara de matrícula
+        matriculaHandler.applyMask(matriculaInput);
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const matricula = matriculaInput.value;
+            const password = passwordInput.value;
+
+            // Limpar erros
+            errorMessage.style.display = 'none';
+
+            if (!matriculaHandler.isValid(matricula)) {
+                showError('Matrícula inválida. Use o formato AAA1234.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Converter matrícula em e-mail virtual
+                const virtualEmail = matriculaHandler.toVirtualEmail(matricula);
+
+                // Tentar login
+                await signInWithEmailAndPassword(auth, virtualEmail, password);
+
+                // Sucesso! O redirecionamento será tratado pelo observer no auth.js
+                // Mas por garantia, podemos forçar se já estivermos logados
+                window.location.href = '/Central/index.html';
+
+            } catch (error) {
+                console.error("Erro no login:", error);
+                let message = 'Erro ao realizar login. Verifique seus dados.';
+
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    message = 'Matrícula ou senha incorretos.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    message = 'Muitas tentativas falhas. Tente novamente mais tarde.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    message = 'Erro de conexão. Verifique sua internet.';
+                }
+
+                showError(message);
+                setLoading(false);
+            }
+        });
+
+        function setLoading(isLoading) {
+            submitBtn.disabled = isLoading;
+            btnText.classList.toggle('hidden', isLoading);
+            btnLoader.classList.toggle('hidden', !isLoading);
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.style.display = 'block';
+        }
+
+        // Inicializar ícones
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+
+</html>

@@ -1431,20 +1431,6 @@
 
         // Inicializar
         window.addEventListener('load', () => {
-            // Verificar se é super-admin
-            authCore.addAuthListener((event, user) => {
-                if (event === 'login') {
-                    if (user.role !== 'super-admin') {
-                        showNotification('Acesso negado. Apenas Super administradores.', 'error');
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 2000);
-                    } else {
-                        carregarDados();
-                    }
-                }
-            });
-
             // Monitorar prontidão da sessão
             window.addEventListener('session-ready', (e) => {
                 const session = e.detail;
@@ -1458,11 +1444,6 @@
             lucide.createIcons();
         });
     </script>
-
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <!-- New Auth System -->
     <script type="module" src="../js/auth/auth.js"></script>

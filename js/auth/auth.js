@@ -1,16 +1,18 @@
+import { auth } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { initSession } from "./session.js";
 
-// Inicializar Firebase se necessário (assumindo que firebase-config.js já foi carregado via script tag ou import)
-// Se não, poderíamos importar aqui. Mas seguindo a estrutura sugerida:
-
-firebase.auth().onAuthStateChanged(async (user) => {
-    console.log("Auth state changed:", user ? "Logged in" : "Logget out");
+onAuthStateChanged(auth, async (user) => {
+    console.log("Auth state changed:", user ? "Logged in" : "Logged out");
 
     if (!user) {
         // Redireciona para login se não estiver em uma página pública
-        const publicPages = ['/login.html'];
-        if (!publicPages.includes(window.location.pathname)) {
-            window.location.href = "/login.html";
+        const publicPages = ['/Central/login.html', '/login.html', '/index.html', '/'];
+        const currentPath = window.location.pathname;
+
+        // Se não for uma página pública e não for a raiz/index (que queremos que seja acessível mas protegida via UI)
+        if (!publicPages.some(page => currentPath.endsWith(page))) {
+            window.location.href = "/Central/login.html";
         }
         return;
     }
@@ -26,7 +28,6 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
     } catch (error) {
         console.error("Erro ao inicializar sessão:", error);
-        // Em caso de erro crítico, talvez deslogar?
-        // firebase.auth().signOut();
     }
 });
+
