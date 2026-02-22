@@ -866,10 +866,10 @@
                         <thead>
                             <tr>
                                 <th>Matrícula</th>
+                                <th>Base</th>
                                 <th>Role</th>
                                 <th>Status</th>
                                 <th>Usada</th>
-                                <th>Observação</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -906,10 +906,20 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label">Base *</label>
+                        <select class="form-select" id="inputBase" required>
+                            <option value="Joinville">Joinville</option>
+                            <option value="Delta">Delta</option>
+                            <option value="Outra">Outra</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label">Permissão *</label>
                         <select class="form-select" id="inputRole" required>
                             <option value="user">Usuário</option>
                             <option value="admin">Administrador</option>
+                            <option value="super-admin">Super Admin</option>
                         </select>
                     </div>
 
@@ -1222,9 +1232,10 @@
             tbody.innerHTML = matriculas.map(mat => `
                 <tr data-matricula-id="${mat.id}">
                     <td><strong>${mat.matricula}</strong></td>
+                    <td><span class="text-sm text-gray-600">${mat.base || '-'}</span></td>
                     <td>
-                        <span class="badge ${mat.role === 'admin' ? 'badge-admin' : 'badge-user'}">
-                            ${mat.role === 'admin' ? 'Admin' : 'Usuário'}
+                        <span class="badge ${mat.role === 'super-admin' ? 'badge-admin' : (mat.role === 'admin' ? 'badge-admin' : 'badge-user')}">
+                            ${mat.role === 'super-admin' ? 'Super Admin' : (mat.role === 'admin' ? 'Admin' : 'Usuário')}
                         </span>
                     </td>
                     <td>
@@ -1237,7 +1248,6 @@
                             ${mat.usada ? 'Sim' : 'Disponível'}
                         </span>
                     </td>
-                    <td>${mat.observacao || '-'}</td>
                     <td>
                         <button 
                             class="action-button" 
@@ -1349,6 +1359,7 @@
 
             const matricula = document.getElementById('inputMatricula').value.toUpperCase().trim();
             const role = document.getElementById('inputRole').value;
+            const base = document.getElementById('inputBase').value;
             const observacao = document.getElementById('inputObservacao').value.trim();
 
             // Validar formato
@@ -1372,9 +1383,11 @@
                 await setDoc(doc(db, 'matriculas', matricula), {
                     matricula,
                     role,
+                    base,
                     habilitada: true,
                     usada: false,
-                    observacao: observacao || ''
+                    observacao: observacao || '',
+                    criadaEm: new Date().toISOString()
                 });
 
                 showNotification('Matrícula criada com sucesso!', 'success');
@@ -1451,8 +1464,16 @@
             if (!container) return;
 
             if (window.SESSION && window.SESSION.uid) {
+                const navAdmin = (window.SESSION.role === 'admin' || window.SESSION.role === 'super-admin')
+                    ? `<a href="/Central/admin/usuarios.html" class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors mr-2">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        <span>Painel Admin</span>
+                       </a>`
+                    : '';
+
                 container.innerHTML = `
                     <div class="flex items-center gap-2">
+                        ${navAdmin}
                         <div class="flex flex-col items-end hidden sm:flex">
                             <span class="text-xs font-bold text-gray-900">${window.SESSION.displayName}</span>
                             <span class="text-[10px] text-gray-500 uppercase tracking-wider">${window.SESSION.role}</span>
@@ -1494,8 +1515,8 @@
             // Monitorar prontidão da sessão
             window.addEventListener('session-ready', (e) => {
                 const session = e.detail;
-                if (session.role !== 'admin' && session.role !== 'super-admin') {
-                    alert('Acesso negado.');
+                if (session.role !== 'super-admin') {
+                    alert('Acesso negado. Apenas Super Admins podem gerenciar matrículas.');
                     window.location.href = '/Central/';
                     return;
                 }

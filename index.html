@@ -175,6 +175,39 @@
             background: #e8e8ed;
         }
 
+        /* Animação de Boas-vindas */
+        .welcome-toast {
+            position: fixed;
+            bottom: 32px;
+            left: 32px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            transform: translateX(-120%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .welcome-toast.show {
+            transform: translateX(0);
+        }
+
+        .welcome-toast .icon {
+            width: 40px;
+            height: 40px;
+            background: #EFF6FF;
+            color: #2563EB;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -2491,8 +2524,16 @@
             if (!container) return;
 
             if (window.SESSION && window.SESSION.uid) {
+                const navAdmin = (window.SESSION.role === 'admin' || window.SESSION.role === 'super-admin')
+                    ? `<a href="/Central/admin/usuarios.html" class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors mr-2">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        <span>Painel Admin</span>
+                       </a>`
+                    : '';
+
                 container.innerHTML = `
                     <div class="flex items-center gap-2">
+                        ${navAdmin}
                         <div class="flex flex-col items-end hidden sm:flex">
                             <span class="text-xs font-bold text-gray-900">${window.SESSION.displayName}</span>
                             <span class="text-[10px] text-gray-500 uppercase tracking-wider">${window.SESSION.role}</span>
@@ -2688,7 +2729,36 @@
             console.log("UI: Sessão pronta, atualizando componentes...");
             renderizarUserMenu();
             renderizarBotaoCriarAviso();
+            mostrarBoasVindas();
         });
+
+        function mostrarBoasVindas() {
+            if (!window.SESSION) return;
+
+            // Evitar mostrar múltiplas vezes na mesma carga
+            if (window.welcomeShown) return;
+            window.welcomeShown = true;
+
+            const welcome = document.createElement('div');
+            welcome.className = 'welcome-toast';
+            welcome.innerHTML = `
+                <div class="icon">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Acesso Liberado</p>
+                    <p class="text-sm font-bold text-gray-900">Bem-vindo, ${window.SESSION.displayName}!</p>
+                </div>
+            `;
+            document.body.appendChild(welcome);
+            if (window.lucide) lucide.createIcons();
+
+            setTimeout(() => welcome.classList.add('show'), 100);
+            setTimeout(() => {
+                welcome.classList.remove('show');
+                setTimeout(() => welcome.remove(), 600);
+            }, 5000);
+        }
     </script>
     <!-- FIM SISTEMA DE AVISOS -->
 

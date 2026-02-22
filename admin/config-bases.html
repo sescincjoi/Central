@@ -845,8 +845,17 @@
                 if (!container) return;
 
                 if (window.SESSION && window.SESSION.uid) {
+                const navAdmin = (window.SESSION.role === 'admin' || window.SESSION.role === 'super-admin')
+                ? `<a href="/Central/admin/usuarios.html"
+                    class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors mr-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-blue-600"></i>
+                    <span>Painel Admin</span>
+                </a>`
+                : '';
+
                 container.innerHTML = `
                 <div class="flex items-center gap-2">
+                    ${navAdmin}
                     <div class="flex flex-col items-end hidden sm:flex">
                         <span class="text-xs font-bold text-gray-900">${window.SESSION.displayName}</span>
                         <span class="text-[10px] text-gray-500 uppercase tracking-wider">${window.SESSION.role}</span>

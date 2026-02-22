@@ -213,6 +213,7 @@
 
         <div id="error-message"></div>
 
+        <!-- Login Form -->
         <form id="loginForm">
             <div class="input-group">
                 <input type="text" id="matricula" class="input-field" placeholder="Matrícula (ex: ABC1234)"
@@ -230,6 +231,47 @@
                 <span id="btnText">Entrar</span>
                 <div id="btnLoader" class="loader hidden"></div>
             </button>
+            <div class="mt-4 text-center">
+                <button type="button" onclick="toggleView('register')"
+                    class="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                    Não tem conta? Cadastre-se
+                </button>
+            </div>
+        </form>
+
+        <!-- Register Form (Hidden by default) -->
+        <form id="registerForm" class="hidden">
+            <div class="input-group">
+                <input type="text" id="regMatricula" class="input-field" placeholder="Matrícula (ex: ABC1234)" required>
+                <i data-lucide="key-round" class="input-icon w-5 h-5"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="regDisplayName" class="input-field" placeholder="Nome na Tarjeta (Ex: FULANO)"
+                    required>
+                <i data-lucide="user-plus" class="input-icon w-5 h-5"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="email" id="regEmail" class="input-field" placeholder="E-mail de Recuperação" required>
+                <i data-lucide="mail" class="input-icon w-5 h-5"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="regPassword" class="input-field" placeholder="Criar Senha" required>
+                <i data-lucide="lock" class="input-icon w-5 h-5"></i>
+            </div>
+
+            <button type="submit" id="regSubmitBtn" class="btn-primary">
+                <span id="regBtnText">Criar Conta</span>
+                <div id="regBtnLoader" class="loader hidden"></div>
+            </button>
+            <div class="mt-4 text-center">
+                <button type="button" onclick="toggleView('login')"
+                    class="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                    Já tem conta? Faça Login
+                </button>
+            </div>
         </form>
 
         <div class="mt-8 text-center">
@@ -238,28 +280,53 @@
     </div>
 
     <script type="module">
-        import { auth } from './js/auth/firebase-config.js';
-        import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { auth, db } from './js/auth/firebase-config.js';
+        import {
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            updateProfile
+        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import {
+            doc,
+            getDoc,
+            setDoc,
+            updateDoc,
+            serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         import matriculaHandler from './js/auth/matricula-handler.js';
 
         const loginForm = document.getElementById('loginForm');
-        const matriculaInput = document.getElementById('matricula');
-        const passwordInput = document.getElementById('password');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const btnLoader = document.getElementById('btnLoader');
+        const registerForm = document.getElementById('registerForm');
         const errorMessage = document.getElementById('error-message');
 
-        // Aplicar máscara de matrícula
-        matriculaHandler.applyMask(matriculaInput);
+        // Alternar entre login e cadastro
+        window.toggleView = (view) => {
+            errorMessage.style.display = 'none';
+            if (view === 'register') {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                document.querySelector('h1').textContent = 'Novo Cadastro';
+                document.querySelector('.subtitle').textContent = 'Crie sua conta na Central';
+            } else {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                document.querySelector('h1').textContent = 'Bem-vindo';
+                document.querySelector('.subtitle').textContent = 'Acesse sua conta da Central';
+            }
+        };
 
+        // --- LÓGICA DE LOGIN ---
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const matriculaInput = document.getElementById('matricula');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
 
             const matricula = matriculaInput.value;
             const password = passwordInput.value;
 
-            // Limpar erros
             errorMessage.style.display = 'none';
 
             if (!matriculaHandler.isValid(matricula)) {
@@ -267,40 +334,103 @@
                 return;
             }
 
-            setLoading(true);
+            setLoading(submitBtn, btnText, btnLoader, true);
 
             try {
-                // Converter matrícula em e-mail virtual
                 const virtualEmail = matriculaHandler.toVirtualEmail(matricula);
-
-                // Tentar login
                 await signInWithEmailAndPassword(auth, virtualEmail, password);
-
-                // Sucesso! O redirecionamento será tratado pelo observer no auth.js
-                // Mas por garantia, podemos forçar se já estivermos logados
                 window.location.href = '/Central/index.html';
-
             } catch (error) {
                 console.error("Erro no login:", error);
-                let message = 'Erro ao realizar login. Verifique seus dados.';
-
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    message = 'Matrícula ou senha incorretos.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    message = 'Muitas tentativas falhas. Tente novamente mais tarde.';
-                } else if (error.code === 'auth/network-request-failed') {
-                    message = 'Erro de conexão. Verifique sua internet.';
-                }
-
-                showError(message);
-                setLoading(false);
+                showError(getAuthErrorMessage(error.code));
+                setLoading(submitBtn, btnText, btnLoader, false);
             }
         });
 
-        function setLoading(isLoading) {
-            submitBtn.disabled = isLoading;
-            btnText.classList.toggle('hidden', isLoading);
-            btnLoader.classList.toggle('hidden', !isLoading);
+        // --- LÓGICA DE CADASTRO ---
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const regMatricula = document.getElementById('regMatricula').value.toUpperCase().trim();
+            const regDisplayName = document.getElementById('regDisplayName').value.trim();
+            const regEmail = document.getElementById('regEmail').value.trim();
+            const regPassword = document.getElementById('regPassword').value;
+
+            const submitBtn = document.getElementById('regSubmitBtn');
+            const btnText = document.getElementById('regBtnText');
+            const btnLoader = document.getElementById('regBtnLoader');
+
+            errorMessage.style.display = 'none';
+
+            // 1. Validar formato da matrícula
+            if (!matriculaHandler.isValid(regMatricula)) {
+                showError('Matrícula inválida. Use o formato AAA1234.');
+                return;
+            }
+
+            setLoading(submitBtn, btnText, btnLoader, true);
+
+            try {
+                // 2. Validar se a matrícula existe, está habilitada e não foi usada
+                const matDoc = await getDoc(doc(db, 'matriculas', regMatricula));
+
+                if (!matDoc.exists()) {
+                    throw new Error('Matrícula não cadastrada no sistema.');
+                }
+
+                const matData = matDoc.data();
+                if (!matData.habilitada) {
+                    throw new Error('Esta matrícula está desabilitada.');
+                }
+                if (matData.usada) {
+                    throw new Error('Esta matrícula já foi utilizada em outro cadastro.');
+                }
+
+                // 3. Criar usuário no Firebase Auth
+                const virtualEmail = matriculaHandler.toVirtualEmail(regMatricula);
+                const userCredential = await createUserWithEmailAndPassword(auth, virtualEmail, regPassword);
+                const user = userCredential.user;
+
+                // 4. Atualizar Perfil de Auth (displayName)
+                await updateProfile(user, { displayName: regDisplayName });
+
+                // 5. Criar documento do usuário no Firestore
+                await setDoc(doc(db, 'usuarios', user.uid), {
+                    id: user.uid,
+                    matricula: regMatricula,
+                    displayName: regDisplayName,
+                    email: regEmail, // Email de recuperação informado
+                    virtualEmail: virtualEmail,
+                    role: matData.role || 'user',
+                    base: matData.base || '',
+                    ativo: true,
+                    cadastradoEm: serverTimestamp()
+                });
+
+                // 6. Marcar matrícula como usada
+                await updateDoc(doc(db, 'matriculas', regMatricula), {
+                    usada: true,
+                    usadaPor: user.uid,
+                    dataUso: serverTimestamp()
+                });
+
+                // Sucesso!
+                window.location.href = '/Central/index.html';
+
+            } catch (error) {
+                console.error("Erro no cadastro:", error);
+                showError(error.message || getAuthErrorMessage(error.code));
+                setLoading(submitBtn, btnText, btnLoader, false);
+            }
+        });
+
+        // Aplicar máscara nos inputs de matrícula
+        matriculaHandler.applyMask(document.getElementById('matricula'));
+        matriculaHandler.applyMask(document.getElementById('regMatricula'));
+
+        function setLoading(btn, text, loader, isLoading) {
+            btn.disabled = isLoading;
+            text.classList.toggle('hidden', isLoading);
+            loader.classList.toggle('hidden', !isLoading);
         }
 
         function showError(msg) {
@@ -308,10 +438,25 @@
             errorMessage.style.display = 'block';
         }
 
-        // Inicializar ícones
-        if (window.lucide) {
-            lucide.createIcons();
+        function getAuthErrorMessage(code) {
+            switch (code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    return 'Matrícula ou senha incorretos.';
+                case 'auth/email-already-in-use':
+                    return 'Esta matrícula já possui um cadastro ativo.';
+                case 'auth/weak-password':
+                    return 'A senha deve ter pelo menos 6 caracteres.';
+                case 'auth/too-many-requests':
+                    return 'Muitas tentativas falhas. Tente novamente mais tarde.';
+                default:
+                    return 'Erro ao processar solicitação. Tente novamente.';
+            }
         }
+
+        // Inicializar ícones
+        if (window.lucide) lucide.createIcons();
     </script>
 </body>
 
