@@ -1023,7 +1023,23 @@
                 carregarUsuarios(),
                 carregarMatriculas()
             ]);
-            atualizarStats();
+            atualizarEstatisticas();
+        }
+
+        function showLoadingState() {
+            const tbody = document.getElementById('tbodyUsuarios');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8">
+                            <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                                <div class="w-8 h-8 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                                <p>Carregando usuários...</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
         }
 
         // Carregar usuários
@@ -1035,7 +1051,7 @@
 
                 if (data.success) {
                     usuarios = data.users || [];
-                    matriculasAtivas = data.matriculas || {};
+                    // matriculasAtivas = data.matriculas || {}; // Removido se não usado ou corrigida referência
                     renderizarUsuarios();
                     atualizarEstatisticas();
                 } else {
