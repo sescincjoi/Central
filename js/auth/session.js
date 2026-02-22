@@ -12,7 +12,14 @@ export async function initSession(user) {
     }
 
     // Fallback para role e base
-    const role = tokenResult.claims.role || "user";
+    let role = tokenResult.claims.role;
+
+    // Fallback manual para o super-admin se os claims estiverem vazios
+    if (!role && user.email === 'mms1718@auth.centralsci.internal') {
+        role = "super-admin";
+    }
+
+    role = role || "user";
     const base = tokenResult.claims.base || "fixa";
 
     window.SESSION = {
