@@ -20,7 +20,7 @@ export async function initSession(user) {
     }
 
     role = role || "user";
-    const base = tokenResult.claims.base || "fixa";
+    const base = tokenResult.claims.base || "";
 
     window.SESSION = {
         uid: user.uid,
@@ -29,7 +29,7 @@ export async function initSession(user) {
         base: base,
         token: tokenResult.token,
         email: user.email,
-        displayName: user.displayName
+        displayName: user.displayName || matricula || "Usuário"
     };
 
     console.log("Sessão iniciada:", window.SESSION);
