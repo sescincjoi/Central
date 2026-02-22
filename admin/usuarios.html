@@ -1429,16 +1429,61 @@
 
         window.showNotification = showNotification;
 
+        // Renderizar menu do usuário (Botão de Conta / Logout)
+        function renderizarUserMenu() {
+            const container = document.getElementById('auth-button-container');
+            if (!container) return;
+
+            if (window.SESSION && window.SESSION.uid) {
+                container.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="flex flex-col items-end hidden sm:flex">
+                            <span class="text-xs font-bold text-gray-900">${window.SESSION.matricula}</span>
+                            <span class="text-[10px] text-gray-500 uppercase tracking-wider">${window.SESSION.role}</span>
+                        </div>
+                        <button onclick="handleLogout()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all" title="Sair">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button onclick="window.location.href='/Central/login.html'" class="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
+                        Entrar
+                    </button>
+                `;
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // Função de Logout
+        async function handleLogout() {
+            try {
+                const { auth } = await import('../js/auth/firebase-config.js');
+                const { signOut } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+                await signOut(auth);
+                window.location.href = '/Central/login.html';
+            } catch (error) {
+                console.error("Erro ao sair:", error);
+            }
+        }
+
         // Inicializar
         window.addEventListener('load', () => {
+            // Tenta renderizar o menu caso a sessão já tenha sido injetada
+            if (window.SESSION) {
+                renderizarUserMenu();
+            }
+
             // Monitorar prontidão da sessão
             window.addEventListener('session-ready', (e) => {
                 const session = e.detail;
                 if (session.role !== 'admin' && session.role !== 'super-admin') {
                     alert('Acesso negado.');
-                    window.location.href = '../';
+                    window.location.href = '/Central/';
                     return;
                 }
+                renderizarUserMenu();
                 carregarUsuarios();
             });
             lucide.createIcons();

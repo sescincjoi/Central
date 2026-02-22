@@ -2675,9 +2675,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             carregarAvisos();
             setInterval(carregarAvisos, 2 * 60 * 1000);
+
+            // Tenta renderizar o menu caso a sessão já tenha sido injetada
+            if (window.SESSION) {
+                renderizarUserMenu();
+                renderizarBotaoCriarAviso();
+            }
         });
 
-        // Escutar quando a sessão estiver pronta
+        // Escutar quando a sessão estiver pronta (disparado pelo auth.js)
         window.addEventListener('session-ready', () => {
             console.log("UI: Sessão pronta, atualizando componentes...");
             renderizarUserMenu();
