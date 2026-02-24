@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indicadores de Vestimenta TP/EPR - Bombeiros de Aeródromo</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    screens: {
+                        'tablet': '780px',
+                        'desktop': '1200px',
+                    }
+                }
+            }
+        }
+    </script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Firebase e AuthGuard -->
+    <script type="module">
+        import authCore from '../js/auth/auth-core.js';
+        import authUI from '../js/auth/auth-ui.js';
+        import authLock from '../js/auth/auth-lock.js';
+        import authGuard from '../js/auth/auth-guard.js';
+
+        window.authCore = authCore;
+        window.authUI = authUI;
+        window.authLock = authLock;
+        window.authGuard = authGuard;
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            padding: 0 !important;
+            margin: 0;
+        }
+
+        .header {
+            background: radial-gradient(circle at center, #2c2c2c 0%, #111111 100%);
+            padding: 3.25rem 2rem 4.5rem 2rem;
+            width: 100%;
+            margin-bottom: -1.5rem !important;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .metric-card {
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .table-row-highlight {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .table-row-highlight:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        .table-row-active {
+            background-color: #eff6ff !important;
+            border-left: 4px solid #3b82f6 !important;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 48px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body data-page-id="epr" data-auth-required>
+
+    <!-- Cabeçalho -->
+    <div class="header mb-8">
+        <!-- Abaixo de 780px: Coluna e centro | 780 a 1200px: Linha e centro | Acima de 1200px: Linha e esquerda -->
+        <div class="max-w-7xl mx-auto w-full px-8 flex flex-col items-center gap-10 
+                    tablet:flex-row tablet:justify-center tablet:text-center
+                    desktop:justify-start desktop:text-left">
+
+            <div class="flex-shrink-0">
+                <a href="../">
+                    <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq"
+                        alt="Logótipo SCI"
+                        class="bg-white rounded-full h-16 aspect-square object-cover logo-border transition-transform hover:scale-105"
+                        onerror="this.src='https://via.placeholder.com/150x150?text=SCI+Logo';">
+                </a>
+            </div>
+
+            <div class="flex flex-col items-center tablet:items-start desktop:items-start">
+                <h1
+                    class="text-1xl sm:text-3xl md:text-3xl font-extrabold tracking-tight text-white whitespace-nowrap drop-shadow-lg transition-colors text-center desktop:text-left">
+                    Tempo Vestimenta TP/EPR
+                </h1>
+                <p
+                    class="text-slate-400 text-xs md:text-sm font-medium mt-1 whitespace-nowrap opacity-90 uppercase tracking-widest text-center desktop:text-left">
+                    Proficiência na Resposta à Emergência
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Principal (Padding lateral de 2rem / px-8) -->
+    <div class="max-w-7xl mx-auto  px-3 md:px-8">
+
+        <!-- Botões de Ação: Abaixo de 780px em coluna | Acima em linha -->
+        <div class="flex flex-col tablet:flex-row items-center justify-center gap-y-4 gap-x-10 px-8 mb-10 w-full">
+            <a href="https://docs.google.com/spreadsheets/d/1SIM3VeI1tFSyI0PA07O6QsYzDTt3nJmfEFJm9807mto"
+                target="_blank"
+                class="action-button w-full tablet:w-1/3 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50">
+                <i data-lucide="table-properties" class="w-5 h-5 text-emerald-500"></i>
+                Acessar Planilha
+            </a>
+
+            <button onclick="PDFReportModule.generate()"
+                class="action-button w-full tablet:w-1/3 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50">
+                <i data-lucide="file-text" class="w-5 h-5 text-red-500"></i>
+                Gerar Relatório PDF
+            </button>
+
+            <button onclick="UIController.toggleFilterModal(true)"
+                class="action-button w-full tablet:w-1/3 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50">
+                <i data-lucide="sliders-horizontal" class="w-5 h-5 text-blue-600"></i>
+                Ajustar Dados
+            </button>
+        </div>
+
+        <!-- Resumo de Filtros -->
+        <div id="filterSummary" class="flex flex-wrap justify-center gap-2 mb-10"></div>
+
+        <!-- Cards de KPI -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Melhores Tempos</p>
+                    <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i>
+                </div>
+                <div id="kpiMelhoresTempos" class="space-y-2 mt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🥇</span>
+                        <div class="flex-1 min-w-0 text-xs">
+                            <span id="tempo1" class="font-bold text-slate-600">--:--</span>
+                            <span class="text-slate-400"> - </span>
+                            <span id="tempo1Nome" class="text-slate-700 font-medium truncate">--</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 opacity-75">
+                        <span class="text-sm px-[0.1rem]">🥈</span>
+                        <div class="flex-1 min-w-0 text-xs">
+                            <span id="tempo2" class="font-bold text-slate-500">--:--</span>
+                            <span class="text-slate-400"> - </span>
+                            <span id="tempo2Nome" class="text-slate-600 font-medium truncate">--</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 opacity-75">
+                        <span class="text-sm px-[0.1rem]">🥉</span>
+                        <div class="flex-1 min-w-0 text-xs">
+                            <span id="tempo3" class="font-bold text-slate-500">--:--</span>
+                            <span class="text-slate-400"> - </span>
+                            <span id="tempo3Nome" class="text-slate-600 font-medium truncate">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Melhor Evolução</p>
+                    <i data-lucide="trending-up" class="w-5 h-5 text-blue-500"></i>
+                </div>
+                <h3 id="kpiEvolucao" class="text-3xl font-bold text-blue-600">--%</h3>
+                <p id="kpiEvolucaoNome" class="text-xs text-slate-400 mt-2 italic font-medium truncate">Histórico
+                    individual</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Média Geral</p>
+                    <i data-lucide="clock" class="w-5 h-5 text-slate-400"></i>
+                </div>
+                <h3 id="kpiMedia" class="text-3xl font-bold text-slate-800">--:--</h3>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-xs text-slate-500">Objetivo: < 01:00</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Registos</p>
+                    <i data-lucide="list-checks" class="w-5 h-5 text-orange-500"></i>
+                </div>
+                <h3 id="kpiTotal" class="text-3xl font-bold text-slate-800">--</h3>
+                <p class="text-xs text-slate-400 mt-2 italic font-medium">Na seleção atual</p>
+            </div>
+        </div>
+
+        <!-- Gráficos e Alertas -->
+        <div id="visualSection" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 scroll-mt-6">
+            <div class="lg:col-span-2 glass-card p-6 rounded-2xl flex flex-col relative">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-2 gap-4">
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2 text-lg">
+                        <i data-lucide="line-chart" class="w-5 h-5 text-blue-600"></i>
+                        Histórico de Performance
+                    </h4>
+                    <div class="flex gap-4 text-[10px] uppercase font-bold tracking-wider">
+                        <span class="text-emerald-500 flex items-center gap-1"><span
+                                class="w-3 h-0.5 bg-emerald-500 inline-block"></span> Objetivo</span>
+                        <span class="text-red-500 flex items-center gap-1"><span
+                                class="w-3 h-0.5 bg-red-500 inline-block"></span> Limite</span>
+                    </div>
+                </div>
+                <div id="chartHistory" class="w-full h-[350px]"></div>
+                <div class="flex justify-center mt-2">
+                    <div id="chartDateRange"
+                        class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-slate-100 shadow-sm">
+                        Carregando...
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl flex flex-col">
+                <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-lg">
+                    <i data-lucide="zap" class="w-5 h-5 text-amber-500"></i>
+                    Pontos de Atenção
+                </h4>
+                <div id="alertsContainer" class="space-y-3 flex-1 overflow-y-auto pr-2">
+                    <div class="flex items-center justify-center h-full text-slate-400 text-sm italic">Analisando
+                        dados...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Detalhada -->
+        <div id="tabelaRegisto" class="glass-card rounded-2xl overflow-hidden mb-12 scroll-mt-8">
+            <div
+                class="p-6 border-b border-slate-100 bg-white/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="database" class="w-5 h-5 text-slate-400"></i>
+                        Lista de Exercícios
+                    </h4>
+                    <div id="filterStatusLabel"
+                        class="text-[10px] uppercase tracking-wider text-blue-600 font-bold mt-1 hidden"></div>
+                </div>
+                <div class="relative">
+                    <input type="text" id="tableSearch" placeholder="Pesquisar na lista..."
+                        class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64 transition-all">
+                    <i data-lucide="search" class="absolute left-3 inset-y-0 my-auto w-4 h-4 text-slate-400"></i>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50/50 text-slate-500 text-[11px] uppercase tracking-widest">
+                        <tr>
+                            <th class="px-6 py-4 font-bold">Data</th>
+                            <th class="px-6 py-4 font-bold">BA</th>
+                            <th class="px-6 py-4 font-bold">Equipe</th>
+                            <th class="px-6 py-4 font-bold text-center">Tempo</th>
+                            <th class="px-6 py-4 font-bold text-center">Avaliação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE FILTROS -->
+    <div id="filterModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden transform transition-all">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-lg">
+                        <i data-lucide="sliders-horizontal" class="w-5 h-5 text-blue-600"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800">Ajustar Dados</h3>
+                </div>
+                <button onclick="UIController.toggleFilterModal(false)"
+                    class="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        Período</label>
+                    <select id="filterPeriodo"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="mais_recente" selected>Última Aferição</option>
+                        <option value="todos">Todo o Período</option>
+                        <option value="ano">Último Ano</option>
+                        <option value="semestre">Último Semestre</option>
+                        <option value="trimestre">Último Trimestre</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        Equipe</label>
+                    <select id="filterEquipe"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="Todas">Todas as Equipes</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        BA</label>
+                    <select id="filterBombeiro"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="Todos">Todos os BAs</option>
+                    </select>
+                </div>
+            </div>
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                <button onclick="DataLoader.resetAllFilters()"
+                    class="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-2xl hover:bg-slate-50">
+                    Limpar
+                </button>
+                <button onclick="UIController.toggleFilterModal(false)"
+                    class="flex-[2] px-4 py-3 bg-blue-600 text-white text-sm font-bold rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100">
+                    Aplicar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Previsão de PDF -->
+    <div id="pdfPreviewModal"
+        class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] hidden flex items-center justify-center p-4 md:p-10">
+        <div class="bg-white rounded-3xl w-full h-full max-w-5xl flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="file-text" class="w-6 h-6 text-blue-600"></i>
+                    <h3 class="font-bold text-slate-800 text-lg">Visualização do PDF</h3>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="PDFReportModule.download()"
+                        class="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-all">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Baixar Agora
+                    </button>
+                    <button onclick="PDFReportModule.close()"
+                        class="bg-white border text-slate-600 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+            <iframe id="pdfPreviewFrame" class="flex-1 w-full border-none"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1SIM3VeI1tFSyI0PA07O6QsYzDTt3nJmfEFJm9807mto';
+        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+        const GOAL_S = 60;
+        const LIMIT_S = 90;
+
+        let rawData = [];
+        let filteredData = [];
+        let contextFilter = null;
+        let selectedDataId = null;
+
+        const UIController = {
+            toggleFilterModal(show) {
+                const modal = document.getElementById('filterModal');
+                if (show) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                } else {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            },
+            renderSummaryLabels() {
+                const eq = document.getElementById('filterEquipe').value;
+                const bm = document.getElementById('filterBombeiro').value;
+                const pd = document.getElementById('filterPeriodo').options[document.getElementById('filterPeriodo').selectedIndex].text;
+
+                const container = document.getElementById('filterSummary');
+                container.innerHTML = '';
+
+                const addLabel = (text, icon) => {
+                    container.innerHTML += `
+                        <div class="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-blue-100">
+                            <i data-lucide="${icon}" class="w-3 h-3"></i>
+                            ${text}
+                        </div>
+                    `;
+                };
+
+                addLabel(pd, 'calendar');
+                if (eq !== 'Todas') addLabel(`Equipe: ${eq}`, 'users');
+                if (bm !== 'Todos') addLabel(bm, 'user');
+
+                lucide.createIcons();
+            }
+        };
+
+        const DataLoader = {
+            async fetch() {
+                try {
+                    const response = await fetch(JSON_URL);
+                    const text = await response.text();
+                    const json = JSON.parse(text.substring(47).slice(0, -2));
+                    const rows = json.table.rows;
+
+                    rawData = rows.map((row, index) => {
+                        const cellData = row.c[1]?.f || row.c[1]?.v || "";
+                        const cellNome = row.c[3]?.v || "";
+                        const cellEquipe = row.c[2]?.v || "";
+                        const timeVal = row.c[4]?.f || row.c[4]?.v || "00:00:00";
+
+                        return {
+                            id: index,
+                            data: cellData,
+                            dateObject: this.parseDate(cellData),
+                            equipe: cellEquipe,
+                            nome: cellNome,
+                            tempoStr: timeVal,
+                            tempoSegundos: this.parseTimeToSeconds(timeVal)
+                        };
+                    }).filter(d => d.nome && d.nome !== 'Nome' && d.nome !== '' && d.tempoSegundos > 0);
+
+                    this.initFilters();
+                    this.updateUI();
+                } catch (error) {
+                    console.error("Erro na carga:", error);
+                }
+            },
+
+            parseDate(dateStr) {
+                if (!dateStr) return null;
+                const parts = dateStr.split('/');
+                return parts.length === 3 ? new Date(parts[2], parts[1] - 1, parts[0]) : null;
+            },
+
+            parseTimeToSeconds(val) {
+                if (!val) return 0;
+                if (typeof val === 'string' && val.includes('Date')) {
+                    const matches = val.match(/\d+/g);
+                    if (matches && matches.length >= 6) return (parseInt(matches[3]) * 3600) + (parseInt(matches[4]) * 60) + parseInt(matches[5]);
+                }
+                const parts = val.toString().split(':').map(Number);
+                if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+                if (parts.length === 2) return (parts[0] * 60) + parts[1];
+                if (!isNaN(val) && val < 1 && val > 0) return Math.round(val * 86400);
+                return 0;
+            },
+
+            formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            },
+
+            initFilters() {
+                const selectEq = document.getElementById('filterEquipe');
+                const selectBm = document.getElementById('filterBombeiro');
+                const selectPeriodo = document.getElementById('filterPeriodo');
+
+                const equipes = [...new Set(rawData.map(d => d.equipe))].sort();
+                const bombeiros = [...new Set(rawData.map(d => d.nome))].sort();
+
+                selectEq.innerHTML = '<option value="Todas">Todas as Equipes</option>';
+                selectBm.innerHTML = '<option value="Todos">Todos os BAs</option>';
+
+                equipes.forEach(eq => selectEq.innerHTML += `<option value="${eq}">${eq}</option>`);
+                bombeiros.forEach(bm => selectBm.innerHTML += `<option value="${bm}">${bm}</option>`);
+
+                selectEq.onchange = () => { contextFilter = null; this.clearSelection(); this.updateUI(); };
+                selectBm.onchange = () => { if (selectBm.value !== 'Todos') selectPeriodo.value = 'todos'; contextFilter = null; this.clearSelection(); this.updateUI(); };
+                selectPeriodo.onchange = () => { contextFilter = null; this.clearSelection(); this.updateUI(); };
+
+                document.getElementById('tableSearch').oninput = (e) => {
+                    this.renderTable(filteredData, e.target.value);
+                };
+            },
+
+            resetAllFilters() {
+                document.getElementById('filterEquipe').value = 'Todas';
+                document.getElementById('filterBombeiro').value = 'Todos';
+                document.getElementById('filterPeriodo').value = 'mais_recente';
+                contextFilter = null;
+                this.clearSelection();
+                this.updateUI();
+            },
+
+            setContextFilter(type) {
+                contextFilter = (contextFilter === type) ? null : type;
+                this.clearSelection();
+                this.updateUI();
+                if (contextFilter) {
+                    document.getElementById('visualSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            },
+
+            clearSelection() {
+                selectedDataId = null;
+            },
+
+            updateUI() {
+                const eq = document.getElementById('filterEquipe').value;
+                const bm = document.getElementById('filterBombeiro').value;
+                const periodo = document.getElementById('filterPeriodo').value;
+                const hoje = new Date();
+
+                filteredData = rawData.filter(d => {
+                    const matchEq = eq === 'Todas' || d.equipe === eq;
+                    const matchBm = bm === 'Todos' || d.nome === bm;
+                    let matchPeriodo = true;
+                    if (d.dateObject) {
+                        if (periodo === 'ano') {
+                            const date = new Date(); date.setFullYear(hoje.getFullYear() - 1); matchPeriodo = d.dateObject >= date;
+                        } else if (periodo === 'semestre') {
+                            const date = new Date(); date.setMonth(hoje.getMonth() - 6); matchPeriodo = d.dateObject >= date;
+                        } else if (periodo === 'trimestre') {
+                            const date = new Date(); date.setMonth(hoje.getMonth() - 3); matchPeriodo = d.dateObject >= date;
+                        } else if (periodo === 'mais_recente') {
+                            const dataLimite = new Date(2025, 7, 1); // 01/08/2025 (mês é 0-indexed, então 7 = agosto)
+                            matchPeriodo = d.dateObject >= dataLimite;
+                        }
+                    }
+                    return matchEq && matchBm && matchPeriodo;
+                });
+
+                // Se o filtro "Mais Recente de Cada BA" estiver ativo
+                if (periodo === 'mais_recente') {
+                    const maisRecentesPorBA = {};
+                    filteredData.forEach(d => {
+                        if (!maisRecentesPorBA[d.nome] || d.dateObject > maisRecentesPorBA[d.nome].dateObject) {
+                            maisRecentesPorBA[d.nome] = d;
+                        }
+                    });
+                    filteredData = Object.values(maisRecentesPorBA);
+                }
+
+                UIController.renderSummaryLabels();
+                this.renderKPIs();
+                this.renderAlerts();
+
+                let tableData = [...filteredData];
+                const statusLabel = document.getElementById('filterStatusLabel');
+
+                if (contextFilter === 'critical') {
+                    tableData = tableData.filter(d => d.tempoSegundos > LIMIT_S);
+                    statusLabel.innerText = "Filtro Ativo: Acima do Limite (01:30)";
+                    statusLabel.classList.remove('hidden');
+                } else if (contextFilter === 'above_goal') {
+                    tableData = tableData.filter(d => d.tempoSegundos > GOAL_S);
+                    statusLabel.innerText = "Filtro Ativo: Acima do Objetivo (01:00)";
+                    statusLabel.classList.remove('hidden');
+                } else {
+                    statusLabel.classList.add('hidden');
+                }
+
+                this.renderTable(tableData);
+                ChartModule.draw();
+                lucide.createIcons();
+            },
+
+            renderKPIs() {
+                // Função auxiliar para pegar apenas os 2 primeiros nomes (pulando preposições)
+                const getDoisPrimeirosNomes = (nomeCompleto) => {
+                    const preposicoes = ['de', 'da', 'do', 'dos', 'das', 'e'];
+                    const partes = nomeCompleto.trim().split(' ');
+                    const nomesFiltrados = [];
+
+                    for (let i = 0; i < partes.length && nomesFiltrados.length < 2; i++) {
+                        // Se não é preposição OU se é o primeiro nome, adiciona
+                        if (!preposicoes.includes(partes[i].toLowerCase()) || nomesFiltrados.length === 0) {
+                            nomesFiltrados.push(partes[i]);
+                        }
+                    }
+
+                    return nomesFiltrados.join(' ');
+                };
+
+                if (filteredData.length === 0) {
+                    document.getElementById('tempo1').innerText = "--:--";
+                    document.getElementById('tempo1Nome').innerText = "--";
+                    document.getElementById('tempo2').innerText = "--:--";
+                    document.getElementById('tempo2Nome').innerText = "--";
+                    document.getElementById('tempo3').innerText = "--:--";
+                    document.getElementById('tempo3Nome').innerText = "--";
+                    document.getElementById('kpiMedia').innerText = "--:--";
+                    document.getElementById('kpiTotal').innerText = "0";
+                    return;
+                }
+
+                // Top 3 melhores tempos
+                const sorted = [...filteredData].sort((a, b) => a.tempoSegundos - b.tempoSegundos);
+
+                // Limpa todos primeiro
+                document.getElementById('tempo1').innerText = '--:--';
+                document.getElementById('tempo1Nome').innerText = '--';
+                document.getElementById('tempo2').innerText = '--:--';
+                document.getElementById('tempo2Nome').innerText = '--';
+                document.getElementById('tempo3').innerText = '--:--';
+                document.getElementById('tempo3Nome').innerText = '--';
+
+                // Preenche conforme disponibilidade
+                if (sorted.length >= 1) {
+                    const nome1 = getDoisPrimeirosNomes(sorted[0].nome);
+                    document.getElementById('tempo1').textContent = this.formatTime(sorted[0].tempoSegundos);
+                    document.getElementById('tempo1Nome').textContent = nome1;
+                }
+                if (sorted.length >= 2) {
+                    const nome2 = getDoisPrimeirosNomes(sorted[1].nome);
+                    document.getElementById('tempo2').textContent = this.formatTime(sorted[1].tempoSegundos);
+                    document.getElementById('tempo2Nome').textContent = nome2;
+                }
+                if (sorted.length >= 3) {
+                    const nome3 = getDoisPrimeirosNomes(sorted[2].nome);
+                    document.getElementById('tempo3').textContent = this.formatTime(sorted[2].tempoSegundos);
+                    document.getElementById('tempo3Nome').textContent = nome3;
+                }
+
+                const media = filteredData.reduce((acc, curr) => acc + curr.tempoSegundos, 0) / filteredData.length;
+                document.getElementById('kpiMedia').innerText = this.formatTime(media);
+                document.getElementById('kpiTotal').innerText = filteredData.length;
+                this.calculateEvolution();
+            },
+
+            calculateEvolution() {
+                // Determinar o período para cálculo de evolução
+                const periodo = document.getElementById('filterPeriodo').value;
+                const hoje = new Date();
+                let dataLimiteEvolucao;
+
+                // Sempre considera no mínimo 6 meses, ou o período selecionado se for maior
+                if (periodo === 'ano' || periodo === 'todos') {
+                    // Se for "ano" ou "todos", usa os dados filtrados normalmente
+                    dataLimiteEvolucao = null; // Sem limite adicional
+                } else {
+                    // Para outros períodos (trimestre, semestre, mais_recente), garante no mínimo 6 meses
+                    const seisM = new Date();
+                    seisM.setMonth(hoje.getMonth() - 6);
+                    dataLimiteEvolucao = seisM;
+                }
+
+                // Filtrar dados para evolução (no mínimo 6 meses)
+                let dadosEvolucao = rawData;
+                if (dataLimiteEvolucao) {
+                    dadosEvolucao = rawData.filter(d => d.dateObject && d.dateObject >= dataLimiteEvolucao);
+                } else if (periodo !== 'todos') {
+                    dadosEvolucao = filteredData; // Usa os dados já filtrados se for período maior
+                }
+
+                // Aplicar filtros de equipe e bombeiro
+                const eq = document.getElementById('filterEquipe').value;
+                const bm = document.getElementById('filterBombeiro').value;
+                dadosEvolucao = dadosEvolucao.filter(d => {
+                    const matchEq = eq === 'Todas' || d.equipe === eq;
+                    const matchBm = bm === 'Todos' || d.nome === bm;
+                    return matchEq && matchBm;
+                });
+
+                const inds = {};
+                dadosEvolucao.forEach(d => { if (!inds[d.nome]) inds[d.nome] = []; inds[d.nome].push(d); });
+                let topEvo = 0, topNome = "N/A";
+                Object.keys(inds).forEach(n => {
+                    const h = inds[n];
+                    if (h.length > 1) {
+                        h.sort((a, b) => a.dateObject - b.dateObject);
+                        const ini = h[0].tempoSegundos, fim = h[h.length - 1].tempoSegundos;
+                        const evo = ini > 0 ? ((ini - fim) / ini) * 100 : 0;
+                        if (evo > topEvo) { topEvo = evo; topNome = n; }
+                    }
+                });
+                document.getElementById('kpiEvolucao').innerText = topEvo > 0 ? `${topEvo.toFixed(1)}%` : "0%";
+                document.getElementById('kpiEvolucaoNome').innerText = topNome === "N/A" ? "Estabilidade" : `BA: ${topNome}`;
+            },
+
+            renderTable(data, search = "") {
+                const body = document.getElementById('dataTableBody');
+                let displayData = data;
+                if (search) displayData = data.filter(d => d.nome.toLowerCase().includes(search.toLowerCase()) || d.equipe.toLowerCase().includes(search.toLowerCase()));
+
+                if (displayData.length === 0) {
+                    body.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 italic font-medium">Nenhum registo encontrado.</td></tr>';
+                    return;
+                }
+                body.innerHTML = displayData.slice().sort((a, b) => b.dateObject - a.dateObject).map((d) => {
+                    let pill = (d.tempoSegundos <= GOAL_S) ? "bg-emerald-100 text-emerald-700" : (d.tempoSegundos <= LIMIT_S) ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700";
+                    let label = (d.tempoSegundos <= GOAL_S) ? "Excelente" : (d.tempoSegundos <= LIMIT_S) ? "Bom" : "Atenção";
+                    let activeClass = (selectedDataId === d.id) ? 'table-row-active' : 'table-row-highlight';
+
+                    return `<tr class="${activeClass}" onmouseover="ChartModule.highlight(${d.id})" onmouseout="ChartModule.clearHighlight()" onclick="ChartModule.focus(${d.id}, event)">
+                        <td class="px-6 py-4 font-medium">${d.data}</td>
+                        <td class="px-6 py-4 font-bold text-slate-800">${d.nome}</td>
+                        <td class="px-6 py-4 text-slate-500 font-medium">${d.equipe}</td>
+                        <td class="px-6 py-4 text-center font-bold text-slate-900">${this.formatTime(d.tempoSegundos)}</td>
+                        <td class="px-6 py-4 text-center"><span class="status-pill ${pill}">${label}</span></td>
+                    </tr>`;
+                }).join('');
+            },
+
+            renderAlerts() {
+                const container = document.getElementById('alertsContainer');
+                if (filteredData.length === 0) {
+                    container.innerHTML = '<div class="text-slate-400 text-sm p-4 text-center italic">Sem dados.</div>';
+                    return;
+                }
+                const alerts = [];
+                const criticos = filteredData.filter(d => d.tempoSegundos > LIMIT_S);
+                if (criticos.length > 0) {
+                    alerts.push({ id: 'critical', title: 'Acima do Limite', text: `${criticos.length} casos excederam 01:30.`, color: 'red', active: contextFilter === 'critical' });
+                }
+                const avg = filteredData.reduce((a, b) => a + b.tempoSegundos, 0) / filteredData.length;
+                if (avg > GOAL_S) {
+                    alerts.push({ id: 'above_goal', title: 'Objetivo Operacional', text: `Média (${this.formatTime(avg)}) superior ao objetivo.`, color: 'amber', active: contextFilter === 'above_goal' });
+                }
+
+                container.innerHTML = alerts.length ? alerts.map(a => `
+                <div onclick="DataLoader.setContextFilter('${a.id}')" class="group p-4 bg-${a.color}-50 border ${a.active ? 'border-' + a.color + '-400 ring-4 ring-' + a.color + '-50' : 'border-transparent'} rounded-2xl cursor-pointer transition-all hover:scale-[1.02] relative pb-8">
+                    <div class="flex justify-between items-start">
+                        <p class="text-[10px] font-black text-${a.color}-600 uppercase tracking-widest mb-1">${a.title}</p>
+                        ${a.active ? `<i data-lucide="check-circle-2" class="w-4 h-4 text-${a.color}-500"></i>` : `<i data-lucide="chevron-right" class="w-3 h-3 text-${a.color}-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>`}
+                    </div>
+                    <p class="text-sm text-slate-700 font-semibold leading-tight mb-2">${a.text}</p>
+                    <div class="absolute bottom-2 left-4 text-[9px] font-bold text-${a.color}-400 uppercase tracking-tighter">CLIQUE PARA FILTRAR</div>
+                </div>`).join('') : '<div class="text-emerald-700 text-sm p-5 font-bold bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5"></i> Performance dentro do objetivo!</div>';
+                lucide.createIcons();
+            }
+        };
+
+        const ChartModule = {
+            chart: null,
+            currentSortedData: [],
+            draw() {
+                const container = document.getElementById('chartHistory');
+                const rangeLabel = document.getElementById('chartDateRange');
+                if (!google.visualization || filteredData.length === 0) {
+                    container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 italic font-medium">Nenhum dado para exibir no gráfico</div>';
+                    return;
+                }
+                const data = new google.visualization.DataTable();
+                data.addColumn('string', 'Data');
+                data.addColumn('number', 'Objetivo');
+                data.addColumn('number', 'Limite');
+                data.addColumn('number', 'Tempo');
+                data.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
+                data.addColumn({ type: 'string', role: 'style' });
+
+                this.currentSortedData = [...filteredData].sort((a, b) => a.dateObject - b.dateObject);
+                rangeLabel.innerText = `${this.currentSortedData[0].data} ➔ ${this.currentSortedData[this.currentSortedData.length - 1].data}`;
+
+                this.currentSortedData.forEach(d => {
+                    const tooltipHtml = `<div class="p-3 shadow-xl rounded-xl border border-slate-100 bg-white min-w-[140px]"><p class="text-[10px] text-slate-400 uppercase font-black mb-2">${d.data}</p><p class="text-sm font-bold text-slate-800 mb-1">${d.nome}</p><p class="text-xs text-blue-600 font-bold mb-3">${d.equipe}</p><div class="flex items-center justify-between border-t pt-2 border-slate-50"><span class="text-[10px] text-slate-400 font-bold">TEMPO</span><span class="text-sm font-black text-slate-800">${DataLoader.formatTime(d.tempoSegundos)}</span></div></div>`;
+                    let pointStyle = null;
+                    if (selectedDataId === d.id) pointStyle = 'point { size: 8; shape-type: circle; fill-color: #3b82f6; stroke-color: #1e3a8a; stroke-width: 2; }';
+                    else if (contextFilter === 'critical' && d.tempoSegundos > LIMIT_S) pointStyle = 'point { size: 6; fill-color: #ef4444; stroke-color: #7f1d1d; stroke-width: 1.5; }';
+                    else if (contextFilter === 'above_goal' && d.tempoSegundos > GOAL_S) pointStyle = 'point { size: 6; fill-color: #f59e0b; stroke-color: #78350f; stroke-width: 1.5; }';
+
+                    data.addRow([d.data, { v: GOAL_S, f: DataLoader.formatTime(GOAL_S) }, { v: LIMIT_S, f: DataLoader.formatTime(LIMIT_S) }, { v: d.tempoSegundos, f: DataLoader.formatTime(d.tempoSegundos) }, tooltipHtml, pointStyle]);
+                });
+
+                const options = {
+                    curveType: 'function', legend: 'none', colors: ['#10b981', '#ef4444', '#3b82f6'],
+                    chartArea: { width: '90%', height: '80%', top: 20 },
+                    tooltip: { isHtml: true, trigger: 'both' },
+                    vAxis: {
+                        viewWindow: { min: 20, max: 120 },
+                        ticks: [{ v: 20, f: '0:20' }, { v: 40, f: '0:40' }, { v: 60, f: '1:00' }, { v: 80, f: '1:20' }, { v: 100, f: '1:40' }, { v: 120, f: '2:00' }],
+                        gridlines: { color: '#f8fafc' }, textStyle: { fontSize: 10, color: '#94a3b8', bold: true }
+                    },
+                    hAxis: { textPosition: 'none', gridlines: { color: 'transparent' }, baselineColor: '#f1f5f9' },
+                    series: { 0: { lineDashStyle: [6, 6], lineWidth: 1.2, opacity: 0.5 }, 1: { lineDashStyle: [6, 6], lineWidth: 1.2, opacity: 0.5 }, 2: { pointSize: 3, lineWidth: 1.5 } },
+                    animation: { duration: 500, easing: 'out' }
+                };
+
+                this.chart = new google.visualization.LineChart(container);
+                google.visualization.events.addListener(this.chart, 'select', () => {
+                    const selection = this.chart.getSelection();
+                    if (selection.length > 0 && selection[0].row !== null) this.focus(this.currentSortedData[selection[0].row].id, null);
+                });
+                this.chart.draw(data, options);
+            },
+            highlight(dataId) { if (this.chart && selectedDataId === null) { const idx = this.currentSortedData.findIndex(d => d.id === dataId); if (idx !== -1) this.chart.setSelection([{ row: idx, column: 3 }]); } },
+            clearHighlight() { if (this.chart && selectedDataId === null) this.chart.setSelection([]); },
+            focus(dataId, event) { if (event) event.stopPropagation(); selectedDataId = (selectedDataId === dataId) ? null : dataId; if (selectedDataId) document.getElementById('visualSection').scrollIntoView({ behavior: 'smooth', block: 'center' }); DataLoader.updateUI(); }
+        };
+
+        const PDFReportModule = {
+            doc: null,
+            generate() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                doc.setFillColor(30, 64, 175);
+                doc.rect(0, 0, 210, 40, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(22); doc.text('Relatório de Prontidão Operacional', 15, 25);
+                doc.setFontSize(10); doc.text(`Gerado em: ${new Date().toLocaleString()}`, 15, 32);
+
+                doc.autoTable({
+                    startY: 50,
+                    head: [['Data', 'BA', 'Equipe', 'Tempo']],
+                    body: filteredData.map(d => [d.data, d.nome, d.equipe, DataLoader.formatTime(d.tempoSegundos)]),
+                    theme: 'striped', headStyles: { fillColor: [30, 64, 175] }
+                });
+
+                document.getElementById('pdfPreviewModal').classList.remove('hidden');
+                document.getElementById('pdfPreviewFrame').src = URL.createObjectURL(doc.output('blob'));
+                this.doc = doc;
+            },
+            close() { document.getElementById('pdfPreviewModal').classList.add('hidden'); },
+            download() { this.doc.save(`Relatorio_Vestimenta_${new Date().toISOString().slice(0, 10)}.pdf`); }
+        };
+
+        window.onload = () => {
+            google.charts.load('current', { 'packages': ['corechart'] });
+            google.charts.setOnLoadCallback(() => { DataLoader.fetch(); });
+            window.onresize = () => ChartModule.draw();
+        };
+
+        const PAGE_ID = document.body.dataset.pageId;
+        function enviarAltura() { window.parent.postMessage({ id: PAGE_ID, altura: document.documentElement.scrollHeight }, window.location.origin); }
+        window.addEventListener('load', enviarAltura);
+        window.addEventListener('resize', enviarAltura);
+        new MutationObserver(enviarAltura).observe(document.body, { childList: true, subtree: true });
+    </script>
+
+    <!-- BOTÃO FLUTUANTE VOLTAR INÍCIO -->
+    <style>
+        #btnVoltarInicio {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        #btnVoltarInicio:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        #btnVoltarInicio svg {
+            width: 18px;
+            height: 18px;
+            stroke: #1e293b;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        #btnVoltarInicio.hide {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+        }
+
+        @media (max-width: 768px) {
+            #btnVoltarInicio {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+            #btnVoltarInicio svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    </style>
+
+    <a href="./" id="btnVoltarInicio">
+        <svg viewBox="0 0 24 24">
+            <path d="M9 14l-4-4m0 0l4-4m-4 4h14a4 4 0 010 8h-1" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Central-SCI
+    </a>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('btnVoltarInicio');
+            let lastScroll = 0;
+            let hideTimer = null;
+            let isScrolling = false;
+
+            function resetHideTimer() {
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => {
+                    if (!isScrolling) {
+                        btn.classList.add('hide');
+                    }
+                }, 4000);
+            }
+
+            function handleScroll() {
+                isScrolling = true;
+                const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+                if (currentScroll > lastScroll) {
+                    // Rolando para BAIXO - esconde
+                    btn.classList.add('hide');
+                    clearTimeout(hideTimer);
+                } else if (currentScroll < lastScroll) {
+                    // Rolando para CIMA - mostra
+                    btn.classList.remove('hide');
+                    resetHideTimer();
+                }
+
+                lastScroll = currentScroll <= 0 ? 0 : currentScroll;
+            }
+
+            let scrollTimeout;
+            window.addEventListener('scroll', function () {
+                handleScroll();
+
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    isScrolling = false;
+                }, 150);
+            });
+
+            // Inicia com o timer de esconder
+            resetHideTimer();
+
+            // Mostra quando mouse passa por cima (mesmo escondido)
+            btn.addEventListener('mouseenter', function () {
+                btn.classList.remove('hide');
+                clearTimeout(hideTimer);
+            });
+
+            btn.addEventListener('mouseleave', function () {
+                resetHideTimer();
+            });
+        })();
+    </script>
+    <!-- FIM BOTÃO FLUTUANTE -->
+</body>
+
+</html>

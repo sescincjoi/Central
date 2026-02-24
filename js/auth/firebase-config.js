@@ -32,10 +32,10 @@ const db = getFirestore(app);
 const CONFIG = {
   domain: 'sescincjoi.github.io',
   emailDomain: '@auth.centralsci.internal', // Email virtual para autenticação
-
+  
   // Padrão de matrícula: 3 letras + 4 números
   matriculaPattern: /^[A-Z]{3}\d{4}$/,
-
+  
   // Requisitos de senha
   senhaMinLength: 8,
   senhaRequirements: {
@@ -44,10 +44,10 @@ const CONFIG = {
     number: true,       // Pelo menos 1 número
     special: true       // Pelo menos 1 caractere especial
   },
-
+  
   // Caracteres especiais permitidos
   specialChars: '!@#$%^&*()_+-=[]{}|;:,.<>?',
-
+  
   // Modo de desenvolvimento (desabilitar em produção)
   dev: false
 };
@@ -60,8 +60,7 @@ if (CONFIG.dev && window.location.hostname === 'localhost') {
 }
 
 // Exportar para uso em outros módulos
-export { app, auth, db, CONFIG };
-
+export { auth, db, CONFIG };
 
 // Log de inicialização
 console.log('✅ Firebase inicializado:', {

@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indicadores TAF - Teste de Aptidão Física</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    screens: {
+                        'tablet': '780px',
+                        'desktop': '1200px',
+                    }
+                }
+            }
+        }
+    </script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Firebase e AuthGuard -->
+    <script type="module">
+        import authCore from '../js/auth/auth-core.js';
+        import authUI from '../js/auth/auth-ui.js';
+        import authLock from '../js/auth/auth-lock.js';
+        import authGuard from '../js/auth/auth-guard.js';
+
+        // Disponibilizar globalmente para os scripts da página
+        window.authCore = authCore;
+        window.authUI = authUI;
+        window.authLock = authLock;
+        window.authGuard = authGuard;
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            padding: 0 !important;
+            margin: 0;
+        }
+
+        .header {
+            background: radial-gradient(circle at center, #2c2c2c 0%, #111111 100%);
+            padding: 3.25rem 2rem 4.5rem 2rem;
+            width: 100%;
+            margin-bottom: -1.5rem !important;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .metric-card {
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .table-row-highlight {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .table-row-highlight:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        .table-row-active {
+            background-color: #eff6ff !important;
+            border-left: 4px solid #3b82f6 !important;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 48px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Estilos para o logo */
+        .logo-border {
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Animações suaves */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Estilos para os alertas clicáveis */
+        .group:hover {
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilos responsivos para tabela */
+        @media (max-width: 768px) {
+            .overflow-x-auto {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                font-size: 0.75rem;
+            }
+
+            .px-6 {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+
+            .py-4 {
+                padding-top: 0.75rem !important;
+                padding-bottom: 0.75rem !important;
+            }
+        }
+
+        /* Estilos para modais */
+        #filterModal.flex,
+        #pdfPreviewModal.flex {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        #filterModal .bg-white,
+        #pdfPreviewModal .bg-white {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Estilos para o badge de análise individual */
+        #individualBadge {
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Estilos para gráficos comparativos */
+        #individualAnalysis {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        #radarChart {
+            max-height: 300px;
+            width: 100% !important;
+        }
+
+        /* Estilos para barras de comparação */
+        #barsComparison .bg-emerald-500,
+        #barsComparison .bg-red-500 {
+            transition: width 0.6s ease-out;
+        }
+
+        /* Estilos para pontos fortes e fracos */
+        #strongPoints>div,
+        #improvementPoints>div {
+            animation: fadeIn 0.3s ease-out;
+            animation-fill-mode: backwards;
+        }
+
+        #strongPoints>div:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        #strongPoints>div:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        #strongPoints>div:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        #improvementPoints>div:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        #improvementPoints>div:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        #improvementPoints>div:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        /* Estilos para card de observações */
+        #observationsCard {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        #observationsContent {
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* Ajustes para impressão */
+        @media print {
+            .header {
+                background: #1e40af !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .action-button,
+            #filterModal,
+            #pdfPreviewModal,
+            #individualBadge button {
+                display: none !important;
+            }
+
+            .glass-card {
+                border: 1px solid #e2e8f0;
+                box-shadow: none;
+            }
+
+            body {
+                background: white !important;
+            }
+        }
+
+        /* Estilos para estados de loading */
+        .loading-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Estilos para tooltips personalizados */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Estilos para inputs de busca */
+        #tableSearch:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Estilos para botões de filtro */
+        .filter-active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Estilos para as linhas de referência no gráfico */
+        .chart-reference-line {
+            stroke-dasharray: 5, 5;
+            opacity: 0.6;
+        }
+
+        /* Estilos para status de conexão */
+        .connection-status {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 50;
+            display: none;
+        }
+
+        .connection-status.offline {
+            display: block;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* Estilos para transições suaves */
+        * {
+            transition-property: background-color, border-color, color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+
+        /* Estilos para foco acessível */
+        button:focus-visible,
+        select:focus-visible,
+        input:focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        /* Estilos para desabilitar interações durante carregamento */
+        .pointer-events-none {
+            pointer-events: none;
+        }
+
+        .opacity-50 {
+            opacity: 0.5;
+        }
+
+        /* Estilos para melhorar legibilidade em telas pequenas */
+        @media (max-width: 640px) {
+            .header {
+                padding: 2rem 1rem 3rem 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem !important;
+            }
+
+            .metric-card h3 {
+                font-size: 1.5rem !important;
+            }
+
+            .action-button {
+                font-size: 0.75rem;
+                padding: 0.5rem 1rem;
+                height: 40px;
+            }
+        }
+
+        /* Estilos para melhorar contraste */
+        .high-contrast {
+            filter: contrast(1.2);
+        }
+
+        /* Estilos para estado de erro */
+        .error-state {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Estilos para skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Estilos para badges de status */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+
+        /* Estilos para animação de entrada dos KPIs */
+        .metric-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .metric-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .metric-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .metric-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        /* Estilos para melhorar acessibilidade */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Estilos para modo escuro (opcional - descomentado se necessário) */
+        /*
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #0f172a;
+        color: #e2e8f0;
+    }
+    
+    .glass-card {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: rgba(71, 85, 105, 0.5);
+    }
+    
+    .header {
+        background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    }
+}
+*/
+    </style>
+</head>
+
+<body data-page-id="taf" data-auth-required>
+
+    <!-- Cabeçalho -->
+    <div class="header mb-8">
+        <div class="max-w-7xl mx-auto w-full px-8 flex flex-col items-center gap-5 md:gap-10 
+                    tablet:flex-row tablet:justify-center tablet:text-center
+                    desktop:justify-start desktop:text-left">
+
+            <div class="flex-shrink-0">
+                <a href="../">
+                    <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq"
+                        alt="Logótipo SCI"
+                        class="bg-white rounded-full h-16 aspect-square object-cover transition-transform hover:scale-105"
+                        onerror="this.src='https://via.placeholder.com/150x150?text=SCI+Logo';">
+                </a>
+            </div>
+
+            <div class="flex flex-col items-center tablet:items-start desktop:items-start">
+                <h1
+                    class="text-1xl sm:text-3xl md:text-3xl font-extrabold tracking-tight text-white whitespace-nowrap drop-shadow-lg transition-colors text-center desktop:text-left">
+                    Teste de Aptidão Física - TAF
+                </h1>
+                <p
+                    class="text-slate-400 text-[11px] md:text-sm font-medium mt-1 whitespace-nowrap opacity-90 uppercase tracking-widest text-center desktop:text-left">
+                    Monitoramento de Performance Operacional
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Principal -->
+    <div class="mx-auto md:px-10">
+
+        <!-- Botões de Ação -->
+        <div class="flex flex-col tablet:flex-row items-center justify-center gap-y-4 gap-x-10 px-8 mb-10 w-full">
+            <a href="https://docs.google.com/spreadsheets/d/1AQvblyoMbIjvoafUx92QQnBEj-DWERvDwwlMy7Q1xSo"
+                target="_blank"
+                class="action-button w-full tablet:w-1/3 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50">
+                <i data-lucide="table-properties" class="w-5 h-5 text-emerald-500"></i>
+                Acessar Planilha
+            </a>
+
+            <button onclick="PDFReportModule.generate()"
+                class="action-button w-full tablet:w-1/3 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50">
+                <i data-lucide="file-text" class="w-5 h-5 text-red-500"></i>
+                Gerar Relatório PDF
+            </button>
+
+            <button onclick="UIController.toggleFilterModal(true)"
+                class="action-button w-full tablet:w-1/3 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50">
+                <i data-lucide="sliders-horizontal" class="w-5 h-5 text-blue-600"></i>
+                Ajustar Dados
+            </button>
+        </div>
+
+        <!-- Badge de Análise Individual -->
+        <div id="individualBadge" class="hidden mx-4 mb-8 glass-card p-4 rounded-2xl">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-lg">
+                        <i data-lucide="user-circle" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Análise Individual Ativa
+                        </p>
+                        <h3 id="individualBadgeName" class="text-lg font-bold text-slate-800"></h3>
+                    </div>
+                </div>
+                <button onclick="DataLoader.clearIndividualFilter()"
+                    class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-all flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    Voltar para Visão Geral
+                </button>
+            </div>
+        </div>
+
+        <!-- Resumo de Filtros -->
+        <div id="filterSummary" class="flex flex-wrap justify-center gap-2 mx-4 mb-10"></div>
+
+        <!-- Cards de KPI -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mx-4 mb-8">
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Melhor Desempenho Relativo</p>
+                    <i data-lucide="trophy" class="w-5 h-5 text-emerald-500"></i>
+                </div>
+                <div id="kpiPodium" class="space-y-2 mt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🥇</span>
+                        <p id="podium1" class="text-xs font-bold text-slate-700 truncate flex-1">--</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm px-[0.2rem]">🥈</span>
+                        <p id="podium2" class="text-xs font-medium text-slate-600 truncate flex-1">--</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm px-[0.2rem]">🥉</span>
+                        <p id="podium3" class="text-xs font-medium text-slate-600 truncate flex-1">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Melhores Tempos</p>
+                    <i data-lucide="zap" class="w-5 h-5 text-amber-500"></i>
+                </div>
+                <div id="kpiMelhoresTempos" class="space-y-2 mt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🥇</span>
+                        <div class="flex-1">
+                            <p id="tempo1" class="text-xs font-bold text-slate-700 truncate flex-1">--:--</p>
+                            <p id="tempo1Nome" class="text-xs text-slate-400 truncate">--</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm px-[0.2rem]">🥈</span>
+                        <div class="flex-1">
+                            <p id="tempo2" class="text-xs font-medium text-slate-600 truncate flex-1">--:--</p>
+                            <p id="tempo2Nome" class="text-xs text-slate-400 truncate">--</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm px-[0.2rem]">🥉</span>
+                        <div class="flex-1">
+                            <p id="tempo3" class="text-xs font-medium text-slate-600 truncate flex-1">--:--</p>
+                            <p id="tempo3Nome" class="text-xs text-slate-400 truncate">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Taxa de Aprovação</p>
+                    <i data-lucide="shield-check" class="w-5 h-5 text-blue-500"></i>
+                </div>
+                <h3 id="kpiAprovacao" class="text-3xl font-bold text-blue-600">--%</h3>
+                <p id="kpiAprovacaoDetalhes" class="text-xs text-slate-400 mt-2 italic font-medium">De X aprovados</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl metric-card">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-500">Média de Nota</p>
+                    <i data-lucide="star" class="w-5 h-5 text-amber-500"></i>
+                </div>
+                <h3 id="kpiMediaNota" class="text-3xl font-bold text-slate-800">--</h3>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-xs text-slate-500">Meta: ≥ 8.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos e Alertas -->
+        <div id="visualSection" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-4 mb-8 scroll-mt-6">
+            <div class="lg:col-span-2 glass-card p-6 rounded-2xl flex flex-col relative">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-2 gap-4">
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2 text-lg">
+                        <i data-lucide="line-chart" class="w-5 h-5 text-blue-600"></i>
+                        <span id="chartTitle">Histórico de Performance</span>
+                    </h4>
+                    <div id="chartLegend" class="flex gap-4 text-[10px] uppercase font-bold tracking-wider">
+                        <span class="text-emerald-500 flex items-center gap-1"><span
+                                class="w-3 h-0.5 bg-emerald-500 inline-block"></span> Excelência</span>
+                        <span class="text-amber-500 flex items-center gap-1"><span
+                                class="w-3 h-0.5 bg-amber-500 inline-block"></span> Bom</span>
+                        <span class="text-red-500 flex items-center gap-1"><span
+                                class="w-3 h-0.5 bg-red-500 inline-block"></span> Limite</span>
+                        <span id="mediaGeralLegend" class="text-slate-500 flex items-center gap-1"><span
+                                class="w-3 h-0.5 bg-slate-400 inline-block"
+                                style="border-top: 2px dashed #94a3b8;"></span> Média: --</span>
+                    </div>
+                </div>
+                <div id="chartHistory" class="w-full h-[350px]"></div>
+                <div class="flex justify-center mt-2">
+                    <div id="chartDateRange"
+                        class="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-slate-100 shadow-sm">
+                        Carregando...
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl flex flex-col">
+                <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-lg">
+                    <i data-lucide="zap" class="w-5 h-5 text-amber-500"></i>
+                    Pontos de Atenção
+                </h4>
+                <div id="alertsContainer" class="space-y-3 flex-1 overflow-y-auto pr-2">
+                    <div class="flex items-center justify-center h-full text-slate-400 text-sm italic">Analisando
+                        dados...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Análise Individual (Gráficos Comparativos) -->
+        <div id="individualAnalysis" class="hidden mx-4 mb-8">
+            <div class="glass-card p-6 rounded-2xl mb-6">
+                <h4 class="font-bold text-slate-800 mb-6 flex items-center gap-2 text-lg">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 text-purple-600"></i>
+                    Análise Comparativa de Exercícios
+                </h4>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Gráfico Radar -->
+                    <div class="bg-slate-50 p-4 rounded-xl">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">
+                            Comparação Visual</p>
+                        <canvas id="radarChart" class="w-full" style="max-height: 300px;"></canvas>
+                    </div>
+
+                    <!-- Barras Horizontais Detalhadas -->
+                    <div class="bg-slate-50 p-4 rounded-xl">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Análise Detalhada</p>
+                        <div id="barsComparison" class="space-y-4"></div>
+                    </div>
+                </div>
+
+                <!-- Pontos Fortes e Oportunidades -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i>
+                            <h5 class="text-sm font-bold text-emerald-800 uppercase tracking-wide">Pontos Fortes</h5>
+                        </div>
+                        <div id="strongPoints" class="space-y-2 text-sm text-emerald-700"></div>
+                    </div>
+
+                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i data-lucide="alert-circle" class="w-5 h-5 text-amber-600"></i>
+                            <h5 class="text-sm font-bold text-amber-800 uppercase tracking-wide">Oportunidades</h5>
+                        </div>
+                        <div id="improvementPoints" class="space-y-2 text-sm text-amber-700"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Observações -->
+            <div id="observationsCard" class="hidden glass-card p-6 rounded-2xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="file-text" class="w-5 h-5 text-slate-600"></i>
+                    <h4 class="font-bold text-slate-800 text-lg">Observações</h4>
+                </div>
+                <div id="observationsContent"
+                    class="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl italic"></div>
+            </div>
+        </div>
+
+        <!-- Tabela Detalhada -->
+        <div id="tabelaRegisto" class="glass-card rounded-2xl overflow-hidden mx-4 mb-12 scroll-mt-8">
+            <div
+                class="p-6 border-b border-slate-100 bg-white/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="database" class="w-5 h-5 text-slate-400"></i>
+                        Lista de Avaliações TAF
+                    </h4>
+                    <div id="filterStatusLabel"
+                        class="text-[10px] uppercase tracking-wider text-blue-600 font-bold mt-1 hidden"></div>
+                </div>
+                <div class="relative">
+                    <input type="text" id="tableSearch" placeholder="Pesquisar na lista..."
+                        class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64 transition-all">
+                    <i data-lucide="search" class="absolute left-3 inset-y-0 my-auto w-4 h-4 text-slate-400"></i>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50/50 text-slate-500 text-[11px] uppercase tracking-widest">
+                        <tr>
+                            <th class="px-6 py-4 font-bold">Data</th>
+                            <th class="px-6 py-4 font-bold">BA</th>
+                            <th class="px-6 py-4 font-bold">Função</th>
+                            <th class="px-6 py-4 font-bold">Equipe</th>
+                            <th class="px-6 py-4 font-bold text-center">Idade</th>
+                            <th class="px-6 py-4 font-bold text-center">Flexão</th>
+                            <th class="px-6 py-4 font-bold text-center">Abdominal</th>
+                            <th class="px-6 py-4 font-bold text-center">Polichinelo</th>
+                            <th class="px-6 py-4 font-bold text-center">Tempo Total</th>
+                            <th class="px-6 py-4 font-bold text-center">Nota</th>
+                            <th class="px-6 py-4 font-bold text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE FILTROS -->
+    <div id="filterModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden transform transition-all">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-lg">
+                        <i data-lucide="sliders-horizontal" class="w-5 h-5 text-blue-600"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800">Ajustar Dados</h3>
+                </div>
+                <button onclick="UIController.toggleFilterModal(false)"
+                    class="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6 max-h-[50vh] overflow-y-scroll">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        Período</label>
+                    <select id="filterPeriodo"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="ultimo_teste" selected>Último Teste</option>
+                        <option value="todos">Todo o Período</option>
+                        <option value="ano">Último Ano</option>
+                        <option value="semestre">Último Semestre</option>
+                        <option value="trimestre">Último Trimestre</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        Equipe</label>
+                    <select id="filterEquipe"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="Todas">Todas as Equipes</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        BA</label>
+                    <select id="filterBombeiro"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="Todos">Todos os BAs</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        Função</label>
+                    <select id="filterFuncao"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="Todas">Todas as Funções</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        Faixa Etária</label>
+                    <select id="filterIdade"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="Todas">Todas as Idades</option>
+                        <option value="ate40">Até 40 anos</option>
+                        <option value="acima40">Acima de 40 anos</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Filtrar por
+                        Status</label>
+                    <select id="filterStatus"
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border-none rounded-2xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="Todos">Todos</option>
+                        <option value="Aprovados">Aprovados (nota ≥7)</option>
+                        <option value="Reprovados">Reprovados (nota <7)< /option>
+                        <option value="Excelencia">Excelência (nota 10)</option>
+                        <option value="Limitrofe">Limítrofe (nota 7)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                <button onclick="DataLoader.resetAllFilters()"
+                    class="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-2xl hover:bg-slate-50">
+                    Limpar
+                </button>
+                <button onclick="UIController.toggleFilterModal(false)"
+                    class="flex-[2] px-4 py-3 bg-blue-600 text-white text-sm font-bold rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100">
+                    Aplicar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Previsão de PDF -->
+    <div id="pdfPreviewModal"
+        class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] hidden flex items-center justify-center p-4 md:p-10">
+        <div class="bg-white rounded-3xl w-full h-full max-w-5xl flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="file-text" class="w-6 h-6 text-blue-600"></i>
+                    <h3 class="font-bold text-slate-800 text-lg">Visualização do PDF</h3>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="PDFReportModule.download()"
+                        class="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-all">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Baixar Agora
+                    </button>
+                    <button onclick="PDFReportModule.close()"
+                        class="bg-white border text-slate-600 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+            <iframe id="pdfPreviewFrame" class="flex-1 w-full border-none"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1AQvblyoMbIjvoafUx92QQnBEj-DWERvDwwlMy7Q1xSo';
+        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+
+        let rawData = [];
+        let filteredData = [];
+        let contextFilter = null;
+        let selectedDataId = null;
+        let radarChartInstance = null;
+
+        const UIController = {
+            toggleFilterModal(show) {
+                const modal = document.getElementById('filterModal');
+                if (show) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                } else {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            },
+
+            renderSummaryLabels() {
+                const eq = document.getElementById('filterEquipe').value;
+                const bm = document.getElementById('filterBombeiro').value;
+                const fn = document.getElementById('filterFuncao').value;
+                const id = document.getElementById('filterIdade').value;
+                const st = document.getElementById('filterStatus').value;
+                const pd = document.getElementById('filterPeriodo').options[document.getElementById('filterPeriodo').selectedIndex].text;
+
+                const container = document.getElementById('filterSummary');
+                container.innerHTML = '';
+
+                const addLabel = (text, icon) => {
+                    container.innerHTML += `
+                        <div class="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-blue-100">
+                            <i data-lucide="${icon}" class="w-3 h-3"></i>
+                            ${text}
+                        </div>
+                    `;
+                };
+
+                addLabel(pd, 'calendar');
+                if (eq !== 'Todas') addLabel(`Equipe: ${eq}`, 'users');
+                if (bm !== 'Todos') addLabel(bm, 'user');
+                if (fn !== 'Todas') addLabel(`Função: ${fn}`, 'briefcase');
+                if (id !== 'Todas') addLabel(id === 'ate40' ? 'Até 40 anos' : 'Acima de 40 anos', 'calendar');
+                if (st !== 'Todos') addLabel(`Status: ${st}`, 'filter');
+
+                lucide.createIcons();
+            },
+
+            showIndividualBadge(nome, equipe, idade) {
+                const badge = document.getElementById('individualBadge');
+                const nameEl = document.getElementById('individualBadgeName');
+                nameEl.textContent = `${nome} - ${equipe} - ${idade} anos`;
+                badge.classList.remove('hidden');
+                lucide.createIcons();
+            },
+
+            hideIndividualBadge() {
+                document.getElementById('individualBadge').classList.add('hidden');
+            }
+        };
+
+        const DataLoader = {
+            async fetch() {
+                try {
+                    const response = await fetch(JSON_URL);
+                    const text = await response.text();
+                    const json = JSON.parse(text.substring(47).slice(0, -2));
+                    const rows = json.table.rows;
+
+                    rawData = rows.slice(0).map((row, index) => {
+                        const cellData = row.c[0]?.f || row.c[0]?.v || "";
+                        const cellNome = row.c[1]?.v || "";
+                        const cellFuncao = row.c[2]?.v || "";
+                        const cellEquipe = row.c[3]?.v || "";
+                        const cellIdade = row.c[4]?.v || 0;
+                        const cellFlexao = row.c[5]?.f || row.c[5]?.v || "00:00:00";
+                        const cellAbdominal = row.c[6]?.f || row.c[6]?.v || "00:00:00";
+                        const cellPolichinelo = row.c[7]?.f || row.c[7]?.v || "00:00:00";
+                        const cellTempoTotal = row.c[8]?.f || row.c[8]?.v || "00:00:00";
+                        const cellNotaPlanilha = row.c[9]?.v || 0;
+                        const cellObservacoes = row.c[10]?.v || "";
+
+                        const flexaoSeg = this.parseTimeToSeconds(cellFlexao);
+                        const abdominalSeg = this.parseTimeToSeconds(cellAbdominal);
+                        const polichineloSeg = this.parseTimeToSeconds(cellPolichinelo);
+                        const tempoTotalSeg = this.parseTimeToSeconds(cellTempoTotal);
+                        const notaCalculada = this.calcularNota(tempoTotalSeg, cellIdade);
+
+                        return {
+                            id: index,
+                            data: cellData,
+                            dateObject: this.parseDate(cellData),
+                            nome: cellNome,
+                            funcao: cellFuncao,
+                            equipe: cellEquipe,
+                            idade: cellIdade,
+                            flexaoStr: cellFlexao,
+                            flexaoSeg: flexaoSeg,
+                            abdominalStr: cellAbdominal,
+                            abdominalSeg: abdominalSeg,
+                            polichineloStr: cellPolichinelo,
+                            polichineloSeg: polichineloSeg,
+                            tempoTotalStr: cellTempoTotal,
+                            tempoTotalSeg: tempoTotalSeg,
+                            notaPlanilha: cellNotaPlanilha,
+                            notaCalculada: notaCalculada,
+                            desempenhoPercentual: this.calcularDesempenhoPercentual(tempoTotalSeg, cellIdade), // ADICIONE AQUI
+                            observacoes: cellObservacoes
+                        };
+                    }).filter(d => d.nome && d.nome !== '' && d.tempoTotalSeg > 0);
+
+                    this.initFilters();
+                    this.updateUI();
+                } catch (error) {
+                    console.error("Erro na carga:", error);
+                }
+            },
+
+            parseDate(dateStr) {
+                if (!dateStr) return null;
+                const parts = dateStr.split('/');
+                return parts.length === 3 ? new Date(parts[2], parts[1] - 1, parts[0]) : null;
+            },
+
+            parseTimeToSeconds(val) {
+                if (!val) return 0;
+                if (typeof val === 'string' && val.includes('Date')) {
+                    const matches = val.match(/\d+/g);
+                    if (matches && matches.length >= 6) return (parseInt(matches[3]) * 3600) + (parseInt(matches[4]) * 60) + parseInt(matches[5]);
+                }
+                const parts = val.toString().split(':').map(Number);
+                if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+                if (parts.length === 2) return (parts[0] * 60) + parts[1];
+                if (!isNaN(val) && val < 1 && val > 0) return Math.round(val * 86400);
+                return 0;
+            },
+
+            formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            },
+
+            calcularNota(tempoSegundos, idade) {
+                if (idade <= 40) {
+                    if (tempoSegundos <= 120) return 10;      // ≤2:00
+                    if (tempoSegundos <= 140) return 9;       // 2:00-2:20
+                    if (tempoSegundos <= 160) return 8;       // 2:20-2:40
+                    if (tempoSegundos <= 180) return 7;       // 2:40-3:00
+                    return 0; // Reprovado
+                } else {
+                    if (tempoSegundos <= 180) return 10;      // ≤3:00
+                    if (tempoSegundos <= 200) return 9;       // 3:00-3:20
+                    if (tempoSegundos <= 220) return 8;       // 3:20-3:40
+                    if (tempoSegundos <= 240) return 7;       // 3:40-4:00
+                    return 0; // Reprovado
+                }
+            },
+
+            calcularDesempenhoPercentual(tempoSegundos, idade) {
+                const tempoIdeal = idade <= 40 ? 120 : 180;
+                return (tempoIdeal / tempoSegundos) * 100; // SEM limite máximo
+            },
+
+            initFilters() {
+                const selectEq = document.getElementById('filterEquipe');
+                const selectBm = document.getElementById('filterBombeiro');
+                const selectFn = document.getElementById('filterFuncao');
+                const selectPeriodo = document.getElementById('filterPeriodo');
+                const selectIdade = document.getElementById('filterIdade');
+                const selectStatus = document.getElementById('filterStatus');
+
+                const equipes = [...new Set(rawData.map(d => d.equipe))].sort();
+                const bombeiros = [...new Set(rawData.map(d => d.nome))].sort();
+                const funcoes = [...new Set(rawData.map(d => d.funcao))].sort();
+
+                selectEq.innerHTML = '<option value="Todas">Todas as Equipes</option>';
+                selectBm.innerHTML = '<option value="Todos">Todos os BAs</option>';
+                selectFn.innerHTML = '<option value="Todas">Todas as Funções</option>';
+
+                equipes.forEach(eq => selectEq.innerHTML += `<option value="${eq}">${eq}</option>`);
+                bombeiros.forEach(bm => selectBm.innerHTML += `<option value="${bm}">${bm}</option>`);
+                funcoes.forEach(fn => selectFn.innerHTML += `<option value="${fn}">${fn}</option>`);
+
+                const onChange = () => { contextFilter = null; this.clearSelection(); this.updateUI(); };
+
+                selectEq.onchange = onChange;
+                selectBm.onchange = () => {
+                    // Quando seleciona um BA específico, muda para "Todo o Período"
+                    if (selectBm.value !== 'Todos') {
+                        selectPeriodo.value = 'todos';
+                    }
+                    contextFilter = null;
+                    this.clearSelection();
+                    this.updateUI();
+                };
+                selectFn.onchange = onChange;
+                selectPeriodo.onchange = onChange;
+                selectIdade.onchange = onChange;
+                selectStatus.onchange = onChange;
+
+                document.getElementById('tableSearch').oninput = (e) => {
+                    this.renderTable(filteredData, e.target.value);
+                };
+            },
+
+            resetAllFilters() {
+                document.getElementById('filterEquipe').value = 'Todas';
+                document.getElementById('filterBombeiro').value = 'Todos';
+                document.getElementById('filterFuncao').value = 'Todas';
+                document.getElementById('filterPeriodo').value = 'ultimo_teste';  // Alterado aqui
+                document.getElementById('filterIdade').value = 'Todas';
+                document.getElementById('filterStatus').value = 'Todos';
+                contextFilter = null;
+                this.clearSelection();
+                this.updateUI();
+            },
+
+            setContextFilter(type) {
+                contextFilter = (contextFilter === type) ? null : type;
+                this.clearSelection();
+                this.updateUI();
+                if (contextFilter) {
+                    document.getElementById('tabelaRegisto').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            },
+
+            clearSelection() {
+                selectedDataId = null;
+            },
+
+            clearIndividualFilter() {
+                document.getElementById('filterBombeiro').value = 'Todos';
+                this.updateUI();
+            },
+
+            updateUI() {
+                const eq = document.getElementById('filterEquipe').value;
+                const bm = document.getElementById('filterBombeiro').value;
+                const fn = document.getElementById('filterFuncao').value;
+                const periodo = document.getElementById('filterPeriodo').value;
+                const idade = document.getElementById('filterIdade').value;
+                const status = document.getElementById('filterStatus').value;
+                const hoje = new Date();
+
+                // Primeiro aplica filtros gerais
+                filteredData = rawData.filter(d => {
+                    const matchEq = eq === 'Todas' || d.equipe === eq;
+                    const matchBm = bm === 'Todos' || d.nome === bm;
+                    const matchFn = fn === 'Todas' || d.funcao === fn;
+
+                    let matchIdade = true;
+                    if (idade === 'ate40') matchIdade = d.idade <= 40;
+                    if (idade === 'acima40') matchIdade = d.idade > 40;
+
+                    let matchPeriodo = true;
+                    if (d.dateObject && periodo !== 'todos' && periodo !== 'ultimo_teste') {
+                        if (periodo === 'ano') {
+                            const date = new Date(); date.setFullYear(hoje.getFullYear() - 1); matchPeriodo = d.dateObject >= date;
+                        } else if (periodo === 'semestre') {
+                            const date = new Date(); date.setMonth(hoje.getMonth() - 6); matchPeriodo = d.dateObject >= date;
+                        } else if (periodo === 'trimestre') {
+                            const date = new Date(); date.setMonth(hoje.getMonth() - 3); matchPeriodo = d.dateObject >= date;
+                        }
+                    }
+
+                    return matchEq && matchBm && matchFn && matchIdade && matchPeriodo;
+                });
+
+                // Se filtro "Último Teste" estiver ativo, pegar apenas o teste mais recente de cada BA
+                if (periodo === 'ultimo_teste') {
+                    const latestTestsByBA = {};
+                    filteredData.forEach(d => {
+                        // Verifica se não existe registro OU se a data atual é MAIOR (mais recente)
+                        if (!latestTestsByBA[d.nome] || !d.dateObject || !latestTestsByBA[d.nome].dateObject || d.dateObject > latestTestsByBA[d.nome].dateObject) {
+                            latestTestsByBA[d.nome] = d;
+                        }
+                    });
+                    filteredData = Object.values(latestTestsByBA);
+                }
+
+                // Aplica filtro de status DEPOIS de ter os dados filtrados
+                if (status !== 'Todos') {
+                    if (status === 'Aprovados') filteredData = filteredData.filter(d => d.notaCalculada >= 7);
+                    if (status === 'Reprovados') filteredData = filteredData.filter(d => d.notaCalculada < 7);
+                    if (status === 'Excelencia') filteredData = filteredData.filter(d => d.notaCalculada === 10);
+                    if (status === 'Limitrofe') filteredData = filteredData.filter(d => d.notaCalculada === 7);
+                }
+
+                // Verificar se é análise individual
+                const isIndividual = bm !== 'Todos';
+                if (isIndividual && filteredData.length > 0) {
+                    const baData = filteredData[0];
+                    UIController.showIndividualBadge(baData.nome, baData.equipe, baData.idade);
+                    this.showIndividualAnalysis();
+                } else {
+                    UIController.hideIndividualBadge();
+                    this.hideIndividualAnalysis();
+                }
+
+                UIController.renderSummaryLabels();
+                this.renderKPIs();
+                this.renderAlerts();
+
+                let tableData = [...filteredData];
+                const statusLabel = document.getElementById('filterStatusLabel');
+
+                // Se houver filtro de contexto ativo, mostrar apenas último teste de cada bombeiro
+                if (contextFilter) {
+                    // Obter apenas o último teste de cada bombeiro para a tabela
+                    const latestTestsByBA = {};
+                    filteredData.forEach(d => {
+                        if (!latestTestsByBA[d.nome] || d.dateObject > latestTestsByBA[d.nome].dateObject) {
+                            latestTestsByBA[d.nome] = d;
+                        }
+                    });
+                    tableData = Object.values(latestTestsByBA);
+                }
+
+                if (contextFilter === 'reprovados') {
+                    tableData = tableData.filter(d => d.notaCalculada < 7);
+                    statusLabel.innerText = "Filtro Ativo: Reprovados (último teste)";
+                    statusLabel.classList.remove('hidden');
+                } else if (contextFilter === 'limitrofe') {
+                    tableData = tableData.filter(d => d.notaCalculada === 7);
+                    statusLabel.innerText = "Filtro Ativo: Limítrofe (último teste)";
+                    statusLabel.classList.remove('hidden');
+                } else if (contextFilter === 'vencendo') {
+                    tableData = tableData.filter(d => {
+                        if (!d.dateObject) return false;
+                        const diffDays = Math.floor((hoje - d.dateObject) / (1000 * 60 * 60 * 24));
+                        return diffDays >= 60 && diffDays <= 90;
+                    });
+                    statusLabel.innerText = "Filtro Ativo: Próximos Vencimentos (último teste)";
+                    statusLabel.classList.remove('hidden');
+                } else if (contextFilter === 'vencidos') {
+                    tableData = tableData.filter(d => {
+                        if (!d.dateObject) return false;
+                        const diffDays = Math.floor((hoje - d.dateObject) / (1000 * 60 * 60 * 24));
+                        return diffDays > 90;
+                    });
+                    statusLabel.innerText = "Filtro Ativo: Testes Vencidos (último teste)";
+                    statusLabel.classList.remove('hidden');
+                } else if (contextFilter === 'critico40') {
+                    tableData = tableData.filter(d => d.idade > 40 && d.notaCalculada >= 7 && d.notaCalculada <= 8);
+                    statusLabel.innerText = "Filtro Ativo: +40 anos (último teste)";
+                    statusLabel.classList.remove('hidden');
+                } else {
+                    statusLabel.classList.add('hidden');
+                }
+
+                this.renderTable(tableData);
+                ChartModule.draw();
+                lucide.createIcons();
+            },
+
+            renderKPIs() {
+                // Função auxiliar para pegar apenas os 2 primeiros nomes
+                const getDoisPrimeirosNomes = (nomeCompleto) => {
+                    const partes = nomeCompleto.trim().split(' ');
+                    return partes.slice(0, 2).join(' ');
+                };
+
+                if (filteredData.length === 0) {
+                    document.getElementById('tempo1').innerText = "--:--";
+                    document.getElementById('tempo1Nome').innerText = "--";
+                    document.getElementById('tempo2').innerText = "--:--";
+                    document.getElementById('tempo2Nome').innerText = "--";
+                    document.getElementById('tempo3').innerText = "--:--";
+                    document.getElementById('tempo3Nome').innerText = "--";
+                    document.getElementById('podium1').innerText = "--";
+                    document.getElementById('podium1Perf').innerText = "--%";
+                    document.getElementById('podium2').innerText = "--";
+                    document.getElementById('podium2Perf').innerText = "--%";
+                    document.getElementById('podium3').innerText = "--";
+                    document.getElementById('podium3Perf').innerText = "--%";
+                    document.getElementById('kpiAprovacao').innerText = "--%";
+                    document.getElementById('kpiAprovacaoDetalhes').innerText = "0 de 0";
+                    document.getElementById('kpiMediaNota').innerText = "--";
+                    document.getElementById('kpiVencimentos').innerText = "0";
+                    return;
+                }
+
+                // Top 3 Melhores Tempos (apenas último teste de cada BA)
+                const latestTestsForTime = {};
+                filteredData.forEach(d => {
+                    if (!latestTestsForTime[d.nome] || !d.dateObject || !latestTestsForTime[d.nome].dateObject || d.dateObject > latestTestsForTime[d.nome].dateObject) {
+                        latestTestsForTime[d.nome] = d;
+                    }
+                });
+                const top3MelhoresTempos = Object.values(latestTestsForTime).sort((a, b) => a.tempoTotalSeg - b.tempoTotalSeg);
+
+                // Limpa todos primeiro
+                document.getElementById('tempo1').innerText = '--:--';
+                document.getElementById('tempo1Nome').innerText = '--';
+                document.getElementById('tempo2').innerText = '--:--';
+                document.getElementById('tempo2Nome').innerText = '--';
+                document.getElementById('tempo3').innerText = '--:--';
+                document.getElementById('tempo3Nome').innerText = '--';
+
+                // Preenche conforme disponibilidade
+                if (top3MelhoresTempos.length >= 1) {
+                    const nome1 = getDoisPrimeirosNomes(top3MelhoresTempos[0].nome);
+                    document.getElementById('tempo1').innerText = `${this.formatTime(top3MelhoresTempos[0].tempoTotalSeg)} - ${nome1}`;
+                    document.getElementById('tempo1Nome').innerText = '';
+                }
+                if (top3MelhoresTempos.length >= 2) {
+                    const nome2 = getDoisPrimeirosNomes(top3MelhoresTempos[1].nome);
+                    document.getElementById('tempo2').innerText = `${this.formatTime(top3MelhoresTempos[1].tempoTotalSeg)} - ${nome2}`;
+                    document.getElementById('tempo2Nome').innerText = '';
+                }
+                if (top3MelhoresTempos.length >= 3) {
+                    const nome3 = getDoisPrimeirosNomes(top3MelhoresTempos[2].nome);
+                    document.getElementById('tempo3').innerText = `${this.formatTime(top3MelhoresTempos[2].tempoTotalSeg)} - ${nome3}`;
+                    document.getElementById('tempo3Nome').innerText = '';
+                }
+
+                // Top 3 Melhor Desempenho (percentual comparativo)
+                const sortedByPerf = [...filteredData].sort((a, b) => b.desempenhoPercentual - a.desempenhoPercentual);
+
+                // Limpa todos primeiro
+                document.getElementById('podium1').innerText = '--';
+                document.getElementById('podium2').innerText = '--';
+                document.getElementById('podium3').innerText = '--';
+
+                // Preenche conforme disponibilidade
+                if (sortedByPerf.length >= 1) {
+                    const nome1 = getDoisPrimeirosNomes(sortedByPerf[0].nome);
+                    document.getElementById('podium1').innerText = `${sortedByPerf[0].desempenhoPercentual.toFixed(1)}% - ${nome1} (${sortedByPerf[0].idade}a)`;
+                }
+                if (sortedByPerf.length >= 2) {
+                    const nome2 = getDoisPrimeirosNomes(sortedByPerf[1].nome);
+                    document.getElementById('podium2').innerText = `${sortedByPerf[1].desempenhoPercentual.toFixed(1)}% - ${nome2} (${sortedByPerf[1].idade}a)`;
+                }
+                if (sortedByPerf.length >= 3) {
+                    const nome3 = getDoisPrimeirosNomes(sortedByPerf[2].nome);
+                    document.getElementById('podium3').innerText = `${sortedByPerf[2].desempenhoPercentual.toFixed(1)}% - ${nome3} (${sortedByPerf[2].idade}a)`;
+                }
+
+                // Taxa de Aprovação
+                const aprovados = filteredData.filter(d => d.notaCalculada >= 7).length;
+                const taxaAprovacao = ((aprovados / filteredData.length) * 100).toFixed(1);
+                document.getElementById('kpiAprovacao').innerText = `${taxaAprovacao}%`;
+                document.getElementById('kpiAprovacaoDetalhes').innerText = `${aprovados} de ${filteredData.length} aprovados`;
+
+                // Média de Nota
+                const mediaNota = filteredData.reduce((acc, curr) => acc + curr.notaCalculada, 0) / filteredData.length;
+                document.getElementById('kpiMediaNota').innerText = mediaNota.toFixed(1);
+            },
+
+            renderTable(data, search = "") {
+                const body = document.getElementById('dataTableBody');
+                let displayData = data;
+                if (search) {
+                    displayData = data.filter(d =>
+                        d.nome.toLowerCase().includes(search.toLowerCase()) ||
+                        d.equipe.toLowerCase().includes(search.toLowerCase()) ||
+                        d.funcao.toLowerCase().includes(search.toLowerCase())
+                    );
+                }
+
+                if (displayData.length === 0) {
+                    body.innerHTML = '<tr><td colspan="11" class="px-6 py-10 text-center text-slate-400 italic font-medium">Nenhum registo encontrado.</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = displayData.slice().sort((a, b) => b.dateObject - a.dateObject).map((d) => {
+                    let pill = '';
+                    let label = '';
+
+                    if (d.notaCalculada === 10) {
+                        pill = "bg-emerald-600 text-white";
+                        label = "Excelente";
+                    } else if (d.notaCalculada === 9) {
+                        pill = "bg-emerald-400 text-white";
+                        label = "Ótimo";
+                    } else if (d.notaCalculada === 8) {
+                        pill = "bg-blue-500 text-white";
+                        label = "Bom";
+                    } else if (d.notaCalculada === 7) {
+                        pill = "bg-amber-500 text-white";
+                        label = "Aprovado";
+                    } else {
+                        pill = "bg-red-600 text-white";
+                        label = "Reprovado";
+                    }
+
+                    let activeClass = (selectedDataId === d.id) ? 'table-row-active' : 'table-row-highlight';
+
+                    return `<tr class="${activeClass}" onmouseover="ChartModule.highlight(${d.id})" onmouseout="ChartModule.clearHighlight()" onclick="ChartModule.focus(${d.id}, event)">
+                        <td class="px-6 py-4 font-medium">${d.data}</td>
+                        <td class="px-6 py-4 font-bold text-slate-800">${d.nome}</td>
+                        <td class="px-6 py-4 text-slate-600 font-medium">${d.funcao}</td>
+                        <td class="px-6 py-4 text-slate-500 font-medium">${d.equipe}</td>
+                        <td class="px-6 py-4 text-center font-semibold text-slate-700">${d.idade}</td>
+                        <td class="px-6 py-4 text-center text-slate-700">${this.formatTime(d.flexaoSeg)}</td>
+                        <td class="px-6 py-4 text-center text-slate-700">${this.formatTime(d.abdominalSeg)}</td>
+                        <td class="px-6 py-4 text-center text-slate-700">${this.formatTime(d.polichineloSeg)}</td>
+                        <td class="px-6 py-4 text-center font-bold text-slate-900">${this.formatTime(d.tempoTotalSeg)}</td>
+                        <td class="px-6 py-4 text-center font-bold text-lg ${d.notaCalculada >= 7 ? 'text-emerald-600' : 'text-red-600'}">${d.notaCalculada}</td>
+                        <td class="px-6 py-4 text-center"><span class="status-pill ${pill}">${label}</span></td>
+                    </tr>`;
+                }).join('');
+            },
+
+            renderAlerts() {
+                const container = document.getElementById('alertsContainer');
+                if (filteredData.length === 0) {
+                    container.innerHTML = '<div class="text-slate-400 text-sm p-4 text-center italic">Sem dados.</div>';
+                    return;
+                }
+
+                // Obter apenas o último teste de cada bombeiro
+                const latestTestsByBA = {};
+                filteredData.forEach(d => {
+                    if (!latestTestsByBA[d.nome] || d.dateObject > latestTestsByBA[d.nome].dateObject) {
+                        latestTestsByBA[d.nome] = d;
+                    }
+                });
+                const latestTests = Object.values(latestTestsByBA);
+
+                const alerts = [];
+
+                // Alerta 1: Reprovações
+                const reprovados = latestTests.filter(d => d.notaCalculada < 7);
+                if (reprovados.length > 0) {
+                    alerts.push({
+                        id: 'reprovados',
+                        title: 'Reprovações',
+                        text: `${reprovados.length} bombeiro(s) reprovado(s) necessitam reavaliação.`,
+                        color: 'red',
+                        active: contextFilter === 'reprovados'
+                    });
+                }
+
+                // Alerta 2: Desempenho Limítrofe
+                const limitrofe = latestTests.filter(d => d.notaCalculada === 7);
+                if (limitrofe.length > 0) {
+                    alerts.push({
+                        id: 'limitrofe',
+                        title: 'Desempenho Limítrofe',
+                        text: `${limitrofe.length} bombeiro(s) com nota mínima (7) - Atenção!`,
+                        color: 'amber',
+                        active: contextFilter === 'limitrofe'
+                    });
+                }
+
+                // NOVO ALERTA: Próximos Vencimentos (60-90 dias)
+                const vencendo = latestTests.filter(d => {
+                    if (!d.dateObject) return false;
+                    const diffDays = Math.floor((hoje - d.dateObject) / (1000 * 60 * 60 * 24));
+                    return diffDays >= 60 && diffDays <= 90;
+                });
+                if (vencendo.length > 0) {
+                    alerts.push({
+                        id: 'vencendo',
+                        title: 'Próximos Vencimentos',
+                        text: `${vencendo.length} bombeiro(s) com teste vencendo em breve (60-90 dias).`,
+                        color: 'orange',
+                        active: contextFilter === 'vencendo'
+                    });
+                }
+
+                // Alerta 3: Testes Vencidos
+                const hoje = new Date();
+                const vencidos = latestTests.filter(d => {
+                    if (!d.dateObject) return false;
+                    const diffDays = Math.floor((hoje - d.dateObject) / (1000 * 60 * 60 * 24));
+                    return diffDays > 90;
+                });
+                if (vencidos.length > 0) {
+                    alerts.push({
+                        id: 'vencidos',
+                        title: 'Testes Vencidos',
+                        text: `${vencidos.length} bombeiro(s) com TAF vencido (>90 dias).`,
+                        color: 'orange',
+                        active: contextFilter === 'vencidos'
+                    });
+                }
+
+                // Alerta 4: Faixa Etária Crítica
+                const critico40 = latestTests.filter(d => d.idade > 40 && d.notaCalculada >= 7 && d.notaCalculada <= 8);
+                if (critico40.length > 0) {
+                    alerts.push({
+                        id: 'critico40',
+                        title: 'Faixa Etária +40',
+                        text: `${critico40.length} bombeiro(s) acima de 40 anos próximos do limite.`,
+                        color: 'blue',
+                        active: contextFilter === 'critico40'
+                    });
+                }
+
+                // Alerta 5: Excelência
+                const aprovados = latestTests.filter(d => d.notaCalculada >= 7).length;
+                if (aprovados === latestTests.length && latestTests.length > 0) {
+                    alerts.push({
+                        id: 'excelencia',
+                        title: 'Excelência Operacional',
+                        text: '100% de aprovação no período!',
+                        color: 'emerald',
+                        active: false,
+                        noClick: true
+                    });
+                }
+
+                container.innerHTML = alerts.length ? alerts.map(a => `
+                <div ${a.noClick ? '' : `onclick="DataLoader.setContextFilter('${a.id}')"`} class="group p-4 bg-${a.color}-50 border ${a.active ? 'border-' + a.color + '-400 ring-4 ring-' + a.color + '-50' : 'border-transparent'} rounded-2xl ${a.noClick ? '' : 'cursor-pointer'} transition-all hover:scale-[1.02] relative pb-8">
+                    <div class="flex justify-between items-start">
+                        <p class="text-[10px] font-black text-${a.color}-600 uppercase tracking-widest mb-1">${a.title}</p>
+                        ${a.active ? `<i data-lucide="check-circle-2" class="w-4 h-4 text-${a.color}-500"></i>` : (a.noClick ? `<i data-lucide="party-popper" class="w-4 h-4 text-${a.color}-500"></i>` : `<i data-lucide="chevron-right" class="w-3 h-3 text-${a.color}-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>`)}
+                    </div>
+                    <p class="text-sm text-slate-700 font-semibold leading-tight mb-2">${a.text}</p>
+                    ${a.noClick ? '' : `<div class="absolute bottom-2 left-4 text-[9px] font-bold text-${a.color}-400 uppercase tracking-tighter">CLIQUE PARA FILTRAR</div>`}
+                </div>`).join('') : '<div class="text-emerald-700 text-sm p-5 font-bold bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3"><i data-lucide="check-circle" class="w-5 h-5"></i> Performance dentro do objetivo!</div>';
+
+                lucide.createIcons();
+            },
+
+            showIndividualAnalysis() {
+                document.getElementById('individualAnalysis').classList.remove('hidden');
+                this.renderComparativeCharts();
+            },
+
+            hideIndividualAnalysis() {
+                document.getElementById('individualAnalysis').classList.add('hidden');
+                if (radarChartInstance) {
+                    radarChartInstance.destroy();
+                    radarChartInstance = null;
+                }
+            },
+
+            renderComparativeCharts() {
+                if (filteredData.length === 0) return;
+
+                // Calcular médias gerais (de todos os dados, não só filtrados)
+                const allDataForAverage = rawData;
+                const avgFlexao = allDataForAverage.reduce((acc, d) => acc + d.flexaoSeg, 0) / allDataForAverage.length;
+                const avgAbdominal = allDataForAverage.reduce((acc, d) => acc + d.abdominalSeg, 0) / allDataForAverage.length;
+                const avgPolichinelo = allDataForAverage.reduce((acc, d) => acc + d.polichineloSeg, 0) / allDataForAverage.length;
+
+                // Pegar último teste do BA selecionado
+                const latestTest = [...filteredData].sort((a, b) => b.dateObject - a.dateObject)[0];
+
+                // Gráfico Radar
+                this.renderRadarChart(latestTest, { avgFlexao, avgAbdominal, avgPolichinelo });
+
+                // Barras Comparativas
+                this.renderBarsComparison(latestTest, { avgFlexao, avgAbdominal, avgPolichinelo });
+
+                // Análise de Pontos Fortes e Fracos
+                this.renderStrengthsWeaknesses(latestTest, { avgFlexao, avgAbdominal, avgPolichinelo });
+
+                // Observações
+                if (latestTest.observacoes && latestTest.observacoes.trim() !== '') {
+                    document.getElementById('observationsCard').classList.remove('hidden');
+                    document.getElementById('observationsContent').innerText = latestTest.observacoes;
+                } else {
+                    document.getElementById('observationsCard').classList.add('hidden');
+                }
+
+                lucide.createIcons();
+            },
+
+            renderRadarChart(baData, averages) {
+                const ctx = document.getElementById('radarChart').getContext('2d');
+
+                if (radarChartInstance) {
+                    radarChartInstance.destroy();
+                }
+
+                radarChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Flexão (30 rep)', 'Abdominal (45 rep)', 'Polichinelo (45 rep)'],
+                        datasets: [
+                            {
+                                label: baData.nome,
+                                data: [baData.flexaoSeg, baData.abdominalSeg, baData.polichineloSeg],
+                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                borderColor: 'rgb(59, 130, 246)',
+                                borderWidth: 2,
+                                pointBackgroundColor: 'rgb(59, 130, 246)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgb(59, 130, 246)',
+                                pointRadius: 4
+                            },
+                            {
+                                label: 'Média Geral',
+                                data: [averages.avgFlexao, averages.avgAbdominal, averages.avgPolichinelo],
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderColor: 'rgb(16, 185, 129)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointBackgroundColor: 'rgb(16, 185, 129)',
+                                pointBorderColor: '#fff',
+                                pointRadius: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            r: {
+                                /*display: false,*/
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return DataLoader.formatTime(value);
+                                    },
+                                    font: { size: 0, weight: 'bold' },
+                                    color: '#64748b',
+                                    display: false
+                                },
+                                pointLabels: {
+                                    font: { size: 11, weight: 'bold' },
+                                    color: '#334155'
+                                },
+                                grid: { color: '#e2e8f0' }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 11, weight: 'bold' },
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.dataset.label + ': ' + DataLoader.formatTime(context.parsed.r);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            renderBarsComparison(baData, averages) {
+                const container = document.getElementById('barsComparison');
+
+                const exercises = [
+                    { name: 'Flexão', ba: baData.flexaoSeg, avg: averages.avgFlexao },
+                    { name: 'Abdominal', ba: baData.abdominalSeg, avg: averages.avgAbdominal },
+                    { name: 'Polichinelo', ba: baData.polichineloSeg, avg: averages.avgPolichinelo }
+                ];
+
+                container.innerHTML = exercises.map(ex => {
+                    const diff = ((ex.ba - ex.avg) / ex.avg) * 100;
+                    const isBetter = diff < 0;
+                    const barWidth = Math.min(Math.abs(diff) * 2, 100);
+                    const color = isBetter ? 'emerald' : 'red';
+                    const icon = isBetter ? 'trending-down' : 'trending-up';
+
+                    return `
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-700">${ex.name}</span>
+                            <span class="text-xs font-bold text-${color}-600 flex items-center gap-1">
+                                <i data-lucide="${icon}" class="w-3 h-3"></i>
+                                ${diff > 0 ? '+' : ''}${diff.toFixed(1)}%
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                                <div class="bg-${color}-500 h-full rounded-full transition-all" style="width: ${barWidth}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                            <span>BA: ${this.formatTime(ex.ba)}</span>
+                            <span>Média: ${this.formatTime(ex.avg)}</span>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+
+                lucide.createIcons();
+            },
+
+            renderStrengthsWeaknesses(baData, averages) {
+                const exercises = [
+                    { name: 'Flexão', ba: baData.flexaoSeg, avg: averages.avgFlexao },
+                    { name: 'Abdominal', ba: baData.abdominalSeg, avg: averages.avgAbdominal },
+                    { name: 'Polichinelo', ba: baData.polichineloSeg, avg: averages.avgPolichinelo }
+                ];
+
+                const strengths = exercises.filter(ex => ex.ba < ex.avg).map(ex => {
+                    const diff = (((ex.avg - ex.ba) / ex.avg) * 100).toFixed(1);
+                    return `<div class="flex items-start gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+                    <span><strong>${ex.name}:</strong> ${diff}% mais rápido que a média</span>
+                </div>`;
+                });
+
+                const weaknesses = exercises.filter(ex => ex.ba > ex.avg).map(ex => {
+                    const diff = (((ex.ba - ex.avg) / ex.avg) * 100).toFixed(1);
+                    return `<div class="flex items-start gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                    <span><strong>${ex.name}:</strong> ${diff}% mais lento que a média</span>
+                </div>`;
+                });
+
+                document.getElementById('strongPoints').innerHTML = strengths.length > 0
+                    ? strengths.join('')
+                    : '<div class="text-slate-500 italic text-xs">Performance dentro da média em todos os exercícios</div>';
+
+                document.getElementById('improvementPoints').innerHTML = weaknesses.length > 0
+                    ? weaknesses.join('')
+                    : '<div class="text-slate-500 italic text-xs">Excelente desempenho geral!</div>';
+
+                lucide.createIcons();
+            }
+        };
+        const ChartModule = {
+            chart: null,
+            currentSortedData: [],
+            draw() {
+                const container = document.getElementById('chartHistory');
+                const rangeLabel = document.getElementById('chartDateRange');
+                const chartTitle = document.getElementById('chartTitle');
+
+                if (!google.visualization || filteredData.length === 0) {
+                    container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 italic font-medium">Nenhum dado para exibir no gráfico</div>';
+                    return;
+                }
+
+                const isIndividual = document.getElementById('filterBombeiro').value !== 'Todos';
+                chartTitle.textContent = isIndividual ? 'Evolução Individual' : 'Histórico de Performance';
+
+                const data = new google.visualization.DataTable();
+                data.addColumn('string', 'Data');
+                data.addColumn('number', 'Excelência');
+                data.addColumn('number', 'Bom');
+                data.addColumn('number', 'Limite');
+                data.addColumn('number', 'Média Geral');
+                data.addColumn('number', 'Nota');
+                data.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
+                data.addColumn({ type: 'string', role: 'style' });
+
+                this.currentSortedData = [...filteredData].sort((a, b) => a.dateObject - b.dateObject);
+
+                if (this.currentSortedData.length > 0) {
+                    rangeLabel.innerText = `${this.currentSortedData[0].data} ➔ ${this.currentSortedData[this.currentSortedData.length - 1].data}`;
+                }
+                // Calcula a média geral do período filtrado
+                const mediaGeralPeriodo = this.currentSortedData.reduce((acc, d) => acc + d.notaCalculada, 0) / this.currentSortedData.length;
+
+                // Atualiza a legenda com a média
+                const mediaLegendEl = document.getElementById('mediaGeralLegend');
+                if (mediaLegendEl) {
+                    mediaLegendEl.innerHTML = `<span class="w-3 h-0.5 bg-slate-400 inline-block" style="border-top: 2px dashed #94a3b8;"></span> Média: ${mediaGeralPeriodo.toFixed(1)}`;
+                }
+
+                this.currentSortedData.forEach(d => {
+                    const tooltipHtml = `<div class="p-3 shadow-xl rounded-xl border border-slate-100 bg-white min-w-[180px]">
+                    <p class="text-[10px] text-slate-400 uppercase font-black mb-2">${d.data}</p>
+                    <p class="text-sm font-bold text-slate-800 mb-1">${d.nome}</p>
+                    <p class="text-xs text-blue-600 font-bold mb-1">${d.equipe}</p>
+                    <p class="text-xs text-slate-500 mb-3">${d.idade} anos</p>
+                    <div class="space-y-1 border-t pt-2 border-slate-50">
+                        <div class="flex justify-between"><span class="text-[10px] text-slate-400 font-bold">TEMPO</span><span class="text-sm font-black text-slate-800">${DataLoader.formatTime(d.tempoTotalSeg)}</span></div>
+                        <div class="flex justify-between"><span class="text-[10px] text-slate-400 font-bold">NOTA</span><span class="text-sm font-black ${d.notaCalculada >= 7 ? 'text-emerald-600' : 'text-red-600'}">${d.notaCalculada}</span></div>
+                    </div>
+                </div>`;
+
+                    let pointStyle = null;
+                    if (selectedDataId === d.id) {
+                        pointStyle = 'point { size: 8; shape-type: circle; fill-color: #3b82f6; stroke-color: #1e3a8a; stroke-width: 2; }';
+                    } else if (d.notaCalculada === 10) {
+                        pointStyle = 'point { size: 5; fill-color: #10b981; }';
+                    } else if (d.notaCalculada === 9) {
+                        pointStyle = 'point { size: 5; fill-color: #34d399; }';
+                    } else if (d.notaCalculada === 8) {
+                        pointStyle = 'point { size: 5; fill-color: #3b82f6; }';
+                    } else if (d.notaCalculada === 7) {
+                        pointStyle = 'point { size: 5; fill-color: #f59e0b; }';
+                    } else {
+                        pointStyle = 'point { size: 6; fill-color: #ef4444; stroke-color: #7f1d1d; stroke-width: 1.5; }';
+                    }
+
+                    data.addRow([
+                        d.data,
+                        10,
+                        8,
+                        7,
+                        mediaGeralPeriodo,
+                        d.notaCalculada,
+                        tooltipHtml,
+                        pointStyle
+                    ]);
+                });
+
+                const options = {
+                    curveType: 'function',
+                    legend: 'none',
+                    colors: ['#10b981', '#f59e0b', '#ef4444', '#94a3b8', '#3b82f6'],
+                    chartArea: { width: '95%', height: '90%', top: 10, left: 40, right: 10, bottom: 30 },
+                    tooltip: { isHtml: true, trigger: 'both' },
+                    vAxis: {
+                        viewWindow: { min: 6.5, max: 10.5 },
+                        ticks: [7, 8, 9, 10],
+                        gridlines: { color: '#f8fafc' },
+                        textStyle: { fontSize: 10, color: '#94a3b8', bold: true }
+                    },
+                    hAxis: {
+                        textPosition: 'none',
+                        gridlines: { color: 'transparent' },
+                        baselineColor: '#f1f5f9'
+                    },
+                    series: {
+                        0: { lineDashStyle: [6, 6], lineWidth: 1.2, opacity: 0.5, visibleInLegend: false },
+                        1: { lineDashStyle: [6, 6], lineWidth: 1.2, opacity: 0.5, visibleInLegend: false },
+                        2: { lineDashStyle: [6, 6], lineWidth: 1.2, opacity: 0.5, visibleInLegend: false },
+                        3: { lineDashStyle: [4, 4], lineWidth: 2, opacity: 0.6, visibleInLegend: false, pointSize: 0 },
+                        4: { pointSize: 4, lineWidth: 2 }
+                    },
+                    animation: { duration: 500, easing: 'out' }
+                };
+
+                this.chart = new google.visualization.LineChart(container);
+
+                google.visualization.events.addListener(this.chart, 'select', () => {
+                    const selection = this.chart.getSelection();
+                    if (selection.length > 0 && selection[0].row !== null) {
+                        this.focus(this.currentSortedData[selection[0].row].id, null);
+                    }
+                });
+
+                this.chart.draw(data, options);
+            },
+
+            highlight(dataId) {
+                if (this.chart && selectedDataId === null) {
+                    const idx = this.currentSortedData.findIndex(d => d.id === dataId);
+                    if (idx !== -1) this.chart.setSelection([{ row: idx, column: 4 }]);
+                }
+            },
+
+            clearHighlight() {
+                if (this.chart && selectedDataId === null) this.chart.setSelection([]);
+            },
+
+            focus(dataId, event) {
+                if (event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+
+                // Se clicar no mesmo ponto, mantém selecionado (não desmarca)
+                if (selectedDataId === dataId) {
+                    return; // Mantém a seleção
+                }
+
+                selectedDataId = dataId;
+                if (selectedDataId) {
+                    document.getElementById('visualSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                DataLoader.updateUI();
+            }
+        };
+        const PDFReportModule = {
+            doc: null,
+            generate() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+
+                // Cabeçalho
+                doc.setFillColor(30, 64, 175);
+                doc.rect(0, 0, 210, 40, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(22);
+                doc.text('Relatório TAF - Teste de Aptidão Física', 15, 20);
+                doc.setFontSize(10);
+                doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 15, 28);
+                doc.text(`Total de Registros: ${filteredData.length}`, 15, 34);
+
+                // Resumo KPIs
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(14);
+                doc.text('Resumo Executivo', 15, 50);
+
+                const aprovados = filteredData.filter(d => d.notaCalculada >= 7).length;
+                const taxaAprovacao = ((aprovados / filteredData.length) * 100).toFixed(1);
+                const mediaNota = (filteredData.reduce((acc, curr) => acc + curr.notaCalculada, 0) / filteredData.length).toFixed(1);
+
+                doc.setFontSize(10);
+                doc.text(`Taxa de Aprovação: ${taxaAprovacao}% (${aprovados} de ${filteredData.length})`, 15, 58);
+                doc.text(`Média de Nota: ${mediaNota}`, 15, 64);
+
+                // Tabela
+                doc.autoTable({
+                    startY: 75,
+                    head: [['Data', 'BA', 'Função', 'Equipe', 'Idade', 'Tempo', 'Nota', 'Status']],
+                    body: filteredData.map(d => [
+                        d.data,
+                        d.nome,
+                        d.funcao,
+                        d.equipe,
+                        d.idade,
+                        DataLoader.formatTime(d.tempoTotalSeg),
+                        d.notaCalculada,
+                        d.notaCalculada >= 7 ? 'Aprovado' : 'Reprovado'
+                    ]),
+                    theme: 'striped',
+                    headStyles: { fillColor: [30, 64, 175] },
+                    styles: { fontSize: 8 }
+                });
+
+                document.getElementById('pdfPreviewModal').classList.remove('hidden');
+                document.getElementById('pdfPreviewModal').classList.add('flex');
+                document.getElementById('pdfPreviewFrame').src = URL.createObjectURL(doc.output('blob'));
+                this.doc = doc;
+                lucide.createIcons();
+            },
+
+            close() {
+                document.getElementById('pdfPreviewModal').classList.add('hidden');
+                document.getElementById('pdfPreviewModal').classList.remove('flex');
+            },
+
+            download() {
+                this.doc.save(`Relatorio_TAF_${new Date().toISOString().slice(0, 10)}.pdf`);
+            }
+        };
+        window.onload = () => {
+            google.charts.load('current', { 'packages': ['corechart'] });
+            google.charts.setOnLoadCallback(() => { DataLoader.fetch(); });
+            window.onresize = () => ChartModule.draw();
+            lucide.createIcons();
+        };
+        document.addEventListener('click', function (e) {
+            // Ignora se clicou no gráfico ou tabela
+            if (e.target.closest('#chartHistory') ||
+                e.target.closest('table') ||
+                e.target.closest('svg')) {  // Adiciona SVG do gráfico
+                return;
+            }
+
+            if (selectedDataId !== null) {
+                selectedDataId = null;
+                DataLoader.updateUI();
+            }
+        });
+        const PAGE_ID = document.body.dataset.pageId;
+        function enviarAltura() {
+            window.parent.postMessage({ id: PAGE_ID, altura: document.documentElement.scrollHeight }, window.location.origin);
+        }
+        window.addEventListener('load', enviarAltura);
+        window.addEventListener('resize', enviarAltura);
+        new MutationObserver(enviarAltura).observe(document.body, { childList: true, subtree: true });
+    </script>
+
+    <!-- BOTÃO FLUTUANTE VOLTAR INÍCIO -->
+    <style>
+        #btnVoltarInicio {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        #btnVoltarInicio:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        #btnVoltarInicio svg {
+            width: 18px;
+            height: 18px;
+            stroke: #1e293b;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        #btnVoltarInicio.hide {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+        }
+
+        @media (max-width: 768px) {
+            #btnVoltarInicio {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+            #btnVoltarInicio svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    </style>
+
+    <a href="../" id="btnVoltarInicio">
+        <svg viewBox="0 0 24 24">
+            <path d="M9 14l-4-4m0 0l4-4m-4 4h14a4 4 0 010 8h-1" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Central-SCI
+    </a>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('btnVoltarInicio');
+            let lastScroll = 0;
+            let hideTimer = null;
+            let isScrolling = false;
+
+            function resetHideTimer() {
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => {
+                    if (!isScrolling) {
+                        btn.classList.add('hide');
+                    }
+                }, 4000);
+            }
+
+            function handleScroll() {
+                isScrolling = true;
+                const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+                if (currentScroll > lastScroll) {
+                    // Rolando para BAIXO - esconde
+                    btn.classList.add('hide');
+                    clearTimeout(hideTimer);
+                } else if (currentScroll < lastScroll) {
+                    // Rolando para CIMA - mostra
+                    btn.classList.remove('hide');
+                    resetHideTimer();
+                }
+
+                lastScroll = currentScroll <= 0 ? 0 : currentScroll;
+            }
+
+            let scrollTimeout;
+            window.addEventListener('scroll', function () {
+                handleScroll();
+
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    isScrolling = false;
+                }, 150);
+            });
+
+            // Inicia com o timer de esconder
+            resetHideTimer();
+
+            // Mostra quando mouse passa por cima (mesmo escondido)
+            btn.addEventListener('mouseenter', function () {
+                btn.classList.remove('hide');
+                clearTimeout(hideTimer);
+            });
+
+            btn.addEventListener('mouseleave', function () {
+                resetHideTimer();
+            });
+        })();
+    </script>
+    <!-- FIM BOTÃO FLUTUANTE -->
+</body>
+
+</html>

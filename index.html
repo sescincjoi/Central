@@ -7,7 +7,6 @@
     <title>Central SCI JOI</title>
 
     <link rel="manifest" href="/Central/pwa/manifest.json">
-
     <meta name="theme-color" content="#fbfbfb">
 
     <!-- iOS suporte -->
@@ -21,17 +20,11 @@
         rel="stylesheet">
     <script src="/Central/pwa/lucide.min.js"></script>
 
-
     <style>
         * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-
-        .auth-loading {
-            visibility: hidden;
-        }
-
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -173,39 +166,6 @@
 
         .training-pill:hover {
             background: #e8e8ed;
-        }
-
-        /* Animação de Boas-vindas */
-        .welcome-toast {
-            position: fixed;
-            bottom: 32px;
-            left: 32px;
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 16px 24px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 9999;
-            transform: translateX(-120%);
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .welcome-toast.show {
-            transform: translateX(0);
-        }
-
-        .welcome-toast .icon {
-            width: 40px;
-            height: 40px;
-            background: #EFF6FF;
-            color: #2563EB;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         ::-webkit-scrollbar {
@@ -1066,13 +1026,50 @@
         }
     </style>
 
+    <!-- Firebase Auth - Módulos ES6 -->
+    <script type="module">
+        // Importar módulos de autenticação
+        import authCore from '/Central/js/auth/auth-core.js';
+        import authUI from '/Central/js/auth/auth-ui.js';
+        import authLock from '/Central/js/auth/auth-lock.js';
+        import authGuard from '/Central/js/auth/auth-guard.js';
+        import matriculaHandler from '/Central/js/auth/matricula-handler.js';
+
+        // Disponibilizar globalmente
+        window.authCore = authCore;
+        window.authUI = authUI;
+        window.authGuard = authGuard;
+        window.matriculaHandler = matriculaHandler;
+        window.authLock = authLock;
+
+        console.log('✅ Módulos de autenticação carregados');
+
+        // ✅ ESPERAR authUI estar TOTALMENTE pronto antes de inicializar authLock
+        function initAuthSystem() {
+            // Verificar se authUI está realmente disponível
+            if (window.authUI && window.authUI.openModal) {
+                console.log('✅ authUI pronto, inicializando authLock...');
+                authLock.init();
+            } else {
+                console.log('⏳ Aguardando authUI...');
+                setTimeout(initAuthSystem, 50); // Tentar novamente em 50ms
+            }
+        }
+
+        // Aguardar DOM carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAuthSystem);
+        } else {
+            initAuthSystem();
+        }
+
+    </script>
     <!-- PWA Service Worker -->
     <script src="/Central/pwa/app.js"></script>
 
-
 </head>
 
-<body class="auth-loading">
+<body>
 
     <!-- Navigation Bar -->
     <div class="nav-bar fixed top-0 left-0 right-0 z-50">
@@ -1378,7 +1375,6 @@
                 const res = await fetch(TAF_JSON_URL);
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47).slice(0, -2));
-                if (!json.table || !json.table.rows) throw new Error("Dados TAF indisponíveis");
 
                 dadosTAF = json.table.rows.slice(1).map(row => ({
                     data: row.c[0]?.f || row.c[0]?.v || "",
@@ -1475,7 +1471,6 @@
                 const res = await fetch(PTR_JSON_URL);
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47).slice(0, -2));
-                if (!json.table || !json.table.rows) throw new Error("Dados PTR indisponíveis");
                 const rows = json.table.rows;
 
                 const mesAtual = rows[0].c[0]?.v || "";
@@ -1533,7 +1528,6 @@
                 const res = await fetch(url);
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47, text.length - 2));
-                if (!json.table || !json.table.rows) throw new Error("Dados TR indisponíveis");
 
                 dadosTR = json.table.rows.map(row => ({
                     dataStr: row.c[0] ? (row.c[0].f || row.c[0].v) : null,
@@ -1620,7 +1614,6 @@
                 const res = await fetch(VEST_JSON_URL);
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47).slice(0, -2));
-                if (!json.table || !json.table.rows) throw new Error("Dados VEST indisponíveis");
 
                 dadosVEST = json.table.rows.slice(1).map(row => ({
                     dataStr: row.c[1] ? (row.c[1].f || row.c[1].v) : null,
@@ -2518,76 +2511,43 @@
             }
         }
 
-        // Renderizar menu do usuário (Botão de Conta / Logout)
-        function renderizarUserMenu() {
-            const container = document.getElementById('auth-button-container');
-            if (!container) return;
-
-            if (window.SESSION && window.SESSION.uid) {
-                const navAdmin = (window.SESSION.role === 'admin' || window.SESSION.role === 'super-admin')
-                    ? `<a href="/Central/admin/usuarios.html" class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors mr-2">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                        <span>Painel Admin</span>
-                       </a>`
-                    : '';
-
-                container.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        ${navAdmin}
-                        <div class="flex flex-col items-end hidden sm:flex">
-                            <span class="text-xs font-bold text-gray-900">${window.SESSION.displayName}</span>
-                            <span class="text-[10px] text-gray-500 uppercase tracking-wider">${window.SESSION.role}</span>
-                        </div>
-                        <button onclick="handleLogout()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all" title="Sair">
-                            <i data-lucide="log-out" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <button onclick="window.location.href='/Central/login.html'" class="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
-                        Entrar
-                    </button>
-                `;
-            }
-            if (window.lucide) lucide.createIcons();
-        }
-
-        // Função de Logout
-        async function handleLogout() {
-            try {
-                const { auth } = await import('./js/auth/firebase-config.js');
-                const { signOut } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
-                await signOut(auth);
-                window.location.href = '/Central/login.html';
-            } catch (error) {
-                console.error("Erro ao sair:", error);
-            }
-        }
-
         // Renderizar botão de criar aviso baseado em autenticação
         function renderizarBotaoCriarAviso() {
             const container = document.getElementById('criar-aviso-container');
-            if (!container) return;
 
-            const isAuthenticated = window.SESSION && window.SESSION.uid;
-            if (isAuthenticated) {
-                container.innerHTML = `
-                    <button class="btn-criar-aviso" onclick="openCriarAviso()">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                        <span>Criar Novo Aviso</span>
-                    </button>
-                `;
-            } else {
-                container.innerHTML = `
-                    <div class="aviso-login-prompt">
-                        <a href="/Central/login.html">Faça login para emitir avisos</a>
-                    </div>
-                `;
+            if (!container) {
+                console.warn('Container criar-aviso-container não encontrado');
+                return;
             }
-            if (window.lucide) lucide.createIcons();
-        }
 
+            const isAuthenticated = window.authCore && window.authCore.isAuthenticated
+                ? window.authCore.isAuthenticated()
+                : false;
+
+            if (isAuthenticated) {
+                // Usuário logado - mostrar botão
+                container.innerHTML = `
+                <button class="btn-criar-aviso" onclick="openCriarAviso()">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    <span>Criar Novo Aviso</span>
+                </button>
+            `;
+            } else {
+                // Usuário NÃO logado - mostrar texto
+                container.innerHTML = `
+                <div class="aviso-login-prompt">
+                    <a href="#" onclick="event.preventDefault(); window.authUI && window.authUI.openModal('login');">
+                        Faça login para emitir avisos
+                    </a>
+                </div>
+            `;
+            }
+
+            // Recriar ícones
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
 
         // Renderizar Avisos
         function renderizarAvisos() {
@@ -2667,18 +2627,25 @@
             const tempoAtivo = document.getElementById('inputTempo').value;
 
             // Obter nome do usuário logado
-            const emissor = window.SESSION && window.SESSION.matricula
-                ? window.SESSION.matricula
+            const emissor = window.authCore && window.authCore.currentUser
+                ? window.authCore.currentUser.displayName
                 : 'Anônimo';
 
             try {
-                const { apiPost } = await import('./js/api/api.js');
-                const result = await apiPost('enviarAviso', {
-                    assunto,
-                    texto,
-                    tempoAtivo,
-                    emissor
+                // Criar FormData
+                const formData = new FormData();
+                formData.append('assunto', assunto);
+                formData.append('texto', texto);
+                formData.append('tempoAtivo', tempoAtivo);
+                formData.append('emissor', emissor); // NOVO
+
+                // Enviar com fetch
+                const response = await fetch(AVISOS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: formData
                 });
+
+                const result = await response.json();
 
                 if (result.success) {
                     btnTexto.textContent = '✓ Publicado!';
@@ -2712,58 +2679,23 @@
             }
         }
 
-        // Inicialização e Eventos
-        document.addEventListener('DOMContentLoaded', () => {
+        // Carregar avisos ao iniciar e atualizar a cada 2 minutos
+        document.addEventListener('DOMContentLoaded', function () {
             carregarAvisos();
+            renderizarBotaoCriarAviso(); // NOVO
             setInterval(carregarAvisos, 2 * 60 * 1000);
-
-            // Tenta renderizar o menu caso a sessão já tenha sido injetada
-            if (window.SESSION) {
-                renderizarUserMenu();
-                renderizarBotaoCriarAviso();
-            }
         });
 
-        // Escutar quando a sessão estiver pronta (disparado pelo auth.js)
-        window.addEventListener('session-ready', () => {
-            console.log("UI: Sessão pronta, atualizando componentes...");
-            renderizarUserMenu();
-            renderizarBotaoCriarAviso();
-            mostrarBoasVindas();
+        // Atualizar botão quando autenticação mudar
+        window.addEventListener('auth-state-changed', function () {
+            renderizarBotaoCriarAviso(); // NOVO
         });
 
-        function mostrarBoasVindas() {
-            if (!window.SESSION) return;
-
-            // Evitar mostrar múltiplas vezes na mesma carga
-            if (window.welcomeShown) return;
-            window.welcomeShown = true;
-
-            const welcome = document.createElement('div');
-            welcome.className = 'welcome-toast';
-            welcome.innerHTML = `
-                <div class="icon">
-                    <i data-lucide="sparkles" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Acesso Liberado</p>
-                    <p class="text-sm font-bold text-gray-900">Bem-vindo, ${window.SESSION.displayName}!</p>
-                </div>
-            `;
-            document.body.appendChild(welcome);
-            if (window.lucide) lucide.createIcons();
-
-            setTimeout(() => welcome.classList.add('show'), 100);
-            setTimeout(() => {
-                welcome.classList.remove('show');
-                setTimeout(() => welcome.remove(), 600);
-            }, 5000);
-        }
+        window.addEventListener('auth-initialized', function () {
+            renderizarBotaoCriarAviso(); // NOVO
+        });
     </script>
     <!-- FIM SISTEMA DE AVISOS -->
-
-    <!-- New Auth System -->
-    <script type="module" src="js/auth/auth.js"></script>
 
 </body>
 

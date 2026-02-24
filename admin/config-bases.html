@@ -4,24 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuração de Bases - Central</title>
+    <title>Configuração de Bases - Central SCI</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <script src="/Central/pwa/lucide.min.js"></script>
 
-
     <style>
         * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-
-        .auth-loading {
-            visibility: hidden;
-        }
-
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -351,7 +345,7 @@
     </style>
 </head>
 
-<body class="auth-loading">
+<body>
 
     <!-- Navigation Bar -->
     <div class="nav-bar fixed top-0 left-0 right-0 z-50">
@@ -365,9 +359,7 @@
 
                 <h1 class="text-lg font-semibold text-gray-900">Configuração de Bases</h1>
 
-                <div class="flex items-center gap-3">
-                    <div id="auth-button-container"></div>
-                </div>
+                <div class="w-20"></div>
             </div>
         </div>
     </div>
@@ -532,85 +524,106 @@
 
     <div class="toast" id="toast"></div>
 
-    </head>
+    <script type="module">
+        import { db } from '../js/auth/firebase-config.js';
+        import { doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import authCore from '../js/auth/auth-core.js';
+        import basesConfig from '../js/config/bases-config.js';
 
-    <body class="auth-loading">
+        let modoEdicao = false;
+        let baseEmEdicao = null;
 
-        <!-- Navigation Bar -->
-        <div class="nav-bar fixed top-0 left-0 right-0 z-50">
+        // Verificar se é super admin
+        window.addEventListener('auth-initialized', () => {
+            if (!authCore.isSuperAdmin()) {
+                alert('Acesso negado. Apenas super administradores podem acessar esta página.');
+                window.location.href = '/Central/';
+            } else {
+                inicializar();
+            }
+        });
 
+        if (authCore.initialized && !authCore.isSuperAdmin()) {
+            window.location.href = '/Central/';
+        }
 
-            async function carregarBases() {
+        async function inicializar() {
+            await basesConfig.init();
+            await carregarBases();
+            lucide.createIcons();
+        }
+
+        async function carregarBases() {
             try {
-            const bases = basesConfig.getAllBases();
-            renderizarBases(bases);
+                const bases = basesConfig.getAllBases();
+                renderizarBases(bases);
             } catch (error) {
-            console.error('Erro ao carregar bases:', error);
-            showToast('Erro ao carregar bases', 'error');
+                console.error('Erro ao carregar bases:', error);
+                showToast('Erro ao carregar bases', 'error');
             }
-            }
+        }
 
-            function renderizarBases(bases) {
+        function renderizarBases(bases) {
             const container = document.getElementById('listaBasesContainer');
 
             if (Object.keys(bases).length === 0) {
-            container.innerHTML = `
-            <div class="card p-12 text-center">
-                <i data-lucide="database" class="w-16 h-16 mx-auto mb-4 text-gray-400"></i>
-                <h3 class="text-xl font-semibold mb-2">Nenhuma base cadastrada</h3>
-                <p class="text-gray-500 mb-6">Clique em "Nova Base" para começar</p>
-            </div>
-            `;
-            lucide.createIcons();
-            return;
+                container.innerHTML = `
+                    <div class="card p-12 text-center">
+                        <i data-lucide="database" class="w-16 h-16 mx-auto mb-4 text-gray-400"></i>
+                        <h3 class="text-xl font-semibold mb-2">Nenhuma base cadastrada</h3>
+                        <p class="text-gray-500 mb-6">Clique em "Nova Base" para começar</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
             }
 
             container.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>';
             const grid = container.querySelector('div');
 
             Object.keys(bases).forEach(baseId => {
-            const base = bases[baseId];
-            const statusClass = base.ativo ? 'ativa' : 'inativa';
-            const statusBadge = base.ativo ? 'badge-ativa' : 'badge-inativa';
-            const statusText = base.ativo ? 'Ativa' : 'Inativa';
+                const base = bases[baseId];
+                const statusClass = base.ativo ? 'ativa' : 'inativa';
+                const statusBadge = base.ativo ? 'badge-ativa' : 'badge-inativa';
+                const statusText = base.ativo ? 'Ativa' : 'Inativa';
 
-            const endpointsConfigurados = Object.values(base.endpoints || {}).filter(e => e !== null && e !==
-            '').length;
+                const endpointsConfigurados = Object.values(base.endpoints || {}).filter(e => e !== null && e !== '').length;
 
-            const card = document.createElement('div');
-            card.className = `card base-card ${statusClass} p-6`;
-            card.onclick = () => editarBase(baseId);
+                const card = document.createElement('div');
+                card.className = `card base-card ${statusClass} p-6`;
+                card.onclick = () => editarBase(baseId);
 
-            card.innerHTML = `
-            <div class="flex items-start justify-between mb-4">
-                <img src="${base.logoUrl || 'https://via.placeholder.com/80x80?text=' + base.id}" alt="${base.nome}"
-                    class="w-16 h-16 rounded-lg object-contain"
-                    onerror="this.src='https://via.placeholder.com/80x80?text=${base.id}'">
-                <span class="badge ${statusBadge}">${statusText}</span>
-            </div>
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <img src="${base.logoUrl || 'https://via.placeholder.com/80x80?text=' + base.id}" 
+                             alt="${base.nome}" 
+                             class="w-16 h-16 rounded-lg object-contain"
+                             onerror="this.src='https://via.placeholder.com/80x80?text=${base.id}'">
+                        <span class="badge ${statusBadge}">${statusText}</span>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold mb-1">${base.nome}</h3>
+                    <p class="text-sm text-gray-500 mb-1">${base.icao} - ${base.id}</p>
+                    <p class="text-xs text-gray-400 mb-4">${base.nomeCompleto}</p>
+                    
+                    <div class="flex items-center gap-2 text-sm">
+                        <i data-lucide="link" class="w-4 h-4 text-gray-400"></i>
+                        <span class="text-gray-600">${endpointsConfigurados} endpoints configurados</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-sm mt-2">
+                        <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
+                        <span class="text-gray-600">${base.config?.equipes?.length || 0} equipes</span>
+                    </div>
+                `;
 
-            <h3 class="text-xl font-bold mb-1">${base.nome}</h3>
-            <p class="text-sm text-gray-500 mb-1">${base.icao} - ${base.id}</p>
-            <p class="text-xs text-gray-400 mb-4">${base.nomeCompleto}</p>
-
-            <div class="flex items-center gap-2 text-sm">
-                <i data-lucide="link" class="w-4 h-4 text-gray-400"></i>
-                <span class="text-gray-600">${endpointsConfigurados} endpoints configurados</span>
-            </div>
-
-            <div class="flex items-center gap-2 text-sm mt-2">
-                <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
-                <span class="text-gray-600">${base.config?.equipes?.length || 0} equipes</span>
-            </div>
-            `;
-
-            grid.appendChild(card);
+                grid.appendChild(card);
             });
 
             lucide.createIcons();
-            }
+        }
 
-            window.abrirModalNovaBase = function () {
+        window.abrirModalNovaBase = function () {
             modoEdicao = false;
             baseEmEdicao = null;
             document.getElementById('modalTitle').textContent = 'Nova Base';
@@ -631,9 +644,9 @@
 
             document.getElementById('modalBase').classList.add('active');
             setTimeout(() => lucide.createIcons(), 100);
-            };
+        };
 
-            window.editarBase = function (baseId) {
+        window.editarBase = function (baseId) {
             modoEdicao = true;
             baseEmEdicao = baseId;
             const base = basesConfig.getBase(baseId);
@@ -649,8 +662,7 @@
             document.getElementById('baseNomeCompleto').value = base.nomeCompleto;
             document.getElementById('baseAtivo').value = base.ativo.toString();
             document.getElementById('baseLogoUrl').value = base.logoUrl || '';
-            document.getElementById('logoPreview').src = base.logoUrl ||
-            'https://via.placeholder.com/150x150?text=Logo';
+            document.getElementById('logoPreview').src = base.logoUrl || 'https://via.placeholder.com/150x150?text=Logo';
 
             // Endpoints
             carregarEndpoints(base.endpoints || {});
@@ -664,257 +676,191 @@
 
             document.getElementById('modalBase').classList.add('active');
             setTimeout(() => lucide.createIcons(), 100);
-            };
+        };
 
-            function fecharModal() {
-            const modal = document.getElementById('modalBase');
-            modal.classList.remove('active');
-            modoEdicao = false;
-            baseEmEdicao = null;
-            }
+        window.fecharModal = function () {
+            document.getElementById('modalBase').classList.remove('active');
+        };
 
-            async function carregarBases() {
-            try {
-            const { apiPost } = await import('../js/api/api.js');
-            const data = await apiPost('getBases');
-            if (data.success) {
-            renderizarBases(data.bases || {});
-            }
-            } catch (error) {
-            console.error('Erro ao carregar bases:', error);
-            showToast('Erro ao carregar bases', 'error');
-            }
-            }
-
-            window.addEventListener('session-ready', (e) => {
-            if (e.detail.role !== 'super-admin') {
-            alert('Acesso negado.');
-            window.location.href = '../';
-            return;
-            }
-            carregarBases();
-            lucide.createIcons();
-            });
-            window.atualizarPreviewLogo = function () {
+        window.atualizarPreviewLogo = function () {
             const url = document.getElementById('baseLogoUrl').value;
             const preview = document.getElementById('logoPreview');
 
             if (url) {
-            preview.src = url;
-            preview.onerror = () => {
-            preview.src = 'https://via.placeholder.com/150x150?text=Erro';
-            };
+                preview.src = url;
+                preview.onerror = () => {
+                    preview.src = 'https://via.placeholder.com/150x150?text=Erro';
+                };
             } else {
-            preview.src = 'https://via.placeholder.com/150x150?text=Logo';
+                preview.src = 'https://via.placeholder.com/150x150?text=Logo';
             }
-            };
+        };
 
-            window.salvarBase = async function () {
+        window.salvarBase = async function () {
             try {
-            const baseId = document.getElementById('baseId').value.trim().toUpperCase();
+                const baseId = document.getElementById('baseId').value.trim().toUpperCase();
+                const baseIdOriginal = document.getElementById('baseIdOriginal').value;
 
-            if (!baseId) {
-            showToast('ID da base é obrigatório', 'error');
-            return;
-            }
+                if (!baseId) {
+                    showToast('ID da base é obrigatório', 'error');
+                    return;
+                }
 
-            const equipesTexto = document.getElementById('configEquipes').value;
-            const equipesArray = equipesTexto.split(',').map(e => e.trim()).filter(e => e);
+                const equipesTexto = document.getElementById('configEquipes').value;
+                const equipesArray = equipesTexto.split(',').map(e => e.trim()).filter(e => e);
 
-            const novaBase = {
-            id: baseId,
-            nome: document.getElementById('baseNome').value.trim(),
-            nomeCompleto: document.getElementById('baseNomeCompleto').value.trim(),
-            icao: document.getElementById('baseIcao').value.trim().toUpperCase(),
-            ativo: document.getElementById('baseAtivo').value === 'true',
-            logoUrl: document.getElementById('baseLogoUrl').value.trim(),
-            endpoints: coletarEndpoints(),
-            config: {
-            equipes: equipesArray,
-            turno: parseInt(document.getElementById('configTurno').value),
-            timezone: document.getElementById('configTimezone').value,
-            equipeReferencia: document.getElementById('configEquipeRef').value.trim(),
-            dataReferenciaEquipe: document.getElementById('configDataRef').value.trim()
-            }
-            };
+                const novaBase = {
+                    id: baseId,
+                    nome: document.getElementById('baseNome').value.trim(),
+                    nomeCompleto: document.getElementById('baseNomeCompleto').value.trim(),
+                    icao: document.getElementById('baseIcao').value.trim().toUpperCase(),
+                    ativo: document.getElementById('baseAtivo').value === 'true',
+                    logoUrl: document.getElementById('baseLogoUrl').value.trim(),
+                    endpoints: coletarEndpoints(),
+                    config: {
+                        equipes: equipesArray,
+                        turno: parseInt(document.getElementById('configTurno').value),
+                        timezone: document.getElementById('configTimezone').value,
+                        equipeReferencia: document.getElementById('configEquipeRef').value.trim(),
+                        dataReferenciaEquipe: document.getElementById('configDataRef').value.trim()
+                    },
+                    atualizadoEm: serverTimestamp()
+                };
 
-            const { apiPost } = await import('../js/api/api.js');
-            const result = await apiPost('salvarBase', { base: novaBase });
+                if (!modoEdicao) {
+                    novaBase.criadoEm = serverTimestamp();
+                }
 
-            if (result.success) {
-            showToast(modoEdicao ? 'Base atualizada com sucesso!' : 'Base criada com sucesso!', 'success');
-            fecharModal();
-            setTimeout(() => carregarBases(), 500);
-            } else {
-            throw new Error(result.error || 'Erro ao salvar base');
-            }
+                // Buscar bases atuais
+                const basesRef = doc(db, 'system-config', 'bases');
+                const basesDoc = await getDoc(basesRef);
+                const basesAtuais = basesDoc.exists() ? basesDoc.data() : {};
+
+                // Atualizar/adicionar a nova base
+                basesAtuais[baseId] = novaBase;
+
+                // Salvar no Firestore
+                await setDoc(basesRef, basesAtuais);
+
+                showToast(modoEdicao ? 'Base atualizada com sucesso!' : 'Base criada com sucesso!', 'success');
+                fecharModal();
+
+                // Recarregar após pequeno delay
+                setTimeout(() => {
+                    carregarBases();
+                }, 500);
 
             } catch (error) {
-            console.error('Erro ao salvar base:', error);
-            showToast('Erro ao salvar base: ' + error.message, 'error');
+                console.error('Erro ao salvar base:', error);
+                showToast('Erro ao salvar base: ' + error.message, 'error');
             }
-            };
+        };
 
-
-            function showToast(message, type = 'success') {
+        function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = `toast ${type} show`;
 
             setTimeout(() => {
-            toast.classList.remove('show');
+                toast.classList.remove('show');
             }, 3000);
-            }
+        }
 
-            // ========== GERENCIAMENTO DE ENDPOINTS DINÂMICOS ==========
-            function carregarEndpoints(endpoints) {
+        // ========== GERENCIAMENTO DE ENDPOINTS DINÂMICOS ==========
+        function carregarEndpoints(endpoints) {
             const container = document.getElementById('endpointsContainer');
             container.innerHTML = '';
 
             // Se não tiver nenhum endpoint, adicionar um vazio
             if (!endpoints || Object.keys(endpoints).length === 0) {
-            adicionarEndpoint();
-            return;
+                adicionarEndpoint();
+                return;
             }
 
             // Carregar endpoints existentes
             Object.keys(endpoints).forEach(nome => {
-            const url = endpoints[nome];
-            if (url !== null && url !== undefined) {
-            adicionarEndpoint(nome, url);
-            }
+                const url = endpoints[nome];
+                if (url !== null && url !== undefined) {
+                    adicionarEndpoint(nome, url);
+                }
             });
-            }
+        }
 
-            window.adicionarEndpoint = function (nome = '', url = '') {
+        window.adicionarEndpoint = function (nome = '', url = '') {
             const container = document.getElementById('endpointsContainer');
             const index = container.children.length;
 
             const row = document.createElement('div');
             row.className = 'endpoint-row';
             row.innerHTML = `
-            <div>
-                <label class="form-label">Nome</label>
-                <input type="text" class="form-input endpoint-nome" placeholder="avisos" value="${nome}"
-                    onchange="normalizarNomeEndpoint(this)">
-            </div>
-            <div>
-                <label class="form-label">URL do Apps Script</label>
-                <input type="url" class="form-input endpoint-url" placeholder="https://script.google.com/macros/s/..."
-                    value="${url}">
-            </div>
-            <div>
-                <button type="button" class="btn-remove-endpoint" onclick="removerEndpoint(this)">
-                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                </button>
-            </div>
+                <div>
+                    <label class="form-label">Nome</label>
+                    <input type="text" 
+                           class="form-input endpoint-nome" 
+                           placeholder="avisos" 
+                           value="${nome}"
+                           onchange="normalizarNomeEndpoint(this)">
+                </div>
+                <div>
+                    <label class="form-label">URL do Apps Script</label>
+                    <input type="url" 
+                           class="form-input endpoint-url" 
+                           placeholder="https://script.google.com/macros/s/..." 
+                           value="${url}">
+                </div>
+                <div>
+                    <button type="button" class="btn-remove-endpoint" onclick="removerEndpoint(this)">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
             `;
 
             container.appendChild(row);
             lucide.createIcons();
-            };
+        };
 
-            window.removerEndpoint = function (btn) {
+        window.removerEndpoint = function (btn) {
             const container = document.getElementById('endpointsContainer');
 
             // Não permitir remover se for o último
-            if (container.children.length <= 1) { showToast('Mantenha pelo menos um endpoint', 'error' ); return; }
-                btn.closest('.endpoint-row').remove(); }; window.normalizarNomeEndpoint=function (input) { // Remover
-                espaços, caracteres especiais, converter para minúscula let valor=input.value.toLowerCase().trim();
-                valor=valor.replace(/[^a-z0-9_-]/g, '' ); input.value=valor; }; function coletarEndpoints() { const
-                container=document.getElementById('endpointsContainer'); const
-                rows=container.querySelectorAll('.endpoint-row'); const endpoints={}; rows.forEach(row=> {
+            if (container.children.length <= 1) {
+                showToast('Mantenha pelo menos um endpoint', 'error');
+                return;
+            }
+
+            btn.closest('.endpoint-row').remove();
+        };
+
+        window.normalizarNomeEndpoint = function (input) {
+            // Remover espaços, caracteres especiais, converter para minúscula
+            let valor = input.value.toLowerCase().trim();
+            valor = valor.replace(/[^a-z0-9_-]/g, '');
+            input.value = valor;
+        };
+
+        function coletarEndpoints() {
+            const container = document.getElementById('endpointsContainer');
+            const rows = container.querySelectorAll('.endpoint-row');
+            const endpoints = {};
+
+            rows.forEach(row => {
                 const nome = row.querySelector('.endpoint-nome').value.trim();
                 const url = row.querySelector('.endpoint-url').value.trim();
 
                 if (nome) {
-                endpoints[nome] = url || null;
+                    endpoints[nome] = url || null;
                 }
-                });
+            });
 
-                return endpoints;
-                }
+            return endpoints;
+        }
 
-                // Disponibilizar globalmente
-                window.carregarBases = carregarBases;
-                window.showToast = showToast;
+        // Disponibilizar globalmente
+        window.carregarBases = carregarBases;
+        window.showToast = showToast;
 
-                // Renderizar menu do usuário (Botão de Conta / Logout)
-                function renderizarUserMenu() {
-                const container = document.getElementById('auth-button-container');
-                if (!container) return;
+    </script>
 
-                if (window.SESSION && window.SESSION.uid) {
-                const navAdmin = (window.SESSION.role === 'admin' || window.SESSION.role === 'super-admin')
-                ? `<a href="/Central/admin/usuarios.html"
-                    class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors mr-2">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-blue-600"></i>
-                    <span>Painel Admin</span>
-                </a>`
-                : '';
-
-                container.innerHTML = `
-                <div class="flex items-center gap-2">
-                    ${navAdmin}
-                    <div class="flex flex-col items-end hidden sm:flex">
-                        <span class="text-xs font-bold text-gray-900">${window.SESSION.displayName}</span>
-                        <span class="text-[10px] text-gray-500 uppercase tracking-wider">${window.SESSION.role}</span>
-                    </div>
-                    <button onclick="handleLogout()"
-                        class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all"
-                        title="Sair">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                `;
-                } else {
-                container.innerHTML = `
-                <button onclick="window.location.href='/Central/login.html'"
-                    class="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
-                    Entrar
-                </button>
-                `;
-                }
-                if (window.lucide) lucide.createIcons();
-                }
-
-                // Função de Logout
-                async function handleLogout() {
-                try {
-                const { auth } = await import('../js/auth/firebase-config.js');
-                const { signOut } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
-                await signOut(auth);
-                window.location.href = '/Central/login.html';
-                } catch (error) {
-                console.error("Erro ao sair:", error);
-                }
-                }
-
-                // Inicializar
-                window.addEventListener('load', () => {
-                if (window.SESSION) {
-                renderizarUserMenu();
-                }
-
-                window.addEventListener('session-ready', (e) => {
-                const session = e.detail;
-                if (session.role !== 'admin' && session.role !== 'super-admin') {
-                alert('Acesso negado.');
-                window.location.href = '/Central/';
-                return;
-                }
-                renderizarUserMenu();
-                carregarBases();
-                });
-                lucide.createIcons();
-                });
-
-                <!-- New Auth System -->
-                <script type="module" src="../js/auth/auth.js"></script>
-
-    </body>
-
-</html>
-
+</body>
 
 </html>

@@ -1,0 +1,3066 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício de Tempo Resposta - SCI Aeroporto de Joinville</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Firebase e AuthGuard -->
+    <script type="module">
+        import authCore from '../js/auth/auth-core.js';
+        import authUI from '../js/auth/auth-ui.js';
+        import authLock from '../js/auth/auth-lock.js';
+        import authGuard from '../js/auth/auth-guard.js';
+
+        window.authCore = authCore;
+        window.authUI = authUI;
+        window.authLock = authLock;
+        window.authGuard = authGuard;
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .chart-container-bar {
+            min-height: 350px;
+        }
+
+        .chart-container-line {
+            min-height: 450px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container-bar {
+                min-height: 450px;
+            }
+
+            .chart-container-line {
+                min-height: 650px;
+            }
+
+            .xl\:px-14 {
+                padding-left: 3.5rem;
+                padding-right: 3.5rem;
+                margin-top: -3.5rem;
+            }
+
+            .md\:py-5 {
+                padding-top: 2.25rem !important;
+                padding-bottom: 3.5rem !important;
+            }
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .custom-tooltip {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            font-size: 12px;
+            pointer-events: none;
+            min-width: 160px;
+        }
+
+        .tooltip-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-weight: 800;
+            color: #1e293b;
+            text-transform: uppercase;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 4px;
+        }
+
+        .color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Custom Dropdown Styling */
+        .custom-select-container {
+            position: relative;
+            min-width: 200px;
+            z-index: 60;
+            transition: z-index 0.1s;
+            /* Smooth transition for stacking context */
+        }
+
+        .custom-select-trigger {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-select-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            margin-top: 0.5rem;
+            max-height: 280px;
+            overflow-y: auto;
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-select-options.active {
+            display: block;
+        }
+
+        .option-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .option-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .option-item.selected {
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .header-studio {
+            background: radial-gradient(circle at center, #2c2c2c 0%, #111111 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-studio::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
+
+        .logo-border {
+            border: 0px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            padding: 0;
+            overflow: hidden;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        html,
+        body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        .btn-sheet {
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-sheet:hover {
+            transform: translateY(-1px);
+            background-color: #f1f5f9;
+        }
+
+        .data-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .data-table th {
+            background-color: #f1f5f9;
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: #334155;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        #customLineLegend>div {
+            transition: all 0.2s ease;
+        }
+
+        #customLineLegend>div:hover {
+            transform: translateY(-2px);
+        }
+
+        .legend-active {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .legend-inactive {
+            opacity: 0.4;
+        }
+
+        /* Footer Notification Bar Animation */
+        #complianceFooter {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        #complianceFooter.hidden-footer {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Floating Info Button Animation */
+        #floatingInfoBtn {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        #floatingInfoBtn.hidden-btn {
+            transform: scale(0) rotate(-180deg);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @media screen and (max-width: 767px) and (orientation: portrait) {
+            #rotationWarning:not(.user-closed) {
+                display: flex !important;
+            }
+        }
+
+        /* Mobile Filter Modal */
+        #mobileFilterModal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #mobileFilterModal.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #mobileFilterDrawer {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100%);
+            left: 50%;
+            margin-left: -250px;
+            /* metade de 500px */
+        }
+
+        @media (max-width: 508px) {
+            #mobileFilterDrawer {
+                left: 1rem;
+                right: 1rem;
+                margin-left: 0;
+            }
+        }
+
+        #mobileFilterModal:not(.hidden) #mobileFilterDrawer {
+            transform: translateY(0);
+        }
+
+        .mobile-filter-select {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-filter-select label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-option-item {
+            padding: 0.875rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: 2px solid transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-option-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .mobile-option-item.selected {
+            background-color: #eff6ff;
+            border-color: #2563eb;
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .mobile-checkbox-item {
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .mobile-checkbox-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .mobile-checkbox-item input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
+        /* Correção de Z-index para evitar sobreposição */
+        #complianceFooter {
+            z-index: 50 !important;
+        }
+
+        #floatingInfoBtn {
+            z-index: 45 !important;
+        }
+
+        /* Garantir que os botões de ação fiquem abaixo do footer */
+        main>div:first-of-type {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Modal de Preview do PDF */
+        #pdfPreviewModal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #pdfPreviewModal.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #pdfPreviewPanel {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            transform: scale(0.95);
+            opacity: 0;
+        }
+
+        #pdfPreviewModal:not(.hidden) #pdfPreviewPanel {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Breakpoint customizado para 1200px */
+        @media (min-width: 1200px) {
+            .show-desktop-filters {
+                display: flex !important;
+            }
+
+            .hide-mobile-filter-btn {
+                display: none !important;
+            }
+
+            .buttons-container-1100 {
+                flex-direction: row !important;
+            }
+
+            .buttons-align-1100 {
+                justify-content: flex-start !important;
+            }
+
+            .hide-modal-1100 {
+                display: none !important;
+            }
+
+            .md\:py-5 {
+                padding-top: 3rem !important;
+                padding-bottom: 4.5rem !important;
+                justify-content: flex-start !important;
+                padding-left: 6rem !important;
+            }
+
+            .xl\:px-14 {
+                padding-left: 3.5rem !important;
+                padding-right: 3.5rem !important;
+                margin-top: -4.25rem !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-slate-900 antialiased pb-20 md:pb-0" data-auth-required>
+
+    <!-- <div id="rotationWarning" class="hidden fixed top-4 left-4 right-4 z-[100] bg-blue-600 text-white p-4 rounded-2xl shadow-2xl items-center justify-between animate-bounce">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <p class="text-xs font-bold leading-tight">Vire o celular para a horizontal para visualizar os gráficos melhor.</p>
+        </div>
+        <button onclick="const el = document.getElementById('rotationWarning'); el.classList.add('user-closed'); el.style.setProperty('display', 'none', 'important');" class="p-1 hover:bg-blue-700 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div> -->
+
+    <header class="header-studio w-full shadow-2xl mb-8">
+        <div
+            class="max-w-[1600px] mx-auto px-4 py-4 md:py-5 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10 text-center relative z-10">
+            <div class="flex-shrink-0">
+                <a href="../">
+                    <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq"
+                        alt="Logótipo SCI"
+                        class="h-12 md:h-16 aspect-square object-cover logo-border transition-transform hover:scale-105"
+                        onerror="this.src='https://via.placeholder.com/150x150?text=SCI+Logo'; this.classList.remove('logo-border');">
+                </a>
+            </div>
+            <div class="flex flex-col items-center md:items-start overflow-hidden">
+                <a href="../" class="group">
+                    <h1
+                        class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-white whitespace-nowrap drop-shadow-lg group-hover:text-blue-200 transition-colors">
+                        Exercício de Tempo Resposta
+                    </h1>
+                </a>
+                <p
+                    class="text-slate-400 text-[9px] sm:text-[10px] md:text-xs font-medium mt-0.5 whitespace-nowrap opacity-90 uppercase tracking-widest">
+                    SCI Aeroporto de Joinville
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1600px] mx-auto px-2 md:px-4 xl:px-14 mb-24 md:mb-12">
+
+        <div
+            class="flex flex-col items-center buttons-container-1100 justify-between items-stretch md:items-center gap-4 mb-8 relative z-[60] px-4 md:px-8">
+            <div class="flex flex-col md:flex-row justify-center buttons-align-1100 gap-3 w-full md:w-auto">
+                <a href="https://docs.google.com/spreadsheets/d/1MB0Q-vQ_dv27LiB0Jfblj5g5bcpLEJAMG2mE59uQ5Rg"
+                    target="_blank"
+                    class="btn-sheet glass-card px-5 py-3 rounded-2xl shadow-sm bg-gradient-to-r from-slate-50 to-white text-sm font-bold text-slate-700 hover:text-blue-600 transition-colors flex-1 min-w-[160px]">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Acessar Planilha
+                </a>
+                <button onclick="PDFReportModule.generate()"
+                    class="btn-sheet glass-card px-5 py-3 rounded-2xl shadow-sm text-sm font-bold text-slate-700 bg-gradient-to-r bg-white hover:text-blue-600 transition-all flex-1 min-w-[160px] whitespace-nowrap">
+                    <svg class="text-red-600 w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Gerar Relatório PDF
+                </button>
+
+                <!-- Botão Mobile para abrir filtros -->
+                <button onclick="MobileFilterModule.open()"
+                    class="hide-mobile-filter-btn btn-sheet glass-card px-5 py-3 rounded-2xl shadow-sm text-sm font-bold text-slate-700 bg-gradient-to-r from-white to-slate-50 hover:text-blue-600 transition-all flex-1 min-w-[160px]">
+                    <svg class="text-blue-600 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
+                    </svg>
+                    Ajustar Dados
+                </button>
+            </div>
+
+            <!-- Filtros Desktop (mantém comportamento atual) -->
+            <div class="hidden show-desktop-filters flex-col md:flex-row gap-4">
+                <div class="glass-card p-3 rounded-2xl shadow-sm flex flex-col gap-1 custom-select-container"
+                    id="typeContainer">
+                    <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider px-1">Tipo de
+                        Medição</label>
+                    <div id="typeTrigger"
+                        class="custom-select-trigger font-semibold text-slate-700 p-1 text-sm min-w-[180px]">
+                        <span id="typeLabel">Tempo Total</span>
+                        <svg class="w-4 h-4 text-slate-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </div>
+                    <div id="typeOptions" class="custom-select-options">
+                        <div class="option-item selected" data-value="final">Tempo Total</div>
+                        <div class="option-item" data-value="tempo1">Embarque CCI</div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-3 rounded-2xl shadow-sm flex flex-col gap-1 custom-select-container"
+                    id="localContainer">
+                    <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider px-1">Localização</label>
+                    <div id="localMultiSelect"
+                        class="custom-select-trigger font-semibold text-slate-700 p-1 text-sm min-w-[180px]">
+                        <span id="localLabel" class="truncate">Todos os Locais</span>
+                        <svg class="w-4 h-4 text-slate-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </div>
+                    <div id="localOptions" class="custom-select-options"></div>
+                </div>
+
+                <div class="glass-card p-3 rounded-2xl shadow-sm flex flex-col gap-1 custom-select-container"
+                    id="periodContainer">
+                    <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider px-1">Período
+                        Analisado</label>
+                    <div id="periodTrigger"
+                        class="custom-select-trigger font-semibold text-slate-700 p-1 text-sm min-w-[180px]">
+                        <span id="periodLabel">Todo o Histórico</span>
+                        <svg class="w-4 h-4 text-slate-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </div>
+                    <div id="periodOptions" class="custom-select-options">
+                        <div class="option-item selected" data-value="all">Todo o Histórico</div>
+                        <div class="option-item" data-value="year">Ano Atual</div>
+                        <div class="option-item" data-value="6months">Últimos 6 meses</div>
+                        <div class="option-item" data-value="last">Último de cada equipe</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMessage"
+            class="hidden mb-8 p-5 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium text-center">
+        </div>
+
+        <!-- Ajustado para evitar quebra 2+1: ou 1 por linha (mobile) ou 3 por linha (md em diante) -->
+        <div class="flex flex-col md:flex-row gap-6 mb-12 relative px-4 md:px-0">
+            <div class="glass-card py-4 px-6 rounded-[1.5rem] md:rounded-[2rem] shadow-sm flex-1">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="p-2 bg-emerald-50 rounded-xl">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider">Melhor Tempo
+                    </p>
+                </div>
+                <div id="bestTeam" class="text-xl md:text-2xl font-bold text-slate-900 truncate">...</div>
+            </div>
+
+            <div class="glass-card py-4 px-6 rounded-[1.5rem] md:rounded-[2rem] shadow-sm flex-1">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="p-2 bg-blue-50 rounded-xl">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider">Média Geral
+                    </p>
+                </div>
+                <div id="avgTime" class="text-xl md:text-2xl font-bold text-slate-900">--:--</div>
+            </div>
+
+            <div class="glass-card py-4 px-6 rounded-[1.5rem] md:rounded-[2rem] shadow-sm flex-1">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="p-2 bg-slate-50 rounded-xl">
+                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                            </path>
+                        </svg>
+                    </div>
+                    <p class="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider">Total
+                        Exercícios</p>
+                </div>
+                <div id="totalTests" class="text-xl md:text-2xl font-bold text-slate-900">0</div>
+            </div>
+        </div>
+
+        <div class="space-y-8 md:space-y-12 mb-12">
+            <div class="glass-card p-3 md:p-6 lg:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm overflow-hidden">
+                <div class="mb-4 md:mb-6 px-2 text-center md:text-left">
+                    <h3 class="text-xl md:text-2xl font-bold text-slate-800">Desempenho por Equipe</h3>
+                    <p class="text-slate-400 text-xs md:text-sm">Média de tempo atingida por grupo.</p>
+                </div>
+                <div id="barChart" class="chart-container-bar flex items-center justify-center">
+                    <div class="loader"></div>
+                </div>
+                <div id="customBarLegend" class="flex flex-wrap justify-center gap-x-6 gap-y-4 mt-3 mb-4 px-4"></div>
+            </div>
+
+            <div class="glass-card p-3 md:p-6 lg:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm overflow-hidden">
+                <div class="mb-4 md:mb-6 px-2 text-center md:text-left">
+                    <h3 class="text-xl md:text-2xl font-bold text-slate-800">Evolução dos Tempos</h3>
+                    <p class="text-slate-400 text-xs md:text-sm">Análise histórica Mensal.</p>
+                </div>
+                <div id="lineChart" class="chart-container-line flex items-center justify-center">
+                    <div class="loader"></div>
+                </div>
+                <div id="customLineLegend" class="flex flex-wrap justify-center gap-x-6 gap-y-4 mt-6 px-4"></div>
+
+                <div class="text-center mt-6">
+                    <span class="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Clique na equipe para
+                        evidenciar sua linha</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-3 md:p-6 lg:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm overflow-hidden mb-12">
+            <div class="mb-4 md:mb-6 px-2">
+                <h3 class="text-xl md:text-2xl font-bold text-slate-800">Histórico de Exercícios</h3>
+                <p class="text-slate-400 text-xs md:text-sm">Listagem detalhada dos registos utilizados.</p>
+            </div>
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Equipe</th>
+                            <th id="thTempo1">Embarque CCI</th>
+                            <th id="thTempoFinal">Tempo Total</th>
+                            <th>Local</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer
+            class="mb-10 px-2 flex flex-col md:flex-row items-center justify-between text-slate-400 text-[10px] md:text-xs border-t border-slate-200 pt-8 gap-4">
+            <p class="text-center md:text-left">&copy; 2025 SCI Aeroporto de Joinville - Central SCI JOI</p>
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                Status: <span id="syncStatus"
+                    class="font-bold uppercase tracking-widest text-[9px] md:text-[10px]">Sincronizado</span>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Footer de Conformidade (Rodapé Clean) -->
+    <div id="complianceFooter"
+        class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-4 md:px-8">
+        <div class="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-start gap-3 flex-1">
+                <div class="mt-1 hidden md:block">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <p class="text-xs md:text-sm text-slate-600 leading-snug text-center md:text-left">
+                    Os indicadores deste painel atendem ao <strong class="text-slate-800">RBAC 153</strong>, com
+                    aferições realizadas conforme referência técnica da Instrução Suplementar Nº <strong
+                        class="text-slate-800">153.409-001</strong> da ANAC.
+                </p>
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end">
+                <button onclick="openPdfModal()"
+                    class="flex-grow md:flex-grow-0 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95 whitespace-nowrap">
+                    Consultar IS
+                </button>
+                <button onclick="toggleFooter(false)"
+                    class="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+                    aria-label="Fechar notificação">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante 'Info' (Aparece quando o footer é fechado) -->
+    <button id="floatingInfoBtn" onclick="toggleFooter(true)"
+        class="hidden-btn fixed bottom-4 right-4 z-40 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95 group">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span
+            class="absolute right-full mr-2 bg-slate-800 text-white text-xs font-bold py-1 px-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-sm">
+            Normativa ANAC
+        </span>
+    </button>
+
+    <!-- Modal Mobile de Filtros -->
+    <div id="mobileFilterModal" class="fixed inset-0 z-[110] hidden hide-modal-1100">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="MobileFilterModule.close()"></div>
+
+        <!-- Drawer -->
+        <div id="mobileFilterDrawer"
+            class="fixed bottom-0 left-4 right-4 mx-auto max-w-[500px] bg-white rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            <!-- Header -->
+            <div
+                class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
+                    </svg>
+                    <h3 class="text-lg font-bold text-white">Ajustar Dados</h3>
+                </div>
+                <button onclick="MobileFilterModule.close()"
+                    class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Conteúdo Scrollável -->
+            <div class="flex-1 overflow-y-auto px-6 py-6">
+                <!-- Tipo de Medição -->
+                <div class="mobile-filter-select">
+                    <label>Tipo de Medição</label>
+                    <div id="mobileTypeOptions">
+                        <div class="mobile-option-item selected" data-value="final">
+                            <div
+                                class="w-5 h-5 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0">
+                                <div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
+                            </div>
+                            <span class="flex-1">Tempo Total</span>
+                        </div>
+                        <div class="mobile-option-item" data-value="tempo1">
+                            <div
+                                class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0">
+                                <div class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
+                            </div>
+                            <span class="flex-1">Embarque CCI</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Localização -->
+                <div class="mobile-filter-select">
+                    <label>Localização</label>
+                    <div class="mb-3 flex gap-2">
+                        <button onclick="MobileFilterModule.selectAllLocations()"
+                            class="flex-1 px-3 py-2 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors">
+                            Selecionar Todos
+                        </button>
+                        <button onclick="MobileFilterModule.clearAllLocations()"
+                            class="flex-1 px-3 py-2 bg-slate-50 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-100 transition-colors">
+                            Limpar Seleção
+                        </button>
+                    </div>
+                    <div id="mobileLocalOptions" class="max-h-64 overflow-y-auto"></div>
+                </div>
+
+                <!-- Período -->
+                <div class="mobile-filter-select mb-6">
+                    <label>Período Analisado</label>
+                    <div id="mobilePeriodOptions">
+                        <div class="mobile-option-item selected" data-value="all">
+                            <div
+                                class="w-5 h-5 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0">
+                                <div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
+                            </div>
+                            <span class="flex-1">Todo o Histórico</span>
+                        </div>
+                        <div class="mobile-option-item" data-value="year">
+                            <div
+                                class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0">
+                                <div class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
+                            </div>
+                            <span class="flex-1">Ano Atual</span>
+                        </div>
+                        <div class="mobile-option-item" data-value="6months">
+                            <div
+                                class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0">
+                                <div class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
+                            </div>
+                            <span class="flex-1">Últimos 6 meses</span>
+                        </div>
+                        <div class="mobile-option-item" data-value="last">
+                            <div
+                                class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0">
+                                <div class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
+                            </div>
+                            <span class="flex-1">Último de cada equipe</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Aplicar -->
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 shrink-0">
+                <button onclick="MobileFilterModule.apply()"
+                    class="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95">
+                    Aplicar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Modal de Preview do Relatório PDF -->
+    <div id="pdfPreviewModal" class="fixed inset-0 z-[120] hidden">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="PDFPreviewModule.close()"></div>
+
+        <!-- Panel -->
+        <div id="pdfPreviewPanel"
+            class="fixed inset-4 md:inset-8 z-10 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div
+                class="bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between shadow-md shrink-0">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="bg-white/10 p-1.5 rounded-lg shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <h3 class="text-sm md:text-base font-bold text-white leading-tight truncate">Pré-visualização do
+                            Relatório</h3>
+                        <span class="text-[10px] md:text-xs text-red-100 truncate">Exercício de Tempo Resposta</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="PDFPreviewModule.download()"
+                        class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 text-xs font-bold rounded-lg transition-all shadow-sm active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        <span>Baixar PDF</span>
+                    </button>
+                    <button onclick="PDFPreviewModule.close()"
+                        class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Download Button -->
+            <div class="sm:hidden bg-red-50 border-b border-red-100 px-4 py-2.5 flex justify-center shrink-0">
+                <button onclick="PDFPreviewModule.download()"
+                    class="flex items-center gap-2 text-red-600 text-sm font-bold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Baixar este Relatório
+                </button>
+            </div>
+
+            <!-- Preview Container -->
+            <div class="flex-1 bg-slate-50 relative overflow-auto">
+                <div class="absolute inset-0 flex items-center justify-center" id="pdfPreviewLoading">
+                    <div class="text-center">
+                        <div class="loader mx-auto mb-4"></div>
+                        <p class="text-sm text-slate-600 font-medium">Gerando pré-visualização...</p>
+                    </div>
+                </div>
+                <iframe id="pdfPreviewFrame" class="w-full h-full hidden" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal PDF -->
+    <div id="pdfModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop"
+            onclick="closePdfModal()"></div>
+
+        <!-- Modal Panel -->
+        <div class="fixed inset-4 md:inset-10 z-10 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0"
+            id="modalPanel">
+            <!-- Header Modal -->
+            <div class="bg-slate-900 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between shadow-md shrink-0">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="bg-white/10 p-1.5 rounded-lg shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <h3 class="text-sm md:text-base font-bold text-white leading-tight truncate" id="modal-title">IS
+                            Nº 153.409-001</h3>
+                        <span class="text-[10px] md:text-xs text-slate-300 truncate">Instrução Suplementar ANAC</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 md:gap-3 shrink-0">
+                    <a href="https://www.anac.gov.br/assuntos/legislacao/legislacao-1/iac-e-is/is/is-153-409-001/@@display-file/arquivo_norma/IS153.409-001A.pdf"
+                        target="_blank"
+                        class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
+                        <span>Abrir Original</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                    <button onclick="closePdfModal()"
+                        class="p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile "Abrir Original" Bar (only small screens) -->
+            <div class="sm:hidden bg-slate-100 border-b border-slate-200 px-4 py-2 flex justify-center shrink-0">
+                <a href="https://www.anac.gov.br/assuntos/legislacao/legislacao-1/iac-e-is/is/is-153-409-001/@@display-file/arquivo_norma/IS153.409-001A.pdf"
+                    target="_blank" class="text-blue-600 text-xs font-bold flex items-center gap-1">
+                    Abrir PDF Original em Nova Aba
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Iframe Container -->
+            <div class="flex-1 bg-slate-50 relative w-full h-full">
+                <div class="absolute inset-0 flex items-center justify-center z-0">
+                    <div class="loader"></div>
+                </div>
+                <iframe id="pdfIframe" class="absolute inset-0 w-full h-full z-10" src="" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // ============================================
+        // 📦 CONFIGURAÇÃO GLOBAL
+        // ============================================
+        const CONFIG = {
+            SHEET_ID: '1MB0Q-vQ_dv27LiB0Jfblj5g5bcpLEJAMG2mE59uQ5Rg',
+            TIME_LIMIT: 180,
+            COLOR_PALETTE: ['#2563eb', '#dc2626', '#f59e0b', '#059669', '#7c3aed']
+        };
+
+        // ============================================
+        // 📦 MÓDULO: DADOS
+        // ============================================
+        const DataModule = {
+            // Estado interno
+            _fullData: [],
+            _filteredData: [],
+
+            // Getter público
+            getFullData() {
+                return this._fullData;
+            },
+
+            getFilteredData() {
+                return this._filteredData;
+            },
+
+            // Buscar dados do Google Sheets
+            async fetch() {
+                const query = encodeURIComponent('Select B, C, D, G, H offset 2');
+                const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tq=${query}&headers=0`;
+
+                try {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    const json = JSON.parse(text.substring(47, text.length - 2));
+                    this._processData(json.table);
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao buscar dados:', error);
+                    UIModule.showError('Erro ao carregar dados.');
+                    return false;
+                }
+            },
+
+            // Filtrar dados
+            filter(locais, periodo, tipo) {
+                let result = [...this._fullData];
+
+                // Filtro de locais
+                if (locais.length > 0) {
+                    result = result.filter(d => locais.includes(d.local));
+                }
+
+                // Filtro de período
+                if (periodo === 'year') {
+                    const year = new Date().getFullYear();
+                    result = result.filter(d => d.dataObj.getFullYear() === year);
+                } else if (periodo === '6months') {
+                    const limit = new Date();
+                    limit.setMonth(limit.getMonth() - 6);
+                    result = result.filter(d => d.dataObj >= limit);
+                } else if (periodo === 'last') {
+                    const map = {};
+                    result.forEach(d => {
+                        if (!map[d.equipe] || d.dataObj > map[d.equipe].dataObj) {
+                            map[d.equipe] = d;
+                        }
+                    });
+                    result = Object.values(map);
+                }
+
+                // Adicionar tempo baseado no tipo
+                result = result.map(d => ({
+                    ...d,
+                    tempo: tipo === 'tempo1' ? d.tempo1 : d.tempoFinal
+                })).filter(d => d.tempo > 0);
+
+                this._filteredData = result;
+                return result;
+            },
+
+            getUniqueLocations() {
+                return [...new Set(this._fullData.map(d => d.local))].sort();
+            },
+
+            // Métodos privados (convenção _)
+            _processData(table) {
+                this._fullData = table.rows.map((row, index) => {
+                    const rawDate = row.c[0] ? (row.c[0].f || row.c[0].v) : null;
+                    return {
+                        id: index,
+                        dataStr: rawDate,
+                        dataObj: this._parseDate(rawDate),
+                        equipe: row.c[1] ? row.c[1].v : null,
+                        local: row.c[2] ? row.c[2].v : 'N/A',
+                        tempo1: this._parseDuration(row.c[3]),
+                        tempoFinal: this._parseDuration(row.c[4])
+                    };
+                }).filter(d =>
+                    d.equipe !== null &&
+                    d.dataObj !== null &&
+                    (d.tempo1 > 0 || d.tempoFinal > 0)
+                );
+
+                this._fullData.sort((a, b) => a.dataObj - b.dataObj);
+            },
+
+            _parseDate(dateStr) {
+                if (!dateStr) return null;
+                const parts = dateStr.split('/');
+                return parts.length === 3
+                    ? new Date(parts[2], parts[1] - 1, parts[0], 12, 0, 0)
+                    : new Date(dateStr);
+            },
+
+            _parseDuration(cell) {
+                if (!cell) return 0;
+                if (cell.f && cell.f.includes(':')) {
+                    const parts = cell.f.split(':');
+                    if (parts.length === 3) {
+                        return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+                    }
+                    if (parts.length === 2) {
+                        return (+parts[0]) * 60 + (+parts[1]);
+                    }
+                }
+                if (typeof cell.v === 'number') {
+                    return cell.v < 1 ? Math.round(cell.v * 86400) : Math.round(cell.v);
+                }
+                return 0;
+            }
+        };
+
+        // ============================================
+        // 📦 MÓDULO: INTERFACE (UI)
+        // ============================================
+        const UIModule = {
+            elements: {},
+
+            init() {
+                // Cachear elementos DOM
+                this.elements = {
+                    bestTeam: document.getElementById('bestTeam'),
+                    avgTime: document.getElementById('avgTime'),
+                    totalTests: document.getElementById('totalTests'),
+                    barChart: document.getElementById('barChart'),
+                    lineChart: document.getElementById('lineChart'),
+                    dataTableBody: document.getElementById('dataTableBody'),
+                    errorMessage: document.getElementById('errorMessage')
+                };
+            },
+
+            showLoading(containerId) {
+                const el = document.getElementById(containerId);
+                if (el) {
+                    el.innerHTML = '<div class="loader"></div>';
+                }
+            },
+
+            showError(message) {
+                if (this.elements.errorMessage) {
+                    this.elements.errorMessage.classList.remove('hidden');
+                    this.elements.errorMessage.innerText = message;
+                }
+            },
+
+            updateStats(stats) {
+                if (this.elements.bestTeam) {
+                    this.elements.bestTeam.innerText = stats.bestTeam;
+                }
+                if (this.elements.avgTime) {
+                    this.elements.avgTime.innerText = this.formatTime(stats.avgTime);
+                }
+                if (this.elements.totalTests) {
+                    this.elements.totalTests.innerText = stats.totalTests;
+                }
+            },
+
+            updateTable(data, colorMap) {
+                if (!this.elements.dataTableBody) return;
+
+                const sortedData = [...data].sort((a, b) => b.dataObj - a.dataObj);
+
+                this.elements.dataTableBody.innerHTML = sortedData.map(row => {
+                    const color = colorMap[row.equipe];
+                    return `
+                        <tr onclick="ChartModule.highlightPoint('${row.equipe}', ${row.dataObj.getTime()})" class="cursor-pointer hover:bg-blue-50 transition-colors">
+                            <td class="font-medium text-slate-600">${row.dataStr}</td>
+                            <td>
+                                <span class="px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-tight" 
+                                      style="background-color: ${color}15; color: ${color}; border: 1px solid ${color}30">
+                                    ${row.equipe}
+                                </span>
+                            </td>
+                            <td class="font-mono text-slate-500 text-xs">${this.formatTime(row.tempo1)}</td>
+                            <td class="font-mono font-bold text-slate-800">${this.formatTime(row.tempoFinal)}</td>
+                            <td class="text-slate-500 italic text-xs">${row.local}</td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+
+            formatTime(totalSeconds) {
+                if (isNaN(totalSeconds) || totalSeconds < 0) return "0:00";
+                const m = Math.floor(totalSeconds / 60);
+                const s = Math.round(totalSeconds % 60);
+                return `${m}:${s < 10 ? '0' : ''}${s}`;
+            }
+        };
+
+        // ============================================
+        // 📦 MÓDULO: GRÁFICOS
+        // ============================================
+        const ChartModule = {
+            instances: {
+                bar: null,
+                line: null
+            },
+
+            highlightedTeam: null,
+            selectedPoint: null,
+
+            drawBarChart(data, tipo) {
+                const equipes = [...new Set(data.map(d => d.equipe))].sort();
+                const colorMap = this._getColorMap(equipes);
+
+                const limitValue = tipo === 'tempo1'
+                    ? (data.reduce((a, d) => a + d.tempo, 0) / data.length || 0)
+                    : CONFIG.TIME_LIMIT;
+
+                const limitLabel = tipo === 'tempo1' ? 'Média Geral' : 'Limite (3min)';
+                const recomendavelValue = 120;
+
+                const dataTable = new google.visualization.DataTable();
+                dataTable.addColumn('string', 'Equipe');
+                dataTable.addColumn('number', 'Média de Tempo');
+                dataTable.addColumn({ type: 'string', role: 'style' });
+                dataTable.addColumn({ type: 'string', role: 'annotation' });
+                dataTable.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
+                dataTable.addColumn('number', limitLabel);
+                if (tipo === 'final') {
+                    dataTable.addColumn('number', 'Recomendável');
+                }
+
+                // Linha fantasma inicial (faz a linha começar no início do gráfico)
+                const rowInicial = [
+                    '',
+                    null,
+                    '',
+                    '',
+                    this._createTooltip('Limite', '#000000', limitValue, limitLabel),
+                    limitValue
+                ];
+                if (tipo === 'final') {
+                    rowInicial.push(recomendavelValue);
+                }
+                dataTable.addRow(rowInicial);
+
+                // Dados reais
+                equipes.forEach(eq => {
+                    const items = data.filter(f => f.equipe === eq);
+                    const avg = items.reduce((s, x) => s + x.tempo, 0) / items.length;
+                    const tempoFormatado = UIModule.formatTime(avg);
+
+                    const rowEquipe = [
+                        eq,
+                        { v: avg, f: tempoFormatado },
+                        colorMap[eq],
+                        tempoFormatado,
+                        this._createTooltip(eq, colorMap[eq], avg, 'TEMPO MÉDIO'),
+                        limitValue
+                    ];
+                    if (tipo === 'final') {
+                        rowEquipe.push(recomendavelValue);
+                    }
+                    dataTable.addRow(rowEquipe);
+                });
+
+                // Linha fantasma final (faz a linha terminar no fim do gráfico)
+                const rowFinal = [
+                    '',
+                    null,
+                    '',
+                    '',
+                    this._createTooltip('Limite', '#000000', limitValue, limitLabel),
+                    limitValue
+                ];
+                if (tipo === 'final') {
+                    rowFinal.push(recomendavelValue);
+                }
+                dataTable.addRow(rowFinal);
+
+                this.instances.bar = new google.visualization.ComboChart(
+                    document.getElementById('barChart')
+                );
+
+                this.instances.bar.draw(dataTable, this._getBarOptions(tipo));
+
+                // LEGENDA HTML
+                this._updateCustomBarLegend(tipo);
+
+                return colorMap;
+            },
+
+            // LEGENDA HTML
+            _updateCustomBarLegend(tipo) {
+                const customLegend = document.getElementById('customBarLegend');
+                if (!customLegend) return;
+
+                const limitLabel = tipo === 'tempo1' ? 'Média Geral' : 'Limite (3min)';
+
+                customLegend.innerHTML = '';
+
+                // Item da Barra (Média de Tempo)
+                const barItem = document.createElement('div');
+                barItem.className = 'flex flex-col items-center gap-1 min-w-[80px] cursor-default';
+                barItem.innerHTML = `
+                    <div class="flex items-center justify-center h-4 w-full">
+                        <div class="w-8 h-3 rounded-sm" style="background-color: #475569;"></div>
+                    </div>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-700 uppercase tracking-tight text-center leading-tight">Média de Tempo</span>
+                `;
+                customLegend.appendChild(barItem);
+
+                // Item do Limite
+                const limitItem = document.createElement('div');
+                limitItem.className = 'flex flex-col items-center gap-1 min-w-[80px] cursor-default opacity-80';
+                limitItem.innerHTML = `
+                    <div class="flex items-center justify-center h-4 w-full">
+                        <div class="h-[2px] w-8 border-t-2 border-dashed border-slate-900"></div>
+                    </div>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-900 uppercase tracking-tight text-center leading-tight">${limitLabel}</span>
+                `;
+                customLegend.appendChild(limitItem);
+
+                // Item do Tempo Recomendável (só para tipo final)
+                if (tipo === 'final') {
+                    const recomendavelItem = document.createElement('div');
+                    recomendavelItem.className = 'flex flex-col items-center gap-1 min-w-[80px] cursor-default opacity-60';
+                    recomendavelItem.innerHTML = `
+                        <div class="flex items-center justify-center h-4 w-full">
+                            <div class="h-[2px] w-8 border-t-2 border-dotted" style="border-color: #ababab;"></div>
+                        </div>
+                        <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tight text-center leading-tight">Recomendável</span>
+                    `;
+                    customLegend.appendChild(recomendavelItem);
+                }
+            },
+
+            drawLineChart(data, tipo, colorMap) {
+                const equipes = [...new Set(data.map(d => d.equipe))].sort();
+                const dates = [...new Set(data.map(d => d.dataObj.getTime()))].sort((a, b) => a - b);
+
+                const limitValue = tipo === 'tempo1'
+                    ? (data.reduce((acc, d) => acc + d.tempo, 0) / data.length || 0)
+                    : CONFIG.TIME_LIMIT;
+
+                const limitLabel = tipo === 'tempo1' ? 'Média Geral' : 'Limite (3min)';
+
+                // Criar DataTable
+                const recomendavelValue = tipo === 'final' ? 120 : null;
+                const recomendavelLabel = 'Tempo Recomendável';
+
+                // Criar DataTable
+                const lineDataTable = new google.visualization.DataTable();
+                lineDataTable.addColumn('date', 'Data');
+
+                equipes.forEach(eq => {
+                    lineDataTable.addColumn('number', eq);
+                    lineDataTable.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
+                });
+
+                lineDataTable.addColumn('number', limitLabel);
+
+                if (tipo === 'final') {
+                    lineDataTable.addColumn('number', recomendavelLabel);
+                }/* acaba aqui */
+
+                // Preencher dados
+                dates.forEach(t => {
+                    const dataAtual = new Date(t);
+                    const row = [dataAtual];
+
+                    equipes.forEach(eq => {
+                        const found = data.find(f => f.dataObj.getTime() === t && f.equipe === eq);
+                        if (found) {
+                            const tooltipLabel = tipo === 'tempo1' ? 'Embarque CCI' : 'TEMPO TOTAL';
+                            const tempo1ParaTooltip = tipo === 'final' ? found.tempo1 : null;
+
+                            row.push({ v: found.tempo, f: UIModule.formatTime(found.tempo) });
+                            row.push(this._createTooltip(
+                                eq,
+                                colorMap[eq],
+                                found.tempo,
+                                tooltipLabel,
+                                found.dataStr,
+                                found.local,
+                                tempo1ParaTooltip
+                            ));
+                        } else {
+                            row.push(null);
+                            row.push(null);
+                        }
+                    });
+
+                    row.push({ v: limitValue, f: UIModule.formatTime(limitValue) });
+
+                    if (tipo === 'final') {
+                        row.push({ v: recomendavelValue, f: UIModule.formatTime(recomendavelValue) });
+                    }
+
+                    lineDataTable.addRow(row);/* acaba aqui */
+                });
+
+                // Desenhar
+                this.instances.line = new google.visualization.LineChart(
+                    document.getElementById('lineChart')
+                );
+
+                this.instances.line.draw(
+                    lineDataTable,
+                    this._getLineOptions(equipes, colorMap, tipo)
+                );
+
+                // Aplicar seleção se houver ponto selecionado
+                if (this.selectedPoint && this.selectedPoint.equipe === this.highlightedTeam) {
+                    const dates = [...new Set(data.map(d => d.dataObj.getTime()))].sort((a, b) => a - b);
+                    const rowIndex = dates.indexOf(this.selectedPoint.timestamp);
+                    const columnIndex = equipes.indexOf(this.selectedPoint.equipe);
+
+                    if (rowIndex !== -1 && columnIndex !== -1) {
+                        setTimeout(() => {
+                            this.instances.line.setSelection([{
+                                row: rowIndex,
+                                column: columnIndex * 2 + 1
+                            }]);
+                        }, 100);
+                    }
+                }
+
+                this._updateCustomLegend(equipes, colorMap, limitLabel);
+            },
+
+            highlightPoint(equipe, timestamp) {
+                if (!this.instances.line) return;
+
+                // Scroll suave até o gráfico
+                document.getElementById('lineChart').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                // Destacar a equipe na legenda e armazenar o ponto selecionado
+                this.highlightedTeam = equipe;
+                this.selectedPoint = { equipe, timestamp };
+
+                // Redesenhar para aplicar o highlight
+                App.refresh();
+            },
+
+            _getColorMap(equipes) {
+                const map = {};
+                equipes.forEach((e, i) => {
+                    map[e] = CONFIG.COLOR_PALETTE[i % CONFIG.COLOR_PALETTE.length];
+                });
+                return map;
+            },
+
+            _createTooltip(equipe, cor, tempoVal, labelPrincipal, dataStr = null, local = null, tempo1Val = null) {
+                const tempoPrincipalFmt = UIModule.formatTime(tempoVal);
+                const tempo1Fmt = tempo1Val !== null ? UIModule.formatTime(tempo1Val) : null;
+
+                return `
+                    <div class="custom-tooltip">
+                        <div class="tooltip-header">
+                            <div class="color-indicator" style="background-color: ${cor}"></div>
+                            <span>${equipe}</span>
+                        </div>
+                        <div style="line-height: 1.6;">
+                            ${dataStr ? `<div style="color: #64748b; font-size: 10px;">DATA: <b style="color: #334155">${dataStr}</b></div>` : ''}
+                            ${tempo1Fmt ? `<div style="color: #64748b; font-size: 10px;">Embarque CCI: <b style="color: #334155">${tempo1Fmt}</b></div>` : ''}
+                            <div style="color: #64748b; font-size: 10px;">${labelPrincipal}: <b style="color: #1e293b; font-size: 12px;">${tempoPrincipalFmt}</b></div>
+                            ${local ? `<div style="color: #64748b; font-size: 10px; margin-top: 4px; border-top: 1px dashed #e2e8f0; padding-top: 4px;">LOCAL: <b style="color: #334155">${local}</b></div>` : ''}
+                        </div>
+                    </div>
+                `;
+            },
+
+            _getBarOptions(tipo) {
+                const ticks = [];
+                const viewWindow = {};
+
+                if (tipo === 'tempo1') {
+                    for (let i = 10; i <= 50; i += 5) {
+                        ticks.push({ v: i, f: UIModule.formatTime(i) });
+                    }
+                    viewWindow.min = 10;
+                    viewWindow.max = 50;
+                } else {
+                    for (let i = 60; i <= 240; i += 30) {
+                        ticks.push({ v: i, f: UIModule.formatTime(i) });
+                    }
+                    viewWindow.min = 60;
+                    viewWindow.max = 240;
+                }
+
+                return {
+                    seriesType: 'bars',
+                    tooltip: { isHtml: true, trigger: 'both' },
+                    series: {
+                        0: { color: '#475569' },
+                        1: {
+                            type: 'line',
+                            color: '#000000',
+                            lineDashStyle: [4, 4],
+                            pointSize: 0,
+                            lineWidth: 2,
+                            visibleInLegend: true
+                        },
+                        ...(tipo === 'final' ? {
+                            2: {
+                                type: 'line',
+                                color: '#ababab',
+                                lineDashStyle: [2, 5],
+                                pointSize: 0,
+                                lineWidth: 2,
+                                visibleInLegend: true
+                            }
+                        } : {})
+                    },
+                    legend: { position: 'none', alignment: 'center', maxLines: 3, maxTextLines: 2, maxAlternation: 2, textStyle: { fontSize: 10, color: '#64748b' } },
+                    bar: { groupWidth: '70%' },
+                    chartArea: { width: '85%', height: '75%', bottom: 80, left: '10%', right: '5%' },
+                    vAxis: { ticks: ticks, viewWindow: viewWindow, gridlines: { color: '#f1f5f9' } },
+                    hAxis: {
+                        maxAlternation: 1,
+                        textStyle: { fontSize: 10 },
+                        padding: 0,
+                    },
+                    annotations: { alwaysOutside: true, textStyle: { fontSize: 14, bold: true } },
+                    backgroundColor: 'transparent'
+                };
+            },
+
+            _getLineOptions(equipes, colorMap, tipo) {
+                const seriesOptions = {};
+
+                equipes.forEach((eq, index) => {
+                    const baseColor = colorMap[eq];
+                    if (this.highlightedTeam) {
+                        seriesOptions[index] = {
+                            color: (this.highlightedTeam === eq ? baseColor : '#e2e8f0'),
+                            lineWidth: (this.highlightedTeam === eq ? 4 : 1),
+                            areaOpacity: (this.highlightedTeam === eq ? 0.1 : 0)
+                        };
+                    } else {
+                        seriesOptions[index] = { color: baseColor, lineWidth: 3 };
+                    }
+                });
+
+                seriesOptions[equipes.length] = {
+                    color: '#000000',
+                    lineDashStyle: [4, 4],
+                    pointSize: 0,
+                    lineWidth: 2
+                };
+
+                if (tipo === 'final') {
+                    seriesOptions[equipes.length + 1] = {
+                        color: '#ababab',
+                        lineDashStyle: [2, 5],
+                        pointSize: 0,
+                        lineWidth: 2
+                    };
+                }
+
+                const ticks = [];
+                const viewWindow = {};
+
+                if (tipo === 'tempo1') {
+                    for (let i = 10; i <= 50; i += 5) {
+                        ticks.push({ v: i, f: UIModule.formatTime(i) });
+                    }
+                    viewWindow.min = 10;
+                    viewWindow.max = 50;
+                } else {
+                    for (let i = 60; i <= 240; i += 30) {
+                        ticks.push({ v: i, f: UIModule.formatTime(i) });
+                    }
+                    viewWindow.min = 60;
+                    viewWindow.max = 240;
+                }
+
+                return {
+                    curveType: 'function',
+                    pointSize: 10,
+                    interpolateNulls: true,
+                    tooltip: { isHtml: true, trigger: 'both' },
+                    legend: { position: 'none' },
+                    series: seriesOptions,
+                    chartArea: { width: '85%', height: '80%', left: '10%', right: '5%' },
+                    vAxis: { ticks: ticks, viewWindow: viewWindow, gridlines: { color: '#f1f5f9' } },
+                    hAxis: { format: "MMM/yy", gridlines: { count: -1 }, minorGridlines: { count: 0 } },
+                    backgroundColor: 'transparent'
+                };
+            },
+
+            _updateCustomLegend(equipes, colorMap, limitLabel) {
+                const customLegend = document.getElementById('customLineLegend');
+                if (!customLegend) return;
+
+                customLegend.innerHTML = '';
+
+                equipes.forEach(eq => {
+                    const color = colorMap[eq];
+                    const isActive = this.highlightedTeam === eq;
+                    const isFaded = this.highlightedTeam && !isActive;
+
+                    const item = document.createElement('div');
+                    item.className = `flex flex-col items-center gap-1 min-w-[60px] cursor-pointer ${isActive ? 'legend-active' : ''} ${isFaded ? 'legend-inactive' : ''}`;
+
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        this.highlightedTeam = (this.highlightedTeam === eq) ? null : eq;
+                        App.refresh();
+                    };
+
+                    item.innerHTML = `
+                        <div class="flex items-center justify-center h-4 w-full">
+                            <div class="h-[3px] w-8 rounded-full relative flex items-center justify-center" style="background-color: ${color}">
+                                <div class="w-2.5 h-2.5 rounded-full border-2 border-white absolute" style="background-color: ${color}"></div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight ${isActive ? 'text-slate-900' : ''}">${eq}</span>
+                    `;
+
+                    customLegend.appendChild(item);
+                });
+
+                // Adicionar item do limite
+                const limitItem = document.createElement('div');
+                limitItem.className = 'flex flex-col items-center gap-1 min-w-[60px] cursor-default opacity-80';
+                limitItem.innerHTML = `
+                    <div class="flex items-center justify-center h-4 w-full">
+                        <div class="h-[2px] w-8 border-t-2 border-dashed border-slate-900"></div>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-900 uppercase tracking-tight text-center leading-tight">${limitLabel}</span>
+                `;
+                customLegend.appendChild(limitItem);
+
+                // Adicionar item do tempo recomendável (só para tipo final)
+                const filterState = FilterModule.getState();
+                if (filterState.tipo === 'final') {
+                    const recomendavelItem = document.createElement('div');
+                    recomendavelItem.className = 'flex flex-col items-center gap-1 min-w-[60px] cursor-default opacity-60';
+                    recomendavelItem.innerHTML = `
+                        <div class="flex items-center justify-center h-4 w-full">
+                            <div class="h-[2px] w-8 border-t-2 border-dotted" style="border-color: #ababab;"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tight text-center leading-tight">Recomendável</span>
+                    `;
+                    customLegend.appendChild(recomendavelItem);
+                }/* acaba aqui */
+            }
+        };
+
+        // ============================================
+        // 📦 MÓDULO: FILTROS
+        // ============================================
+        const FilterModule = {
+            state: {
+                locais: [],
+                periodo: 'all',
+                tipo: 'final'
+            },
+
+            init() {
+                this._setupTypeSelect();
+                this._setupPeriodSelect();
+                this._setupGlobalClickHandler();
+            },
+
+            initLocalSelect(locations) {
+                // Configurar apenas "Cabeceira 33" como selecionado inicialmente
+                if (locations.includes('Cabeceira 33')) {
+                    this.state.locais = ['Cabeceira 33'];
+                } else {
+                    // Fallback: se "Cabeceira 33" não existir, seleciona todos
+                    this.state.locais = [...locations];
+                }
+                this._setupLocalMultiSelect(locations);
+            },
+
+            getState() {
+                return { ...this.state };
+            },
+
+            _setupTypeSelect() {
+                const trigger = document.getElementById('typeTrigger');
+                const options = document.getElementById('typeOptions');
+                const label = document.getElementById('typeLabel');
+
+                if (!trigger || !options) return;
+
+                trigger.onclick = (e) => {
+                    e.stopPropagation();
+                    this._closeOthers('typeContainer');
+                    options.classList.toggle('active');
+                    document.getElementById('typeContainer').style.zIndex =
+                        options.classList.contains('active') ? '80' : '';
+                };
+
+                options.querySelectorAll('.option-item').forEach(opt => {
+                    opt.onclick = () => {
+                        options.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+                        opt.classList.add('selected');
+                        this.state.tipo = opt.dataset.value;
+                        label.innerText = opt.innerText;
+                        options.classList.remove('active');
+                        document.getElementById('typeContainer').style.zIndex = '';
+                        App.refresh();
+                    };
+                });
+            },
+
+            _setupPeriodSelect() {
+                const trigger = document.getElementById('periodTrigger');
+                const options = document.getElementById('periodOptions');
+                const label = document.getElementById('periodLabel');
+
+                if (!trigger || !options) return;
+
+                trigger.onclick = (e) => {
+                    e.stopPropagation();
+                    this._closeOthers('periodContainer');
+                    options.classList.toggle('active');
+                    document.getElementById('periodContainer').style.zIndex =
+                        options.classList.contains('active') ? '80' : '';
+                };
+
+                options.querySelectorAll('.option-item').forEach(opt => {
+                    opt.onclick = () => {
+                        options.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+                        opt.classList.add('selected');
+                        this.state.periodo = opt.dataset.value;
+                        label.innerText = opt.innerText;
+                        options.classList.remove('active');
+                        document.getElementById('periodContainer').style.zIndex = '';
+                        App.refresh();
+                    };
+                });
+            },
+
+            _setupLocalMultiSelect(locais) {
+                const trigger = document.getElementById('localMultiSelect');
+                const optionsContainer = document.getElementById('localOptions');
+                const label = document.getElementById('localLabel');
+
+                if (!trigger || !optionsContainer) return;
+
+                trigger.onclick = (e) => {
+                    e.stopPropagation();
+                    this._closeOthers('localContainer');
+                    optionsContainer.classList.toggle('active');
+                    document.getElementById('localContainer').style.zIndex =
+                        optionsContainer.classList.contains('active') ? '80' : '';
+                };
+
+                optionsContainer.innerHTML = '';
+
+                // Botão "Selecionar Todos"
+                const allItem = document.createElement('div');
+                allItem.className = 'option-item border-b border-slate-100 font-bold text-blue-600 hover:bg-blue-50';
+                allItem.innerHTML = '<span>Selecionar Todos</span>';
+                allItem.onclick = (e) => {
+                    e.stopPropagation();
+                    this.state.locais = [...locais];
+                    this._updateLocalCheckboxes(locais);
+                    App.refresh();
+                };
+                optionsContainer.appendChild(allItem);
+
+                // Botão "Limpar Seleção"
+                const noneItem = document.createElement('div');
+                noneItem.className = 'option-item border-b border-slate-100 font-bold text-slate-400 hover:bg-slate-50';
+                noneItem.innerHTML = '<span>Limpar Seleção</span>';
+                noneItem.onclick = (e) => {
+                    e.stopPropagation();
+                    this.state.locais = [];
+                    this._updateLocalCheckboxes(locais);
+                    App.refresh();
+                };
+                optionsContainer.appendChild(noneItem);
+
+                // Checkboxes de locais
+                // Checkboxes de locais
+                locais.forEach(local => {
+                    const isChecked = this.state.locais.includes(local);
+                    const div = document.createElement('div');
+                    div.className = 'option-item';
+                    div.innerHTML = `
+				        <input type="checkbox" value="${local}" id="chk_${local}" ${isChecked ? 'checked' : ''}>
+				        <label for="chk_${local}" class="flex-grow cursor-pointer truncate text-slate-700 font-medium">${local}</label>
+				    `;
+
+                    div.onclick = (e) => {
+                        e.stopPropagation();
+                        const chk = div.querySelector('input');
+                        if (e.target !== chk) chk.checked = !chk.checked;
+
+                        if (chk.checked) {
+                            if (!this.state.locais.includes(local)) {
+                                this.state.locais.push(local);
+                            }
+                        } else {
+                            this.state.locais = this.state.locais.filter(l => l !== local);
+                        }
+
+                        this._updateLabel(locais);
+                        App.refresh();
+                    };
+
+                    optionsContainer.appendChild(div);
+                });
+
+                this._updateLabel(locais);
+            },
+
+            _updateLocalCheckboxes(locais) {
+                const optionsContainer = document.getElementById('localOptions');
+                if (!optionsContainer) return;
+
+                const checks = optionsContainer.querySelectorAll('input[type="checkbox"]');
+                checks.forEach(c => {
+                    c.checked = this.state.locais.includes(c.value);
+                });
+
+                this._updateLabel(locais);
+            },
+
+            _updateLabel(locais) {
+                const label = document.getElementById('localLabel');
+                if (!label) return;
+
+                if (this.state.locais.length === 0) {
+                    label.innerText = "Nenhum Local";
+                } else if (this.state.locais.length === locais.length) {
+                    label.innerText = "Todos os Locais";
+                } else if (this.state.locais.length === 1) {
+                    label.innerText = this.state.locais[0];
+                } else {
+                    label.innerText = `${this.state.locais.length} Locais`;
+                }
+            },
+
+            _closeOthers(exceptId) {
+                const ids = ['typeContainer', 'localContainer', 'periodContainer'];
+                ids.forEach(id => {
+                    if (id !== exceptId) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.querySelector('.custom-select-options').classList.remove('active');
+                            el.style.zIndex = '';
+                        }
+                    }
+                });
+            },
+
+            _setupGlobalClickHandler() {
+                window.addEventListener('click', (e) => {
+                    const selects = ['typeContainer', 'localContainer', 'periodContainer'];
+                    selects.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el && !el.contains(e.target)) {
+                            el.querySelector('.custom-select-options').classList.remove('active');
+                            el.style.zIndex = '';
+                        }
+                    });
+                });
+            }
+        };
+
+        // ============================================
+        // 📦 MÓDULO: MODAL PDF
+        // ============================================
+        const ModalModule = {
+            PDF_VIEWERS: [
+                {
+                    name: "Google Drive Preview",
+                    url: "https://drive.google.com/file/d/1EiiSe5oGFNgJ2ttoJsKS-luNqWE838kj/preview"
+                },
+                {
+                    name: "Google Drive Embed",
+                    url: "https://drive.google.com/file/d/1EiiSe5oGFNgJ2ttoJsKS-luNqWE838kj/view?embedded=true"
+                },
+                {
+                    name: "Mozilla PDF.js",
+                    url: "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
+                        encodeURIComponent("https://www.anac.gov.br/assuntos/legislacao/legislacao-1/iac-e-is/is/is-153-409-001/@@display-file/arquivo_norma/IS153.409-001A.pdf")
+                }
+            ],
+
+            currentViewerIndex: 0,
+            autoLoadTimeout: null,
+
+            open() {
+                const modal = document.getElementById('pdfModal');
+                const backdrop = document.getElementById('modalBackdrop');
+                const panel = document.getElementById('modalPanel');
+
+                this.currentViewerIndex = 0;
+                this._loadPdfMethod();
+
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    backdrop.classList.remove('opacity-0');
+                    panel.classList.remove('scale-95', 'opacity-0');
+                    panel.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            },
+
+            close() {
+                const modal = document.getElementById('pdfModal');
+                const backdrop = document.getElementById('modalBackdrop');
+                const panel = document.getElementById('modalPanel');
+
+                backdrop.classList.add('opacity-0');
+                panel.classList.remove('scale-100', 'opacity-100');
+                panel.classList.add('scale-95', 'opacity-0');
+
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            },
+
+            _loadPdfMethod() {
+                if (this.currentViewerIndex >= this.PDF_VIEWERS.length) {
+                    console.error('Todos os métodos de visualização falharam');
+                    window.open("https://www.anac.gov.br/assuntos/legislacao/legislacao-1/iac-e-is/is/is-153-409-001/@@display-file/arquivo_norma/IS153.409-001A.pdf", '_blank');
+                    return;
+                }
+
+                const iframe = document.getElementById('pdfIframe');
+                const currentMethod = this.PDF_VIEWERS[this.currentViewerIndex];
+
+                console.log(`Tentando método ${this.currentViewerIndex + 1} de ${this.PDF_VIEWERS.length}: ${currentMethod.name}`);
+
+                iframe.src = currentMethod.url;
+
+                if (this.autoLoadTimeout) clearTimeout(this.autoLoadTimeout);
+                this.autoLoadTimeout = setTimeout(() => {
+                    console.log(`Timeout do método ${this.currentViewerIndex + 1}, tentando próximo...`);
+                    this.currentViewerIndex++;
+                    this._loadPdfMethod();
+                }, 8000);
+
+                iframe.onload = () => {
+                    setTimeout(() => {
+                        try {
+                            if (iframe.contentWindow) {
+                                clearTimeout(this.autoLoadTimeout);
+                                console.log('PDF carregado com sucesso!');
+                            }
+                        } catch (e) {
+                            clearTimeout(this.autoLoadTimeout);
+                            console.log('Iframe carregado (CORS pode estar bloqueando verificação)');
+                        }
+                    }, 1000);
+                };
+            }
+        };
+
+        // ============================================
+        // 📦 MÓDULO: FOOTER DE CONFORMIDADE
+        // ============================================
+        const FooterModule = {
+            toggle(show) {
+                const footer = document.getElementById('complianceFooter');
+                const floatingBtn = document.getElementById('floatingInfoBtn');
+
+                if (show) {
+                    footer.classList.remove('hidden-footer');
+                    floatingBtn.classList.add('hidden-btn');
+                } else {
+                    footer.classList.add('hidden-footer');
+                    floatingBtn.classList.remove('hidden-btn');
+                }
+            }
+        };
+
+        // ============================================
+        // 🎯 APLICAÇÃO PRINCIPAL
+        // ============================================
+        const App = {
+            async init() {
+                // Inicializar módulos
+                UIModule.init();
+                FilterModule.init();
+
+                // Mostrar loading
+                UIModule.showLoading('barChart');
+                UIModule.showLoading('lineChart');
+
+                // Carregar dados
+                const success = await DataModule.fetch();
+
+                if (!success) {
+                    return;
+                }
+
+                // Inicializar filtro de locais
+                const locations = DataModule.getUniqueLocations();
+                FilterModule.initLocalSelect(locations);
+
+                // Desenhar dashboard inicial
+                this.refresh();
+            },
+
+            refresh() {
+                const filters = FilterModule.getState();
+                const data = DataModule.filter(
+                    filters.locais,
+                    filters.periodo,
+                    filters.tipo
+                );
+
+                if (data.length === 0) {
+                    UIModule.updateStats({
+                        bestTeam: '-',
+                        avgTime: 0,
+                        totalTests: 0
+                    });
+                    return;
+                }
+
+                // Calcular estatísticas
+                const stats = this._calculateStats(data);
+                UIModule.updateStats(stats);
+
+                // Desenhar gráficos
+                const colorMap = ChartModule.drawBarChart(data, filters.tipo);
+                ChartModule.drawLineChart(data, filters.tipo, colorMap);
+
+                // Atualizar tabela
+                UIModule.updateTable(data, colorMap);
+            },
+
+            _calculateStats(data) {
+                let bestAvg = Infinity;
+                let bestTeam = '-';
+                let sumAvg = 0;
+
+                const equipes = [...new Set(data.map(d => d.equipe))];
+
+                equipes.forEach(eq => {
+                    const items = data.filter(f => f.equipe === eq);
+                    const avg = items.reduce((s, x) => s + x.tempo, 0) / items.length;
+                    sumAvg += avg;
+
+                    if (avg < bestAvg) {
+                        bestAvg = avg;
+                        bestTeam = eq;
+                    }
+                });
+
+                return {
+                    bestTeam: bestTeam,
+                    avgTime: sumAvg / (equipes.length || 1),
+                    totalTests: data.length
+                };
+            }
+        };
+
+        // ============================================
+        // 🚀 FUNÇÕES GLOBAIS (para onclick no HTML)
+        // ============================================
+        function openPdfModal() {
+            ModalModule.open();
+        }
+
+        function closePdfModal() {
+            ModalModule.close();
+        }
+
+        function toggleFooter(show) {
+            FooterModule.toggle(show);
+        }
+
+        // ============================================
+        // 📦 MÓDULO: MODAL DE FILTROS MOBILE
+        // ============================================
+        const MobileFilterModule = {
+            tempState: {
+                tipo: 'final',
+                locais: [],
+                periodo: 'all'
+            },
+
+            open() {
+                // Copiar estado atual para temporário
+                const currentState = FilterModule.getState();
+                this.tempState = {
+                    tipo: currentState.tipo,
+                    locais: [...currentState.locais],
+                    periodo: currentState.periodo
+                };
+
+                // Renderizar opções de localização
+                this._renderLocalOptions();
+
+                // Sincronizar seleções visuais
+                this._syncVisualState();
+
+                // Mostrar modal
+                const modal = document.getElementById('mobileFilterModal');
+                modal.classList.remove('hidden');
+            },
+
+            close() {
+                const modal = document.getElementById('mobileFilterModal');
+                modal.classList.add('hidden');
+            },
+
+            apply() {
+                // Aplicar estado temporário ao FilterModule
+                FilterModule.state.tipo = this.tempState.tipo;
+                FilterModule.state.locais = [...this.tempState.locais];
+                FilterModule.state.periodo = this.tempState.periodo;
+
+                // Atualizar labels desktop
+                this._updateDesktopLabels();
+
+                // Fechar modal
+                this.close();
+
+                // Atualizar dashboard
+                App.refresh();
+            },
+
+            selectAllLocations() {
+                const locations = DataModule.getUniqueLocations();
+                this.tempState.locais = [...locations];
+                this._renderLocalOptions();
+            },
+
+            clearAllLocations() {
+                this.tempState.locais = [];
+                this._renderLocalOptions();
+            },
+
+            _renderLocalOptions() {
+                const container = document.getElementById('mobileLocalOptions');
+                if (!container) return;
+
+                const locations = DataModule.getUniqueLocations();
+
+                container.innerHTML = locations.map(local => {
+                    const isChecked = this.tempState.locais.includes(local);
+                    return `
+                        <div class="mobile-checkbox-item" onclick="MobileFilterModule._toggleLocation('${local}')">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation()">
+                            <span class="flex-1 text-sm text-slate-700 font-medium">${local}</span>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            _toggleLocation(local) {
+                const index = this.tempState.locais.indexOf(local);
+                if (index > -1) {
+                    this.tempState.locais.splice(index, 1);
+                } else {
+                    this.tempState.locais.push(local);
+                }
+                this._renderLocalOptions();
+            },
+
+            _syncVisualState() {
+                // Tipo de Medição
+                document.querySelectorAll('#mobileTypeOptions .mobile-option-item').forEach(item => {
+                    const value = item.dataset.value;
+                    const isSelected = value === this.tempState.tipo;
+
+                    if (isSelected) {
+                        item.classList.add('selected');
+                        item.querySelector('.w-5 div').classList.add('bg-blue-600');
+                        item.querySelector('.w-5').classList.remove('border-slate-300');
+                        item.querySelector('.w-5').classList.add('border-blue-600');
+                    } else {
+                        item.classList.remove('selected');
+                        item.querySelector('.w-5 div').classList.remove('bg-blue-600');
+                        item.querySelector('.w-5').classList.add('border-slate-300');
+                        item.querySelector('.w-5').classList.remove('border-blue-600');
+                    }
+
+                    item.onclick = () => {
+                        this.tempState.tipo = value;
+                        this._syncVisualState();
+                    };
+                });
+
+                // Período
+                document.querySelectorAll('#mobilePeriodOptions .mobile-option-item').forEach(item => {
+                    const value = item.dataset.value;
+                    const isSelected = value === this.tempState.periodo;
+
+                    if (isSelected) {
+                        item.classList.add('selected');
+                        item.querySelector('.w-5 div').classList.add('bg-blue-600');
+                        item.querySelector('.w-5').classList.remove('border-slate-300');
+                        item.querySelector('.w-5').classList.add('border-blue-600');
+                    } else {
+                        item.classList.remove('selected');
+                        item.querySelector('.w-5 div').classList.remove('bg-blue-600');
+                        item.querySelector('.w-5').classList.add('border-slate-300');
+                        item.querySelector('.w-5').classList.remove('border-blue-600');
+                    }
+
+                    item.onclick = () => {
+                        this.tempState.periodo = value;
+                        this._syncVisualState();
+                    };
+                });
+            },
+
+            _updateDesktopLabels() {
+                // Atualizar label de Tipo
+                const typeLabel = document.getElementById('typeLabel');
+                if (typeLabel) {
+                    typeLabel.innerText = this.tempState.tipo === 'tempo1' ? 'Embarque CCI' : 'Tempo Total';
+                }
+
+                // Atualizar seleção visual de Tipo
+                document.querySelectorAll('#typeOptions .option-item').forEach(opt => {
+                    if (opt.dataset.value === this.tempState.tipo) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+
+                // Atualizar label de Período
+                const periodLabel = document.getElementById('periodLabel');
+                if (periodLabel) {
+                    const periodLabels = {
+                        'all': 'Todo o Histórico',
+                        'year': 'Ano Atual',
+                        '6months': 'Últimos 6 meses',
+                        'last': 'Último de cada equipe'
+                    };
+                    periodLabel.innerText = periodLabels[this.tempState.periodo];
+                }
+
+                // Atualizar seleção visual de Período
+                document.querySelectorAll('#periodOptions .option-item').forEach(opt => {
+                    if (opt.dataset.value === this.tempState.periodo) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+
+                // Atualizar label e checkboxes de Localização
+                FilterModule._updateLocalCheckboxes(DataModule.getUniqueLocations());
+            }
+        };
+
+        // ============================================
+        // 🚀 INICIALIZAÇÃO
+        // ============================================
+        window.onload = function () {
+            if (typeof google !== 'undefined') {
+                google.charts.load('current', { 'packages': ['corechart'], 'language': 'pt-br' });
+                google.charts.setOnLoadCallback(() => App.init());
+            }
+        };
+
+        window.onresize = function () {
+            App.refresh();
+        };
+
+        // ============================================
+        // 📦 MÓDULO: GERADOR E PREVIEW DE RELATÓRIOS PDF
+        // ============================================
+        const PDFReportModule = {
+            currentPdfDoc: null,
+            logoDataUrl: null, // 👈 ADICIONAR
+
+            // Método para carregar logo
+            async _loadLogo() {
+                if (this.logoDataUrl) return this.logoDataUrl;
+
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        this.logoDataUrl = canvas.toDataURL('image/png');
+                        resolve(this.logoDataUrl);
+                    };
+                    img.onerror = () => {
+                        console.warn('Erro ao carregar logo, usando fallback');
+                        resolve(null);
+                    };
+                    img.src = 'https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq';
+                });
+            },
+
+            async _captureCharts() {
+                try {
+                    // Criar container temporário em alta resolução
+                    const tempContainer = document.createElement('div');
+                    tempContainer.style.position = 'absolute';
+                    tempContainer.style.left = '-9999px';
+                    tempContainer.style.top = '0';
+                    tempContainer.style.width = '1200px'; // Largura fixa em alta resolução
+                    tempContainer.style.height = '600px'; // Altura fixa em alta resolução
+                    document.body.appendChild(tempContainer);
+
+                    // Obter dados filtrados e state atual
+                    const filters = FilterModule.getState();
+                    const data = DataModule.getFilteredData();
+
+                    if (data.length === 0) {
+                        document.body.removeChild(tempContainer);
+                        return null;
+                    }
+
+                    // Preparar dados para o gráfico
+                    const equipes = [...new Set(data.map(d => d.equipe))].sort();
+                    const colorMap = ChartModule._getColorMap(equipes);
+                    const dates = [...new Set(data.map(d => d.dataObj.getTime()))].sort((a, b) => a - b);
+
+                    const limitValue = filters.tipo === 'tempo1'
+                        ? (data.reduce((acc, d) => acc + d.tempo, 0) / data.length || 0)
+                        : CONFIG.TIME_LIMIT;
+
+                    const recomendavelValue = filters.tipo === 'final' ? 120 : null;
+
+                    // Criar DataTable
+                    const lineDataTable = new google.visualization.DataTable();
+                    lineDataTable.addColumn('date', 'Data');
+
+                    equipes.forEach(eq => {
+                        lineDataTable.addColumn('number', eq);
+                        lineDataTable.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
+                    });
+
+                    lineDataTable.addColumn('number', filters.tipo === 'tempo1' ? 'Média Geral' : 'Limite (3min)');
+
+                    if (filters.tipo === 'final') {
+                        lineDataTable.addColumn('number', 'Tempo Recomendável');
+                    }
+
+                    // Preencher dados
+                    dates.forEach(t => {
+                        const dataAtual = new Date(t);
+                        const row = [dataAtual];
+
+                        equipes.forEach(eq => {
+                            const found = data.find(f => f.dataObj.getTime() === t && f.equipe === eq);
+                            if (found) {
+                                row.push({ v: found.tempo, f: UIModule.formatTime(found.tempo) });
+                                row.push(''); // Tooltip vazio para PDF
+                            } else {
+                                row.push(null);
+                                row.push(null);
+                            }
+                        });
+
+                        row.push({ v: limitValue, f: UIModule.formatTime(limitValue) });
+
+                        if (filters.tipo === 'final') {
+                            row.push({ v: recomendavelValue, f: UIModule.formatTime(recomendavelValue) });
+                        }
+
+                        lineDataTable.addRow(row);
+                    });
+
+                    // Opções otimizadas para PDF
+                    const seriesOptions = {};
+                    equipes.forEach((eq, index) => {
+                        seriesOptions[index] = {
+                            color: colorMap[eq],
+                            lineWidth: 3
+                        };
+                    });
+
+                    seriesOptions[equipes.length] = {
+                        color: '#000000',
+                        lineDashStyle: [4, 4],
+                        pointSize: 0,
+                        lineWidth: 2
+                    };
+
+                    if (filters.tipo === 'final') {
+                        seriesOptions[equipes.length + 1] = {
+                            color: '#ababab',
+                            lineDashStyle: [2, 5],
+                            pointSize: 0,
+                            lineWidth: 2
+                        };
+                    }
+
+                    const ticks = [];
+                    const viewWindow = {};
+
+                    if (filters.tipo === 'tempo1') {
+                        for (let i = 10; i <= 50; i += 5) {
+                            ticks.push({ v: i, f: UIModule.formatTime(i) });
+                        }
+                        viewWindow.min = 10;
+                        viewWindow.max = 50;
+                    } else {
+                        for (let i = 60; i <= 240; i += 30) {
+                            ticks.push({ v: i, f: UIModule.formatTime(i) });
+                        }
+                        viewWindow.min = 60;
+                        viewWindow.max = 240;
+                    }
+
+                    const chartOptions = {
+                        curveType: 'function',
+                        pointSize: 10,
+                        interpolateNulls: true,
+                        tooltip: { trigger: 'none' }, // Desabilitar tooltip no PDF
+                        legend: { position: 'bottom', alignment: 'center', textStyle: { fontSize: 16, bold: true }, maxLines: 3 },
+                        series: seriesOptions,
+                        chartArea: { width: '85%', height: '65%', left: '10%', right: '5%', top: '5%', bottom: '25%' },
+                        vAxis: {
+                            ticks: ticks,
+                            viewWindow: viewWindow,
+                            gridlines: { color: '#f1f5f9' },
+                            textStyle: { fontSize: 16, bold: true }
+                        },
+                        hAxis: {
+                            format: "MMM/yy",
+                            gridlines: { count: -1 },
+                            minorGridlines: { count: 0 },
+                            textStyle: { fontSize: 16, bold: true }
+                        },
+                        backgroundColor: 'white',
+                        width: 1200,
+                        height: 600
+                    };
+
+                    // Renderizar gráfico temporário
+                    const tempChart = new google.visualization.LineChart(tempContainer);
+
+                    // Aguardar renderização e capturar
+                    return new Promise((resolve) => {
+                        google.visualization.events.addListener(tempChart, 'ready', function () {
+                            const imageURI = tempChart.getImageURI();
+                            document.body.removeChild(tempContainer);
+                            resolve(imageURI);
+                        });
+
+                        tempChart.draw(lineDataTable, chartOptions);
+                    });
+
+                } catch (e) {
+                    console.warn('Erro ao capturar gráfico de linhas:', e);
+                }
+
+                return null;
+            },
+
+            async generate() {
+                try {
+                    this._showGeneratingIndicator();
+
+                    // Carregar logo
+                    await this._loadLogo();
+
+                    // Capturar gráficos
+                    const chartImages = await this._captureCharts();
+
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+
+                    const filters = FilterModule.getState();
+                    const data = DataModule.getFilteredData();
+
+                    if (data.length === 0) {
+                        alert('Não há dados para gerar o relatório. Ajuste os filtros e tente novamente.');
+                        this._hideGeneratingIndicator();
+                        return;
+                    }
+
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const margin = 15;
+                    let yPos = margin;
+
+                    yPos = this._addHeader(doc, pageWidth, yPos, margin);
+                    yPos = this._addReportInfo(doc, filters, margin, yPos);
+                    yPos = this._addStatistics(doc, data, filters, margin, yPos, pageWidth);
+                    yPos = this._addCharts(doc, chartImages, yPos, pageWidth, margin, pageHeight);
+                    yPos = this._addTeamPerformanceTable(doc, data, filters, yPos, pageWidth);
+                    this._addHistoryTable(doc, data, filters);
+                    this._addFooters(doc);
+
+                    // Salvar referência do documento
+                    this.currentPdfDoc = doc;
+
+                    this._hideGeneratingIndicator();
+
+                    // Abrir modal de preview
+                    PDFPreviewModule.open(doc);
+
+                } catch (error) {
+                    console.error('Erro ao gerar PDF:', error);
+                    alert('Erro ao gerar relatório PDF. Tente novamente.');
+                    this._hideGeneratingIndicator();
+                }
+            },
+
+            _addHeader(doc, pageWidth, yPos, margin) {
+                // Adicionar logo se disponível
+                if (this.logoDataUrl) {
+                    try {
+                        doc.addImage(this.logoDataUrl, 'PNG', margin, yPos, 15, 15);
+                    } catch (e) {
+                        // Fallback para quadrado azul
+                        doc.setFillColor(37, 99, 235);
+                        doc.roundedRect(margin, yPos, 15, 15, 2, 2, 'F');
+                    }
+                } else {
+                    // Fallback para quadrado azul
+                    doc.setFillColor(37, 99, 235);
+                    doc.roundedRect(margin, yPos, 15, 15, 2, 2, 'F');
+                }
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.setTextColor(15, 23, 42);
+                doc.text('Exercício de Tempo Resposta', margin + 20, yPos + 7);
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 116, 139);
+                doc.text('SCI Aeroporto de Joinville', margin + 20, yPos + 12);
+
+                yPos += 20;
+                doc.setDrawColor(226, 232, 240);
+                doc.setLineWidth(0.5);
+                doc.line(margin, yPos, pageWidth - margin, yPos);
+
+                return yPos + 8;
+            },
+
+            _addReportInfo(doc, filters, margin, yPos) {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(71, 85, 105);
+
+                const tipoLabel = filters.tipo === 'tempo1' ? 'Embarque CCI' : 'Tempo Total';
+                const periodoLabel = this._getPeriodoLabel(filters.periodo);
+                const locaisLabel = filters.locais.length === 0
+                    ? 'Todos os Locais'
+                    : filters.locais.length === 1
+                        ? filters.locais[0]
+                        : `${filters.locais.length} Locais Selecionados`;
+
+                doc.text(`TIPO DE MEDIÇÃO: ${tipoLabel}`, margin, yPos);
+                doc.text(`PERÍODO: ${periodoLabel}`, margin, yPos + 5);
+                doc.text(`LOCALIZAÇÃO: ${locaisLabel}`, margin, yPos + 10);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(148, 163, 184);
+                doc.text(`Relatório gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, yPos + 18);
+
+                return yPos + 25;
+            },
+
+            _addStatistics(doc, data, filters, margin, yPos, pageWidth) {
+                const stats = this._calculateStats(data);
+
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(15, 23, 42);
+                doc.text('ESTATÍSTICAS GERAIS', margin, yPos);
+                yPos += 8;
+
+                const cardWidth = (pageWidth - margin * 2 - 10) / 3;
+                const cardHeight = 25;
+
+                const cards = [
+                    { title: 'MELHOR TEMPO', value: stats.bestTeam, color: [16, 185, 129] },
+                    { title: 'MÉDIA GERAL', value: UIModule.formatTime(stats.avgTime), color: [37, 99, 235] },
+                    { title: 'TOTAL EXERCÍCIOS', value: stats.totalTests.toString(), color: [100, 116, 139] }
+                ];
+
+                cards.forEach((card, index) => {
+                    const x = margin + (cardWidth + 5) * index;
+
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(x, yPos, cardWidth, cardHeight, 3, 3, 'F');
+
+                    doc.setDrawColor(...card.color);
+                    doc.setLineWidth(0.5);
+                    doc.roundedRect(x, yPos, cardWidth, cardHeight, 3, 3, 'S');
+
+                    // Desenhar ícone
+                    this._drawCardIcon(doc, x + 5, yPos + 7, card.color, index);
+
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(card.title, x + 10, yPos + 7);
+
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(15, 23, 42);
+                    const valueText = card.value.length > 15 ? card.value.substring(0, 12) + '...' : card.value;
+                    doc.text(valueText, x + 5, yPos + 18);
+                });
+
+                return yPos + cardHeight + 10;
+            },
+
+            _addCharts(doc, lineChartImage, yPos, pageWidth, margin, pageHeight) {
+                if (!lineChartImage) return yPos;
+
+                // Verificar se precisa de nova página
+                if (yPos + 95 > pageHeight - 20) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                const chartWidth = pageWidth - (margin * 2);
+                const chartHeight = 80;
+                const padding = 3; // Espaçamento lateral e inferior
+                const paddingTop = 10; // Espaçamento superior para o título
+
+                // Desenhar container com borda arredondada (similar ao glass-card)
+                doc.setFillColor(255, 255, 255); // Fundo branco
+                doc.setDrawColor(226, 232, 240); // Cor da borda (slate-200)
+                doc.setLineWidth(0.3);
+                doc.roundedRect(margin - padding, yPos - padding, chartWidth + (padding * 2), chartHeight + paddingTop + padding, 3, 3, 'FD');
+
+                // Título dentro da borda
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(15, 23, 42);
+                doc.text('EVOLUÇÃO DOS TEMPOS', margin, yPos + 4);
+
+                yPos += paddingTop;
+
+                try {
+                    doc.addImage(lineChartImage, 'PNG', margin, yPos, chartWidth, chartHeight);
+                    yPos += chartHeight + padding + 10;
+                } catch (e) {
+                    console.error('Erro ao adicionar gráfico de linhas:', e);
+                }
+
+                return yPos;
+            },
+
+            _drawCardIcon(doc, x, y, color, iconType) {
+                doc.setDrawColor(...color);
+                doc.setFillColor(...color);
+                doc.setLineWidth(0.5); // 👈 REDUZIDO de 0.8 para 0.5
+
+                if (iconType === 0) {
+                    // Ícone de CHECK (Melhor Tempo)
+                    doc.circle(x, y, 3, 'S');
+                    doc.setLineWidth(0.7); // 👈 REDUZIDO de 1.2 para 0.7
+                    doc.line(x - 1.5, y, x - 0.3, y + 1.5);
+                    doc.line(x - 0.3, y + 1.5, x + 1.8, y - 1.2);
+
+                } else if (iconType === 1) {
+                    // Ícone de RELÓGIO (Média Geral)
+                    doc.circle(x, y, 3, 'S');
+                    doc.setLineWidth(0.5); // 👈 Mantém em 0.5
+                    doc.line(x, y, x, y - 1.8); // Ponteiro hora
+                    doc.line(x, y, x + 1.5, y); // Ponteiro minuto
+
+                } else if (iconType === 2) {
+                    // Ícone de CLIPBOARD (Total Exercícios)
+                    doc.roundedRect(x - 2, y - 2.5, 4, 5, 0.5, 0.5, 'S');
+                    doc.line(x - 1, y - 0.5, x + 1, y - 0.5);
+                    doc.line(x - 1, y + 0.5, x + 1, y + 0.5);
+                    doc.line(x - 1, y + 1.5, x + 1, y + 1.5);
+                }
+            },
+
+            _addTeamPerformanceTable(doc, data, filters, yPos, pageWidth) {
+                const equipes = [...new Set(data.map(d => d.equipe))].sort();
+                const teamData = equipes.map(eq => {
+                    const items = data.filter(f => f.equipe === eq);
+                    const avg = items.reduce((s, x) => s + x.tempo, 0) / items.length;
+                    const min = Math.min(...items.map(x => x.tempo));
+                    const max = Math.max(...items.map(x => x.tempo));
+                    return { equipe: eq, media: avg, minimo: min, maximo: max, total: items.length };
+                }).sort((a, b) => a.media - b.media);
+
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(15, 23, 42);
+                doc.text('DESEMPENHO POR EQUIPE', 15, yPos);
+                yPos += 5;
+
+                doc.autoTable({
+                    startY: yPos,
+                    head: [['Posição', 'Equipe', 'Média', 'Melhor', 'Pior', 'Total']],
+                    body: teamData.map((team, index) => [
+                        `${index + 1}º`,
+                        team.equipe,
+                        UIModule.formatTime(team.media),
+                        UIModule.formatTime(team.minimo),
+                        UIModule.formatTime(team.maximo),
+                        team.total
+                    ]),
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [37, 99, 235],
+                        textColor: [255, 255, 255],
+                        fontSize: 9,
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    },
+                    bodyStyles: { fontSize: 8, textColor: [51, 65, 85] },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 20 },
+                        1: { halign: 'left', fontStyle: 'bold' },
+                        2: { halign: 'center', cellWidth: 25 },
+                        3: { halign: 'center', cellWidth: 25 },
+                        4: { halign: 'center', cellWidth: 25 },
+                        5: { halign: 'center', cellWidth: 20 }
+                    },
+                    margin: { left: 15, right: 15 }
+                });
+
+                return doc.lastAutoTable.finalY + 10;
+            },
+
+            _addHistoryTable(doc, data, filters) {
+                const sortedData = [...data].sort((a, b) => b.dataObj - a.dataObj);
+                const displayData = sortedData.slice(0, 100);
+
+                doc.addPage();
+
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(15, 23, 42);
+                doc.text('HISTÓRICO DE EXERCÍCIOS', 15, 20);
+
+                if (sortedData.length > 100) {
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(220, 38, 38);
+                    doc.text(`* Exibindo os 100 registros mais recentes de ${sortedData.length} totais`, 15, 26);
+                }
+
+                const isTempo1 = filters.tipo === 'tempo1';
+                const headers = isTempo1
+                    ? [['Data', 'Equipe', 'Embarque CCI', 'Local']]
+                    : [['Data', 'Equipe', 'Embarque CCI', 'Tempo Total', 'Local']];
+
+                const bodyData = displayData.map(row => {
+                    const base = [row.dataStr, row.equipe, UIModule.formatTime(row.tempo1)];
+                    if (!isTempo1) base.push(UIModule.formatTime(row.tempoFinal));
+                    base.push(row.local);
+                    return base;
+                });
+
+                doc.autoTable({
+                    startY: sortedData.length > 100 ? 30 : 25,
+                    head: headers,
+                    body: bodyData,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [71, 85, 105],
+                        textColor: [255, 255, 255],
+                        fontSize: 8,
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    },
+                    bodyStyles: { fontSize: 7, textColor: [51, 65, 85] },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 25 },
+                        1: { halign: 'left', fontStyle: 'bold', cellWidth: isTempo1 ? 40 : 35 },
+                        2: { halign: 'center', cellWidth: isTempo1 ? 30 : 28 },
+                        ...(isTempo1 ? {
+                            3: { halign: 'left', cellWidth: 'auto' }
+                        } : {
+                            3: { halign: 'center', cellWidth: 28 },
+                            4: { halign: 'left', cellWidth: 'auto' }
+                        })
+                    },
+                    margin: { left: 15, right: 15 }
+                });
+            },
+
+            _addFooters(doc) {
+                const pageCount = doc.internal.getNumberOfPages();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.3);
+                    doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
+
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(148, 163, 184);
+
+                    doc.text('© 2025 SCI Aeroporto de Joinville', 15, pageHeight - 10);
+
+                    const conformidade = 'Conforme RBAC 153 e IS Nº 153.409-001';
+                    const textWidth = doc.getTextWidth(conformidade);
+                    doc.text(conformidade, (pageWidth - textWidth) / 2, pageHeight - 10);
+
+                    const pageText = `Página ${i} de ${pageCount}`;
+                    const pageTextWidth = doc.getTextWidth(pageText);
+                    doc.text(pageText, pageWidth - 15 - pageTextWidth, pageHeight - 10);
+                }
+            },
+
+            _calculateStats(data) {
+                let bestAvg = Infinity;
+                let bestTeam = '-';
+                let sumAvg = 0;
+
+                const equipes = [...new Set(data.map(d => d.equipe))];
+
+                equipes.forEach(eq => {
+                    const items = data.filter(f => f.equipe === eq);
+                    const avg = items.reduce((s, x) => s + x.tempo, 0) / items.length;
+                    sumAvg += avg;
+
+                    if (avg < bestAvg) {
+                        bestAvg = avg;
+                        bestTeam = `${eq} (${UIModule.formatTime(avg)})`;
+                    }
+                });
+
+                return {
+                    bestTeam: bestTeam,
+                    avgTime: sumAvg / (equipes.length || 1),
+                    totalTests: data.length
+                };
+            },
+
+            _getPeriodoLabel(periodo) {
+                const labels = {
+                    'all': 'Todo o Histórico',
+                    'year': 'Ano Atual',
+                    '6months': 'Últimos 6 meses',
+                    'last': 'Último de cada equipe'
+                };
+                return labels[periodo] || 'Todo o Histórico';
+            },
+
+            _showGeneratingIndicator() {
+                const indicator = document.createElement('div');
+                indicator.id = 'pdfGeneratingIndicator';
+                indicator.className = 'fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center';
+                indicator.innerHTML = `
+            <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4 max-w-sm mx-4">
+                <div class="loader"></div>
+                <div class="text-center">
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Gerando Relatório PDF</h3>
+                    <p class="text-sm text-slate-600">Aguarde enquanto processamos os dados...</p>
+                </div>
+            </div>
+        `;
+                document.body.appendChild(indicator);
+            },
+
+            _hideGeneratingIndicator() {
+                const indicator = document.getElementById('pdfGeneratingIndicator');
+                if (indicator) indicator.remove();
+            }
+        };
+
+        // ============================================
+        // 📦 MÓDULO: PREVIEW DE PDF
+        // ============================================
+        const PDFPreviewModule = {
+            open(pdfDoc) {
+                const modal = document.getElementById('pdfPreviewModal');
+                const iframe = document.getElementById('pdfPreviewFrame');
+                const loading = document.getElementById('pdfPreviewLoading');
+
+                // Mostrar modal e loading
+                modal.classList.remove('hidden');
+                iframe.classList.add('hidden');
+                loading.classList.remove('hidden');
+
+                // Gerar blob do PDF e exibir no iframe
+                setTimeout(() => {
+                    const pdfBlob = pdfDoc.output('blob');
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                    iframe.src = pdfUrl;
+                    iframe.onload = () => {
+                        loading.classList.add('hidden');
+                        iframe.classList.remove('hidden');
+                    };
+                }, 100);
+            },
+
+            close() {
+                const modal = document.getElementById('pdfPreviewModal');
+                const iframe = document.getElementById('pdfPreviewFrame');
+
+                modal.classList.add('hidden');
+                iframe.src = '';
+            },
+
+            download() {
+                if (PDFReportModule.currentPdfDoc) {
+                    const filters = FilterModule.getState();
+                    const timestamp = new Date().toISOString().split('T')[0];
+                    const tipoLabel = filters.tipo === 'tempo1' ? 'EmbarqueCCI' : 'TempoTotal';
+                    PDFReportModule.currentPdfDoc.save(`Relatorio_TempoResposta_${tipoLabel}_${timestamp}.pdf`);
+                }
+            }
+        };
+    </script>
+
+    <!-- BOTÃO FLUTUANTE VOLTAR INÍCIO -->
+    <style>
+        #btnVoltarInicio {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        #btnVoltarInicio:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        #btnVoltarInicio svg {
+            width: 18px;
+            height: 18px;
+            stroke: #1e293b;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        #btnVoltarInicio.hide {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+        }
+
+        @media (max-width: 768px) {
+            #btnVoltarInicio {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+            #btnVoltarInicio svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    </style>
+
+    <a href="./" id="btnVoltarInicio">
+        <svg viewBox="0 0 24 24">
+            <path d="M9 14l-4-4m0 0l4-4m-4 4h14a4 4 0 010 8h-1" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Central-SCI
+    </a>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('btnVoltarInicio');
+            let lastScroll = 0;
+            let hideTimer = null;
+            let isScrolling = false;
+
+            function resetHideTimer() {
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => {
+                    if (!isScrolling) {
+                        btn.classList.add('hide');
+                    }
+                }, 4000);
+            }
+
+            function handleScroll() {
+                isScrolling = true;
+                const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+                if (currentScroll > lastScroll) {
+                    // Rolando para BAIXO - esconde
+                    btn.classList.add('hide');
+                    clearTimeout(hideTimer);
+                } else if (currentScroll < lastScroll) {
+                    // Rolando para CIMA - mostra
+                    btn.classList.remove('hide');
+                    resetHideTimer();
+                }
+
+                lastScroll = currentScroll <= 0 ? 0 : currentScroll;
+            }
+
+            let scrollTimeout;
+            window.addEventListener('scroll', function () {
+                handleScroll();
+
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    isScrolling = false;
+                }, 150);
+            });
+
+            // Inicia com o timer de esconder
+            resetHideTimer();
+
+            // Mostra quando mouse passa por cima (mesmo escondido)
+            btn.addEventListener('mouseenter', function () {
+                btn.classList.remove('hide');
+                clearTimeout(hideTimer);
+            });
+
+            btn.addEventListener('mouseleave', function () {
+                resetHideTimer();
+            });
+        })();
+    </script>
+    <!-- FIM BOTÃO FLUTUANTE -->
+</body>
+
+</html>

@@ -15,11 +15,16 @@ import { CONFIG } from './firebase-config.js';
  * CLASSE DE UTILITÁRIOS DE MATRÍCULA
  */
 class MatriculaHandler {
-
+  
+  /**
+   * NORMALIZAR MATRÍCULA
+   * Remove espaços, converte para maiúscula
+   * @param {string} matricula 
+   * @returns {string}
+   */
   normalize(matricula) {
     if (!matricula) return '';
-    // Converte para maiúscula e remove espaços e hífens
-    return matricula.toUpperCase().trim().replace(/[\s-]/g, '');
+    return matricula.toUpperCase().trim().replace(/\s+/g, '');
   }
 
   /**
@@ -62,12 +67,12 @@ class MatriculaHandler {
   applyMask(input) {
     input.addEventListener('input', (e) => {
       let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-
+      
       // Limitar comprimento
       if (value.length > 7) {
         value = value.substring(0, 7);
       }
-
+      
       e.target.value = value;
     });
 
@@ -91,12 +96,12 @@ class MatriculaHandler {
   validateRealTime(input) {
     const validate = () => {
       const value = input.value;
-
+      
       if (value.length === 0) {
         input.classList.remove('valid', 'invalid');
         return;
       }
-
+      
       if (this.isValid(value)) {
         input.classList.remove('invalid');
         input.classList.add('valid');
@@ -129,7 +134,7 @@ class MatriculaHandler {
     if (!email.endsWith(CONFIG.emailDomain)) {
       return null;
     }
-
+    
     const matricula = email.replace(CONFIG.emailDomain, '');
     return this.isValid(matricula) ? matricula : null;
   }
@@ -150,19 +155,19 @@ class MatriculaHandler {
   generateRandom() {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers = '0123456789';
-
+    
     let matricula = '';
-
+    
     // 3 letras
     for (let i = 0; i < 3; i++) {
       matricula += letters.charAt(Math.floor(Math.random() * letters.length));
     }
-
+    
     // 4 números
     for (let i = 0; i < 4; i++) {
       matricula += numbers.charAt(Math.floor(Math.random() * numbers.length));
     }
-
+    
     return matricula;
   }
 
@@ -174,7 +179,7 @@ class MatriculaHandler {
   getInfo(matricula) {
     const normalized = this.normalize(matricula);
     const valid = this.isValid(normalized);
-
+    
     return {
       original: matricula,
       normalized: normalized,
@@ -213,7 +218,7 @@ class MatriculaHandler {
 
     matriculas.forEach(m => {
       const normalized = this.normalize(m);
-
+      
       if (this.isValid(normalized)) {
         if (seen.has(normalized)) {
           results.duplicates.push(normalized);
@@ -253,7 +258,7 @@ class MatriculaHandler {
     // Tentar corrigir ordem (números antes de letras)
     const letters = normalized.match(/[A-Z]/g) || [];
     const numbers = normalized.match(/\d/g) || [];
-
+    
     if (letters.length === 3 && numbers.length === 4) {
       const corrected = letters.join('') + numbers.join('');
       if (this.isValid(corrected)) {
@@ -277,7 +282,7 @@ class MatriculaHandler {
    */
   createInput(options = {}) {
     const input = document.createElement('input');
-
+    
     input.type = 'text';
     input.maxLength = 7;
     input.placeholder = options.placeholder || 'ABC1234';
@@ -302,9 +307,9 @@ class MatriculaHandler {
    */
   injectValidationStyles() {
     const styleId = 'matricula-validation-styles';
-
+    
     if (document.getElementById(styleId)) return;
-
+    
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
@@ -326,7 +331,7 @@ class MatriculaHandler {
         box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
       }
     `;
-
+    
     document.head.appendChild(style);
   }
 }
