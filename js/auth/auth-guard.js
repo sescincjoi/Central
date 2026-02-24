@@ -101,7 +101,31 @@ class AuthGuard {
         authLock.unlock(element);
         console.log('✅ Desbloqueado:', element.id || element.className);
       } else {
-        // Não tem acesso - SEMPRE usar modo locked (blur)
+        // Não tem acesso
+
+        // OPÇÃO: Redirecionamento 
+        // Se for o BODY (página inteira) e não tiver redirect explícito, usa o padrão /Central/login.html
+        let redirectUrl = element.getAttribute('data-auth-redirect');
+        const isBody = element.tagName.toLowerCase() === 'body';
+
+        if (!redirectUrl && isBody) {
+          redirectUrl = '/Central/login.html';
+        }
+
+        if (redirectUrl && !isAuthenticated) {
+          console.warn('🚀 Acesso negado: Redirecionando para:', redirectUrl);
+
+          // Adicionar a URL atual como parâmetro de retorno para o login
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          const finalRedirect = redirectUrl.includes('?')
+            ? `${redirectUrl}&return=${returnUrl}`
+            : `${redirectUrl}?return=${returnUrl}`;
+
+          window.location.href = finalRedirect;
+          return;
+        }
+
+        // Caso contrário, usar modo locked (blur)
         element.style.display = '';
         element.classList.add('auth-locked');
         authLock.lock(element);
