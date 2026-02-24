@@ -745,7 +745,7 @@
   </style>
 </head>
 
-<body data-auth-redirect>
+<body data-auth-required data-auth-redirect>
 
   <div class="corpo-container">
     <h1>
@@ -814,9 +814,22 @@
     window.authGuard = authGuard;
     window.authLock = authLock;
 
-    // Inicializa segurança
-    authLock.init();
-    console.log('✅ Segurança carregada em Extintores');
+    // ✅ Garantir inicialização correta
+    function initAuth() {
+      if (window.authUI && window.authUI.openModal && window.authGuard) {
+        console.log('✅ Sistema de segurança pronto em Extintores');
+        authGuard.init();
+        authLock.init();
+      } else {
+        setTimeout(initAuth, 50);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAuth);
+    } else {
+      initAuth();
+    }
   </script>
 
   <script>

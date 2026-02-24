@@ -20,10 +20,14 @@ class AuthGuard {
       this.handleAuthChange(event, user);
     });
 
-    // Aguardar auth-initialized
-    window.addEventListener('auth-initialized', () => {
+    // Aguardar auth-initialized ou inicializar se já estiver pronto
+    if (authCore.initialized) {
       this.init();
-    });
+    } else {
+      window.addEventListener('auth-initialized', () => {
+        this.init();
+      });
+    }
   }
 
   /**
@@ -72,7 +76,7 @@ class AuthGuard {
     console.log(`🛡️ Aplicando proteção: ${isAuthenticated ? 'LOGADO' : 'NÃO LOGADO'}`);
 
     // Encontrar todos os elementos protegidos
-    const protectedElements = document.querySelectorAll('[data-auth-required]');
+    const protectedElements = document.querySelectorAll('[data-auth-required], [data-auth-redirect]');
 
     console.log(`🛡️ Elementos protegidos encontrados: ${protectedElements.length}`);
 
