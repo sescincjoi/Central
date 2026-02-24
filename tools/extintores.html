@@ -2,12 +2,12 @@
 <html lang="pt-BR">
 
 <head>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/Central/pwa/manifest.json">
   <meta name="theme-color" content="#212121">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- iOS suporte -->
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/Central/pwa/icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta charset="UTF-8">
@@ -17,6 +17,16 @@
 
     :root {
       --vh: 100%;
+    }
+
+    /* Evitar flash de conteúdo antes da autenticação */
+    body[data-auth-required] {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    body.auth-ready {
+      opacity: 1;
     }
 
     :root {
@@ -820,6 +830,11 @@
         console.log('✅ Sistema de segurança pronto em Extintores');
         authGuard.init();
         authLock.init();
+
+        // Se estiver logado, mostrar a página (remover ghosting/flash)
+        if (authCore.isAuthenticated()) {
+          document.body.classList.add('auth-ready');
+        }
       } else {
         setTimeout(initAuth, 50);
       }
@@ -1599,6 +1614,9 @@
       right: 0;
     }
   </style>
+
+  <!-- PWA Service Worker -->
+  <script src="/Central/pwa/app.js"></script>
 
 </body>
 
