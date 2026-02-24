@@ -2,12 +2,12 @@
 <html lang="pt-BR">
 
 <head>
-  <link rel="manifest" href="/Central/pwa/manifest.json">
+  <link rel="manifest" href="../pwa/manifest.json">
   <meta name="theme-color" content="#212121">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- iOS suporte -->
-  <link rel="apple-touch-icon" href="/Central/pwa/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="../pwa/icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta charset="UTF-8">
@@ -828,11 +828,19 @@
     function initAuth() {
       if (window.authUI && window.authUI.openModal && window.authGuard) {
         console.log('✅ Sistema de segurança pronto em Extintores');
-        authGuard.init();
-        authLock.init();
 
-        // Se estiver logado, mostrar a página (remover ghosting/flash)
-        if (authCore.isAuthenticated()) {
+        // O AuthGuard já se auto-inicializa via evento 'auth-initialized'.
+        // Não chamar manualmente para evitar verificações precipitadas.
+
+        // Mostrar a página assim que o estado de login for validado
+        window.addEventListener('auth-state-changed', (e) => {
+          if (e.detail && e.detail.user) {
+            document.body.classList.add('auth-ready');
+          }
+        });
+
+        // Caso já tenha inicializado (navegação entre abas/cache)
+        if (authCore.initialized && authCore.isAuthenticated()) {
           document.body.classList.add('auth-ready');
         }
       } else {
