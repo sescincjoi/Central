@@ -103,19 +103,13 @@ class AuthGuard {
       } else {
         // Não tem acesso
 
-        // OPÇÃO: Redirecionamento 
-        // Se for o BODY (página inteira) e não tiver redirect explícito, usa o padrão /Central/login.html
-        let redirectUrl = element.getAttribute('data-auth-redirect');
-        const isBody = element.tagName.toLowerCase() === 'body';
+        // 1. PRIORIDADE: Redirecionamento Obrigatório (data-auth-redirect)
+        // Se o elemento tiver este atributo e o usuário não estiver logado, redireciona.
+        if (element.hasAttribute('data-auth-redirect') && !isAuthenticated) {
+          let redirectUrl = element.getAttribute('data-auth-redirect') || '/Central/login.html';
 
-        if (!redirectUrl && isBody) {
-          redirectUrl = '/Central/login.html';
-        }
-
-        if (redirectUrl && !isAuthenticated) {
           console.warn('🚀 Acesso negado: Redirecionando para:', redirectUrl);
 
-          // Adicionar a URL atual como parâmetro de retorno para o login
           const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
           const finalRedirect = redirectUrl.includes('?')
             ? `${redirectUrl}&return=${returnUrl}`
@@ -125,11 +119,14 @@ class AuthGuard {
           return;
         }
 
-        // Caso contrário, usar modo locked (blur)
-        element.style.display = '';
-        element.classList.add('auth-locked');
-        authLock.lock(element);
-        console.log('🔒 Bloqueado:', element.id || element.className);
+        // 2. BLOQUEIO VISUAL: data-auth-required (blur/lock)
+        // Mantém o conteúdo visível mas protege com blur e impede interação.
+        if (element.hasAttribute('data-auth-required')) {
+          element.style.display = '';
+          element.classList.add('auth-locked');
+          authLock.lock(element);
+          console.log('🔒 Bloqueado (Blur):', element.id || element.className);
+        }
       }
     });
   }
@@ -140,7 +137,7 @@ class AuthGuard {
   attachClickListeners() {
     document.addEventListener('click', (e) => {
       // Verificar se clicou em elemento protegido
-      const protectedElement = e.target.closest('[data-auth-required]');
+      const protectedElement = e.target.closest('[data-auth-required], [data-auth-exclusive]');
 
       if (protectedElement && !authCore.isAuthenticated()) {
         // Verificar se é interativo (link, botão, etc)
