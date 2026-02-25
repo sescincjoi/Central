@@ -1376,6 +1376,11 @@
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47).slice(0, -2));
 
+                if (!json.table || !json.table.rows) {
+                    console.warn("⚠️ Dados TAF não retornaram uma tabela válida.");
+                    return;
+                }
+
                 dadosTAF = json.table.rows.slice(1).map(row => ({
                     data: row.c[0]?.f || row.c[0]?.v || "",
                     dateObject: parseDate(row.c[0]?.f || row.c[0]?.v),
@@ -1529,6 +1534,11 @@
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47, text.length - 2));
 
+                if (!json.table || !json.table.rows) {
+                    console.warn("⚠️ Dados TR não retornaram uma tabela válida.");
+                    return;
+                }
+
                 dadosTR = json.table.rows.map(row => ({
                     dataStr: row.c[0] ? (row.c[0].f || row.c[0].v) : null,
                     dataObj: parseDateTR(row.c[0] ? (row.c[0].f || row.c[0].v) : null),
@@ -1614,6 +1624,11 @@
                 const res = await fetch(VEST_JSON_URL);
                 const text = await res.text();
                 const json = JSON.parse(text.substring(47).slice(0, -2));
+
+                if (!json.table || !json.table.rows) {
+                    console.warn("⚠️ Dados VEST não retornaram uma tabela válida.");
+                    return;
+                }
 
                 dadosVEST = json.table.rows.slice(1).map(row => ({
                     dataStr: row.c[1] ? (row.c[1].f || row.c[1].v) : null,
