@@ -76,7 +76,7 @@ class AuthGuard {
     console.log(`🛡️ Aplicando proteção: ${isAuthenticated ? 'LOGADO' : 'NÃO LOGADO'}`);
 
     // Encontrar todos os elementos protegidos
-    const protectedElements = document.querySelectorAll('[data-auth-required], [data-auth-redirect]');
+    const protectedElements = document.querySelectorAll('[data-auth-required], [data-auth-login]');
 
     console.log(`🛡️ Elementos protegidos encontrados: ${protectedElements.length}`);
 
@@ -103,28 +103,40 @@ class AuthGuard {
         element.style.display = '';
         element.classList.remove('auth-locked');
         authLock.unlock(element);
+
+        // Remover fundo off-white se for o body
+        if (element.tagName === 'BODY') {
+          document.body.style.backgroundColor = '';
+          document.body.classList.remove('auth-login-active');
+        }
+
         console.log('✅ Desbloqueado:', element.id || element.className);
       } else {
         // Não tem acesso
 
-        // 1. PRIORIDADE: Redirecionamento Obrigatório (data-auth-redirect)
-        // Se o elemento tiver este atributo e o usuário não estiver logado, redireciona.
-        if (element.hasAttribute('data-auth-redirect') && !isAuthenticated) {
-          let redirectUrl = element.getAttribute('data-auth-redirect') || '/Central/login.html';
+        // 1. PRIORIDADE: LOGIN DIRETO (data-auth-login)
+        if (element.hasAttribute('data-auth-login') && !isAuthenticated) {
+          console.warn('🛡️ Acesso Restrito: Exibindo modal de login');
 
-          console.warn('🚀 Acesso negado: Redirecionando para:', redirectUrl);
+          // Aplicar fundo off-white imediatamente se for o body
+          if (element.tagName === 'BODY') {
+            document.body.style.backgroundColor = '#fbfbfb';
+            document.body.classList.add('auth-login-active');
 
-          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-          const finalRedirect = redirectUrl.includes('?')
-            ? `${redirectUrl}&return=${returnUrl}`
-            : `${redirectUrl}?return=${returnUrl}`;
+            // Ocultar conteúdo via CSS (opacidade já tratada na página, mas garantimos aqui)
+            element.style.opacity = '0';
+          }
 
-          window.location.href = finalRedirect;
+          // Abrir modal e mostrar notificação se UI disponível
+          if (window.authUI) {
+            // Notificação de ACESSO À PÁGINA
+            window.authUI.showNotification('Você precisa estar logado para acessar esta página', 'error');
+            window.authUI.openModal('login');
+          }
           return;
         }
 
         // 2. BLOQUEIO VISUAL: data-auth-required (blur/lock)
-        // Mantém o conteúdo visível mas protege com blur e impede interação.
         if (element.hasAttribute('data-auth-required')) {
           element.style.display = '';
           element.classList.add('auth-locked');
@@ -141,7 +153,7 @@ class AuthGuard {
   attachClickListeners() {
     document.addEventListener('click', (e) => {
       // Verificar se clicou em elemento protegido
-      const protectedElement = e.target.closest('[data-auth-required], [data-auth-exclusive]');
+      const protectedElement = e.target.closest('[data-auth-required]');
 
       if (protectedElement && !authCore.isAuthenticated()) {
         // Verificar se é interativo (link, botão, etc)
@@ -149,15 +161,15 @@ class AuthGuard {
           e.preventDefault();
           e.stopPropagation();
 
-          // Mostrar notificação
-          if (window.authUI && window.authUI.showNotification) {
-            window.authUI.showNotification('Faça login para acessar esta funcionalidade', 'error');
-          }
+          // Mostrar notificação de INTERAÇÃO
+          if (window.authUI) {
+            window.authUI.showNotification('Você precisa estar autenticado para interagir com esta página', 'error');
 
-          // Abrir modal de login após 500ms
-          setTimeout(() => {
-            window.authUI.openModal('login');
-          }, 500);
+            // Abrir modal de login após 500ms
+            setTimeout(() => {
+              window.authUI.openModal('login');
+            }, 500);
+          }
         }
       }
     }, true); // Use capture para pegar antes de outros handlers
