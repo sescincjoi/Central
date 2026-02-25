@@ -104,11 +104,8 @@ class AuthGuard {
         element.classList.remove('auth-locked');
         authLock.unlock(element);
 
-        // Remover fundo off-white se for o body
-        if (element.tagName === 'BODY') {
-          document.body.style.backgroundColor = '';
-          document.body.classList.remove('auth-login-active');
-        }
+        // Remover overlay de bloqueio se existir
+        this.removeLockOverlay();
 
         console.log('✅ Desbloqueado:', element.id || element.className);
       } else {
@@ -118,19 +115,13 @@ class AuthGuard {
         if (element.hasAttribute('data-auth-login') && !isAuthenticated) {
           console.warn('🛡️ Acesso Restrito: Exibindo modal de login');
 
-          // Aplicar fundo off-white imediatamente se for o body
-          if (element.tagName === 'BODY') {
-            document.body.style.backgroundColor = '#fbfbfb';
-            document.body.classList.add('auth-login-active');
-
-            // Ocultar conteúdo via CSS (opacidade já tratada na página, mas garantimos aqui)
-            element.style.opacity = '0';
-          }
+          // Criar overlay de bloqueio total (off-white)
+          this.ensureLockOverlay();
 
           // Abrir modal e mostrar notificação se UI disponível
           if (window.authUI) {
             // Notificação de ACESSO À PÁGINA
-            window.authUI.showNotification('Você precisa estar logado para acessar esta página', 'error');
+            window.authUI.showNotification('Acesso restrito. Por favor, identifique-se para continuar.', 'error');
             window.authUI.openModal('login');
           }
           return;
@@ -148,27 +139,72 @@ class AuthGuard {
   }
 
   /**
+   * GARANTIR OVERLAY DE BLOQUEIO TOTAL
+   */
+  ensureLockOverlay() {
+    if (document.getElementById('auth-lock-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'auth-lock-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #fbfbfb;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    document.body.appendChild(overlay);
+    document.body.classList.add('auth-login-active');
+  }
+
+  /**
+   * REMOVER OVERLAY DE BLOQUEIO TOTAL
+   */
+  removeLockOverlay() {
+    const overlay = document.getElementById('auth-lock-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+    document.body.classList.remove('auth-login-active');
+  }
+
+  /**
    * ADICIONAR LISTENERS EM ELEMENTOS PROTEGIDOS
    */
   attachClickListeners() {
     document.addEventListener('click', (e) => {
-      // Verificar se clicou em elemento protegido
+      // 1. IGNORAR cliques dentro do modal de auth ou notificações
+      if (e.target.closest('#auth-modal') || e.target.closest('.auth-notification')) {
+        return;
+      }
+
+      // 2. Verificar se clicou em elemento protegido (ou se a página está sob bloqueio total)
+      const isPageLocked = document.getElementById('auth-lock-overlay');
       const protectedElement = e.target.closest('[data-auth-required]');
 
-      if (protectedElement && !authCore.isAuthenticated()) {
-        // Verificar se é interativo (link, botão, etc)
-        if (e.target.closest('a, button, [onclick]')) {
+      if ((protectedElement || isPageLocked) && !authCore.isAuthenticated()) {
+        // Se clicar em qualquer coisa interativa ou se a página estiver em lock total
+        if (e.target.closest('a, button, [onclick]') || isPageLocked) {
           e.preventDefault();
           e.stopPropagation();
 
           // Mostrar notificação de INTERAÇÃO
           if (window.authUI) {
-            window.authUI.showNotification('Você precisa estar autenticado para interagir com esta página', 'error');
+            const message = isPageLocked
+              ? 'Acesso restrito. Por favor, identifique-se para continuar.'
+              : 'Ação bloqueada. É necessário estar autenticado para interagir.';
 
-            // Abrir modal de login após 500ms
-            setTimeout(() => {
+            window.authUI.showNotification(message, 'error');
+
+            // Garantir que o modal esteja aberto
+            if (!window.authUI.isOpen) {
               window.authUI.openModal('login');
-            }, 500);
+            }
           }
         }
       }

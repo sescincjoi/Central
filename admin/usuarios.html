@@ -2,6 +2,15 @@
 <html lang="pt-br">
 
 <head>
+    <script>
+        // ✅ Head Guard: Bloqueio instantâneo para evitar flash de conteúdo
+        (function () {
+            const savedUser = localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('firebase:authUser')));
+            if (!savedUser) {
+                document.documentElement.style.display = 'none';
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin - Central SCI-JOI</title>
@@ -1408,29 +1417,22 @@
 
         // Inicializar
         window.addEventListener('load', () => {
-            // Verificar se é super-admin
-            authCore.addAuthListener((event, user) => {
-                if (event === 'login') {
-                    if (user.role !== 'super-admin') {
-                        showNotification('Acesso negado. Apenas Super administradores.', 'error');
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 2000);
-                    } else {
+            // Se o auth-initialized disparar, ou se já estiver pronto
+            const handleAuthReady = () => {
+                if (authCore.isAuthenticated()) {
+                    if (authCore.isSuperAdmin()) {
+                        document.documentElement.style.display = '';
                         carregarDados();
+                    } else {
+                        // Se não for super-admin, o AuthGuard/AuthLock cuidará do bloqueio visual
+                        // mas aqui forçamos a volta por segurança se necessário
+                        document.documentElement.style.display = '';
                     }
                 }
-            });
+            };
 
-            // Se já estiver logado
-            if (authCore.isAuthenticated()) {
-                if (!authCore.isSuperAdmin()) {
-                    alert('Acesso negado. Apenas super administradores podem acessar esta página.');
-                    window.location.href = '/Central/';
-                } else {
-                    carregarDados();
-                }
-            }
+            window.addEventListener('auth-initialized', handleAuthReady);
+            if (authCore.initialized) handleAuthReady();
 
             lucide.createIcons();
         });

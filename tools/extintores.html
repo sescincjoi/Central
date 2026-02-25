@@ -2,6 +2,15 @@
 <html lang="pt-BR">
 
 <head>
+  <script>
+    // ✅ Head Guard: Bloqueia renderização instantaneamente se a página exigir login
+    (function () {
+      const savedUser = localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('firebase:authUser')));
+      if (!savedUser) {
+        document.documentElement.style.display = 'none';
+      }
+    })();
+  </script>
   <link rel="manifest" href="../pwa/manifest.json">
   <meta name="theme-color" content="#212121">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,11 +29,6 @@
     }
 
     /* Evitar flash de conteúdo antes da autenticação */
-    body[data-auth-required] {
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
     body.auth-ready {
       opacity: 1;
     }
@@ -835,12 +839,14 @@
         // Mostrar a página assim que o estado de login for validado
         window.addEventListener('auth-state-changed', (e) => {
           if (e.detail && e.detail.user) {
+            document.documentElement.style.display = '';
             document.body.classList.add('auth-ready');
           }
         });
 
         // Caso já tenha inicializado (navegação entre abas/cache)
         if (authCore.initialized && authCore.isAuthenticated()) {
+          document.documentElement.style.display = '';
           document.body.classList.add('auth-ready');
         }
       } else {
