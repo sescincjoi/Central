@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>TAF - BA | Bombeiros de Aeródromo</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <title>TAF BA | Bombeiros de Aeródromo</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&family=Orbitron:wght@500;900&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --fire-red: #d32f2f;
-            --dark-red: #8b0000;
-            --coal: #121212;
-            --iron: #2a2a2a;
-            --steel: #454545;
-            --warning-amber: #ffc107;
-            --warning-orange: #ff8f00;
-            --success-green: #2e7d32;
-            --text-white: #f5f5f5;
+            --bg: #000000;
+            --panel: #141414;
+            --primary: rgb(20, 20, 20);
+            --text: #eaeaea;
+            --text-dim: #888888;
+            --green-ok: #4caf50;
+            --yellow-warn: #ff9800;
+            --red-hot: #f44336;
+            --steel: #333333;
         }
 
         * {
@@ -28,324 +32,606 @@
             touch-action: manipulation;
         }
 
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            position: fixed;
-            background-color: #000;
-        }
-
         body {
-            font-family: 'Oswald', sans-serif;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            color: var(--text-white);
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             display: flex;
             flex-direction: column;
             height: 100vh;
             height: 100dvh;
+            overflow: hidden;
         }
 
-        header {
-            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-red) 100%);
-            padding: calc(15px + env(safe-area-inset-top)) 10px 15px 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            flex-shrink: 0;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 20px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+        .cmd-bar {
+            background: var(--panel);
+            padding: calc(15px + env(safe-area-inset-top)) 15px 15px 15px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .white-divider {
-            height: 3px;
-            background-color: #ffffff;
-            width: 100%;
-            flex-shrink: 0;
-        }
-
-        .timeline-container {
-            background: #000;
-            height: 38px;
-            width: 100%;
-            position: relative;
-            display: flex;
+            justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--steel);
             flex-shrink: 0;
         }
 
-        .timeline-bar {
-            height: 100%;
-            width: 0%;
+        .sys-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sys-title svg {
+            fill: var(--text);
+        }
+
+        .sys-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+
+        .sys-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .btn-hist {
+            background: transparent;
+            border: 1px solid var(--steel);
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-hist:active {
+            background: #222;
+        }
+
+        .mission-strip {
+            background: var(--panel);
+            border-bottom: 1px solid var(--steel);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .strip-bg {
             position: absolute;
             left: 0;
             top: 0;
-            opacity: 0.8;
-            transition: background-color 0.3s ease;
+            height: 100%;
+            width: 0%;
+            background: rgba(51, 51, 51, 0.4);
+            z-index: 1;
+            transition: width 0.3s ease, background-color 0.3s ease;
         }
 
-        .bg-10 { background-color: var(--success-green) !important; }
-        .bg-9  { background-color: var(--warning-amber) !important; }
-        .bg-8  { background-color: var(--warning-orange) !important; }
-        .bg-7  { background-color: var(--fire-red) !important; }
-        .bg-fail { background-color: #000 !important; border-right: 2px solid var(--fire-red); }
+        .strip-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            z-index: 1;
+            transition: width 0.3s linear, background-color 0.3s ease;
+        }
 
-        .timeline-info {
+        .strip-bar.ok {
+            background: rgba(76, 175, 80, 0.2);
+            border-right: 2px solid var(--green-ok);
+        }
+
+        .strip-bar.warn {
+            background: rgba(255, 152, 0, 0.2);
+            border-right: 2px solid var(--yellow-warn);
+        }
+
+        .strip-bar.fail {
+            background: rgba(244, 67, 54, 0.2);
+            border-right: 2px solid var(--red-hot);
+        }
+
+        .strip-info {
             position: relative;
             z-index: 2;
             width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 12px;
-            font-family: 'JetBrains Mono', monospace;
         }
 
-        .score-indicator  { font-size: 13px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
-        .countdown-timer  { font-size: 18px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
+        .strip-status {
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
 
-        .main-content {
+        .strip-time {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .blink {
+            animation: flash 1s infinite alternate;
+        }
+
+        @keyframes flash {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0.3;
+            }
+        }
+
+        .critical-blink {
+            animation: blinker 0.4s infinite alternate;
+        }
+
+        @keyframes blinker {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0.3;
+            }
+        }
+
+        .main-stage {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 8px 12px 10px 12px;
-            max-width: 450px;
-            margin: 0 auto;
-            width: 100%;
-            justify-content: space-between;
-            overflow: hidden;
+            padding: 12px 15px;
+            gap: 10px;
+            overflow-y: auto;
         }
 
         .input-group {
-            background: var(--iron);
-            padding: 6px 12px;
+            background: var(--panel);
+            padding: 10px 15px;
             border-radius: 6px;
-            border-left: 4px solid var(--warning-amber);
-            flex-shrink: 0;
+            border-left: 3px solid var(--steel);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .input-group label {
-            display: block;
-            font-size: 9px;
-            color: #aaa;
-            margin-bottom: 2px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text-dim);
             text-transform: uppercase;
         }
 
         select {
-            width: 100%;
             background: #000;
-            color: var(--warning-amber);
+            color: #fff;
             border: 1px solid var(--steel);
-            padding: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
+            padding: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
             border-radius: 4px;
             outline: none;
             appearance: none;
         }
 
-        .card {
-            background: linear-gradient(145deg, #222, #111);
+        .ex-card {
+            background: var(--panel);
             border: 1px solid var(--steel);
             border-radius: 8px;
-            padding: 10px 15px;
+            padding: 12px 15px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            flex: 1;
-            margin: 4px 0;
-            min-height: 80px;
-            transition: all 0.3s ease;
+            justify-content: center;
         }
 
-        .card.active {
-            border-color: var(--fire-red);
-            background: #1a0a0a;
-            box-shadow: 0 0 12px rgba(211, 47, 47, 0.25);
+        .ex-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--steel);
+            transition: background 0.3s;
         }
 
-        .exercise-header {
+        .ex-card.active {
+            border-color: var(--text-dim);
+            background: #1a1a1a;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .ex-card.active::before {
+            background: #fff;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        .ex-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .ex-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .ex-target {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            background: #000;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-dim);
+            border: 1px solid var(--steel);
+        }
+
+        .ex-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timer-val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 38px;
+            color: var(--text-dim);
+            font-weight: bold;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .ex-card.active .timer-val {
+            color: #fff;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+            animation: pulseTimer 2s infinite;
+        }
+
+        @keyframes pulseTimer {
+            0% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            }
+
+            50% {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+            }
+
+            100% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        .btn-trigger {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            border: 1px solid var(--steel);
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-trigger svg {
+            fill: #616161;
             margin-bottom: 2px;
         }
 
-        .exercise-title {
-            text-transform: uppercase;
-            font-size: 12px;
-            font-weight: 700;
-            color: #aaa;
-            letter-spacing: 0.5px;
-        }
-
-        .exercise-goal {
+        .trig-label {
+            font-family: 'Rajdhani', sans-serif;
             font-size: 10px;
-            background: var(--steel);
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace;
-            color: #eee;
+            font-weight: 700;
+            color: #616161;
         }
 
-        .timer-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            flex: 1;
+        .btn-trigger.running {
+            background: var(--text);
+            border-color: #fff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
         }
 
-        .timer-display {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 32px;
+        .btn-trigger.running svg {
+            fill: #000;
+        }
+
+        .btn-trigger.running .trig-label {
+            color: #000;
+        }
+
+        .btn-end {
+            background: var(--red-hot);
             color: #fff;
-            text-align: left;
-            flex-grow: 1;
-        }
-
-        .active .timer-display { color: var(--fire-red); }
-
-        .btn-action {
-            background: var(--iron);
-            border: 1px solid var(--steel);
-            color: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-            margin-left: 10px;
-        }
-
-        .btn-action.running {
-            background: var(--fire-red);
-            box-shadow: 0 0 10px var(--fire-red);
-        }
-
-        .final-btn {
-            background: var(--success-green);
-            color: white;
             border: none;
-            padding: 18px 12px;
-            font-family: 'Oswald', sans-serif;
+            padding: 18px;
+            font-family: 'Rajdhani', sans-serif;
             font-size: 16px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             border-radius: 6px;
+            margin-top: 5px;
             cursor: pointer;
-            flex-shrink: 0;
-            margin-bottom: calc(10px + env(safe-area-inset-bottom));
-            box-shadow: 0 4px 0 #1b4b1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 0 #b71c1c;
+            margin-bottom: env(safe-area-inset-bottom);
         }
 
-        .overlay {
+        .btn-end:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #b71c1c;
+        }
+
+        #overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.97);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
             display: none;
             justify-content: center;
             align-items: center;
-            padding: 20px;
             z-index: 100;
-        }
-
-        .modal {
-            background: var(--iron);
-            width: 100%;
-            max-width: 380px;
-            border: 2px solid #ffffff;
-            border-radius: 8px;
             padding: 20px;
-            text-align: center;
-            display: none;
         }
 
-        .loading-container {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .intro-modal {
-            background: var(--iron);
+        .modal-panel {
             width: 100%;
-            max-width: 380px;
-            border-left: 6px solid var(--fire-red);
-            padding: 25px;
+            max-width: 400px;
+            background: var(--panel);
             border-radius: 8px;
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            padding: 28px;
+            position: relative;
+            display: none;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            text-align: center;
+            border: 1px solid var(--steel);
         }
 
-        .intro-modal h2 {
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 900;
             color: #fff;
+            letter-spacing: 2px;
             margin-bottom: 20px;
-            font-size: 22px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--steel);
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .instruction-item {
-            margin-bottom: 15px;
             display: flex;
-            gap: 15px;
             align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 15px;
+            text-align: left;
         }
 
         .step-num {
-            background: var(--fire-red);
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--steel);
             color: #fff;
             width: 24px;
             height: 24px;
-            border-radius: 50%;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
             font-size: 12px;
+            font-weight: bold;
             flex-shrink: 0;
             margin-top: 2px;
         }
 
         .step-text {
-            color: #ccc;
+            font-family: 'Rajdhani', sans-serif;
             font-size: 14px;
+            color: var(--text-dim);
             line-height: 1.4;
         }
 
         .step-text strong {
             color: #fff;
             display: block;
-            margin-bottom: 2px;
             font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--steel);
+            background: var(--primary);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-primary:active {
+            background: #333;
+        }
+
+        .btn-danger {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            background: var(--red-hot);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #b71c1c;
+            margin-top: 10px;
+        }
+
+        .btn-ghost {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid var(--steel);
+            background: transparent;
+            color: var(--text-dim);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .loader-wrap {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            color: #fff;
+        }
+
+        .loader-ring {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--steel);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: rot 1s linear infinite;
+        }
+
+        @keyframes rot {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result-rows {
+            margin-top: 20px;
+            text-align: left;
+            background: #000;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--steel);
+            margin-bottom: 15px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--steel);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .rr-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .rr-val {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .result-total {
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid var(--steel);
+        }
+
+        .result-total .rr-val {
+            font-size: 20px;
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: bold;
+        }
+
+        .nota-detail {
+            font-size: 12px;
+            font-family: 'Share Tech Mono', monospace;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        .nota-detail.positivo {
+            color: var(--green-ok);
+        }
+
+        .nota-detail.negativo {
+            color: var(--red-hot);
+        }
+
+        .btn-export {
+            background: var(--panel);
+            color: #fff;
+            border: 1px solid var(--steel);
+            padding: 14px;
+            width: 100%;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-family: 'Rajdhani', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+            font-size: 14px;
+            letter-spacing: 1px;
         }
 
         #toast {
@@ -353,652 +639,606 @@
             top: 15%;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--dark-red);
-            padding: 10px 20px;
+            background: #000;
+            color: #fff;
+            padding: 12px 24px;
             border-radius: 6px;
             display: none;
             z-index: 1000;
-            border: 1px solid var(--warning-amber);
+            font-family: 'Rajdhani', sans-serif;
             font-weight: bold;
+            border: 1px solid var(--steel);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            font-size: 14px;
+            letter-spacing: 1px;
             white-space: nowrap;
         }
-
-        .critical-blink { animation: blinker 0.4s infinite alternate; }
-        @keyframes blinker { from { opacity: 1; } to { opacity: 0.3; } }
-
-        .btn-reset {
-            background: #ffffff;
-            color: #000000;
-            border: none;
-            padding: 15px;
-            width: 100%;
-            margin-top: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 6px;
-            text-transform: uppercase;
-            font-family: 'Oswald';
-            box-shadow: 0 4px 0 #cccccc;
-            transition: transform 0.1s;
-        }
-        .btn-reset:active { transform: translateY(2px); box-shadow: 0 2px 0 #cccccc; }
-
-        /* Botão de exportar imagem */
-        .btn-export {
-            background: var(--iron);
-            color: #fff;
-            border: 1px solid var(--steel);
-            padding: 15px;
-            width: 100%;
-            margin-top: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 6px;
-            text-transform: uppercase;
-            font-family: 'Oswald';
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-        .btn-export:hover { background: #3a3a3a; }
-
-        /* Resultado por nota */
-        .nota-detail {
-            font-size: 11px;
-            color: #aaa;
-            font-family: 'JetBrains Mono', monospace;
-            margin-top: 6px;
-        }
-        .nota-detail.positivo { color: #4caf50; }
-        .nota-detail.negativo { color: #f44336; }
     </style>
 </head>
+
 <body>
 
-<header>
-    <h1>
-        <svg viewBox="0 0 24 24" width="22" height="22" style="fill:#fff;"><path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,3L19,6.11V11C19,15.33 16.25,19.43 12,20.93C7.75,19.43 5,15.33 5,11V6.11L12,3Z"/></svg>
-        TAF - BA
-    </h1>
-</header>
-
-<div class="white-divider"></div>
-
-<div class="timeline-container">
-    <div class="timeline-bar" id="progressBar"></div>
-    <div class="timeline-info">
-        <span class="score-indicator" id="notaAtual">NOTA: -</span>
-        <span class="countdown-timer" id="regressivo">00:00,00</span>
-    </div>
-</div>
-
-<div class="main-content">
-    <div class="input-group">
-        <label for="idade">Idade do Bombeiro</label>
-        <select id="idade"></select>
-    </div>
-
-    <!-- Flexão -->
-    <div class="card" id="card-flexao">
-        <div class="exercise-header">
-            <span class="exercise-title">Flexões</span>
-            <span class="exercise-goal">30 Rep.</span>
-        </div>
-        <div class="timer-row">
-            <div class="timer-display" id="flexaoTime">00:00,00</div>
-            <button class="btn-action" id="btn-flexao" onclick="ativar('flexao')" aria-label="Iniciar flexão">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- Abdominal -->
-    <div class="card" id="card-abdominal">
-        <div class="exercise-header">
-            <span class="exercise-title">Abdominais</span>
-            <span class="exercise-goal">45 Rep.</span>
-        </div>
-        <div class="timer-row">
-            <div class="timer-display" id="abdominalTime">00:00,00</div>
-            <button class="btn-action" id="btn-abdominal" onclick="ativar('abdominal')" aria-label="Iniciar abdominal">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- Polichinelo -->
-    <div class="card" id="card-polichinelo">
-        <div class="exercise-header">
-            <span class="exercise-title">Polichinelos</span>
-            <span class="exercise-goal">45 Rep.</span>
-        </div>
-        <div class="timer-row">
-            <div class="timer-display" id="polichineloTime">00:00,00</div>
-            <button class="btn-action" id="btn-polichinelo" onclick="ativar('polichinelo')" aria-label="Iniciar polichinelo">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
-            </button>
-        </div>
-    </div>
-
-    <button class="final-btn" onclick="confirmarEncerramento()">Encerrar Missão</button>
-</div>
-
-<!-- Overlay unificado -->
-<div class="overlay" id="overlay">
-    <div class="intro-modal" id="introModal">
-        <h2>Guia de Operação</h2>
-
-        <div class="instruction-item">
-            <div class="step-num">1</div>
-            <div class="step-text">
-                <strong>Configuração</strong>
-                Selecione a idade do Bombeiro para carregar os critérios da avaliação.
+    <div class="cmd-bar">
+        <div class="sys-title">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <path
+                    d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,3L19,6.11V11C19,15.33 16.25,19.43 12,20.93C7.75,19.43 5,15.33 5,11V6.11L12,3Z"
+                    fill="#fff" />
+            </svg>
+            <div>
+                <div class="sys-name">TAF BA</div>
+                <div class="sys-sub">MOD. FISIOLÓGICO</div>
             </div>
         </div>
-        <div class="instruction-item">
-            <div class="step-num">2</div>
-            <div class="step-text">
-                <strong>Início</strong>
-                Toque no Play em qualquer teste para começar. O tempo é contínuo e compartilhado.
-            </div>
-        </div>
-        <div class="instruction-item">
-            <div class="step-num">3</div>
-            <div class="step-text">
-                <strong>Migração</strong>
-                Toque no Play de outro teste para transferir a cronometragem. Você pode alternar livremente.
-            </div>
-        </div>
-        <div class="instruction-item">
-            <div class="step-num">4</div>
-            <div class="step-text">
-                <strong>Conclusão</strong>
-                O cronômetro só para definitivamente ao clicar em "Encerrar Missão".
-            </div>
-        </div>
-
-        <button style="background:var(--fire-red);color:white;border:none;padding:15px;width:100%;cursor:pointer;font-weight:bold;border-radius:6px;text-transform:uppercase;font-family:'Oswald';margin-top:10px;" onclick="fecharIntro()">Iniciar Operação</button>
-    </div>
-
-    <!-- Modal de confirmação de encerramento -->
-    <div class="modal" id="confirmModal" style="border-color: var(--fire-red);">
-        <svg viewBox="0 0 24 24" width="40" height="40" fill="#d32f2f" style="margin-bottom:10px;"><path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z"/></svg>
-        <h2 style="text-transform:uppercase;color:#fff;font-size:18px;margin-bottom:8px;">Encerrar Missão?</h2>
-        <p style="color:#aaa;font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;line-height:1.5;">O cronômetro será parado<br>e o resultado calculado.</p>
-        <button onclick="confirmarSim()" style="background:var(--fire-red);color:white;border:none;padding:14px;width:100%;cursor:pointer;font-weight:bold;border-radius:6px;text-transform:uppercase;font-family:'Oswald';font-size:15px;margin-bottom:10px;">Confirmar Encerramento</button>
-        <button onclick="confirmarNao()" style="background:var(--iron);color:#ccc;border:1px solid var(--steel);padding:12px;width:100%;cursor:pointer;font-weight:bold;border-radius:6px;text-transform:uppercase;font-family:'Oswald';font-size:14px;">Voltar ao TAF</button>
-    </div>
-
-    <div class="loading-container" id="loader">
-        <div class="spinner"></div>
-        <p style="letter-spacing:2px;color:#fff;font-weight:bold;text-transform:uppercase;">Processando Dados...</p>
-    </div>
-
-    <div class="modal" id="finalModal">
-        <h2 style="text-transform:uppercase;color:#fff;font-size:18px;">Relatório TAF</h2>
-        <div id="results-content"></div>
-        <button class="btn-export" onclick="exportarImagem()">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
-            Salvar como Imagem
+        <button class="btn-hist" onclick="history.back()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+            </svg>
+            VOLTAR
         </button>
-        <button class="btn-reset" onclick="fecharModalCompleto()">Novo TAF</button>
     </div>
-</div>
 
-<div id="toast"></div>
+    <!-- Barra de Missão (Substitui timeline-container) -->
+    <div class="mission-strip">
+        <div class="strip-bar" id="progressBar"></div>
+        <div class="strip-info">
+            <span class="strip-status" id="notaAtual">NOTA: -</span>
+            <span class="strip-time" id="regressivo">00:00,00</span>
+        </div>
+    </div>
 
-<!-- Canvas oculto para exportação -->
-<canvas id="exportCanvas" style="display:none;"></canvas>
+    <div class="main-stage">
+        <div class="input-group">
+            <label for="idade">Idade do Bombeiro</label>
+            <select id="idade"></select>
+        </div>
 
-<script>
-    // ─── Estado da aplicação ───────────────────────────────────────────────────
-    const EXERCISES = ['flexao', 'abdominal', 'polichinelo'];
+        <!-- Flexão -->
+        <div class="ex-card" id="card-flexao">
+            <div class="ex-header">
+                <span class="ex-title">Flexões</span>
+                <span class="ex-target">30 REP</span>
+            </div>
+            <div class="ex-row">
+                <div class="timer-val" id="flexaoTime">00:00,00</div>
+                <button class="btn-trigger" id="btn-flexao" onclick="ativar('flexao')">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161" />
+                    </svg>
+                    <span class="trig-label">INICIAR</span>
+                </button>
+            </div>
+        </div>
 
-    const state = {
-        activeExercise: null,
-        rafId: null,
-        startTimestamp: 0,
-        timers: { flexao: 0, abdominal: 0, polichinelo: 0 },
-        finalData: null,  // guarda dados para exportação
-    };
+        <!-- Abdominal -->
+        <div class="ex-card" id="card-abdominal">
+            <div class="ex-header">
+                <span class="ex-title">Abdominais</span>
+                <span class="ex-target">45 REP</span>
+            </div>
+            <div class="ex-row">
+                <div class="timer-val" id="abdominalTime">00:00,00</div>
+                <button class="btn-trigger" id="btn-abdominal" onclick="ativar('abdominal')">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161" />
+                    </svg>
+                    <span class="trig-label">INICIAR</span>
+                </button>
+            </div>
+        </div>
 
-    // ─── Limites por faixa etária (ms) ────────────────────────────────────────
-    function getLimites(idade) {
-        if (!idade) return null;
-        return Number(idade) < 40
-            ? { 10: 120000, 9: 140000, 8: 160000, 7: 180000 }
-            : { 10: 180000, 9: 200000, 8: 220000, 7: 240000 };
-    }
+        <!-- Polichinelo -->
+        <div class="ex-card" id="card-polichinelo">
+            <div class="ex-header">
+                <span class="ex-title">Polichinelos</span>
+                <span class="ex-target">45 REP</span>
+            </div>
+            <div class="ex-row">
+                <div class="timer-val" id="polichineloTime">00:00,00</div>
+                <button class="btn-trigger" id="btn-polichinelo" onclick="ativar('polichinelo')">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161" />
+                    </svg>
+                    <span class="trig-label">INICIAR</span>
+                </button>
+            </div>
+        </div>
 
-    // ─── Formatação de tempo ───────────────────────────────────────────────────
-    function formatTime(ms) {
-        const absMs = Math.abs(ms);
-        const mins  = Math.floor(absMs / 60000);
-        const secs  = Math.floor((absMs % 60000) / 1000);
-        const cents = Math.floor((absMs % 1000) / 10);
-        return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')},${String(cents).padStart(2,'0')}`;
-    }
+        <button class="btn-end" onclick="confirmarEncerramento()">ENCERRAR MISSÃO</button>
+    </div>
 
-    // ─── Cálculo de nota ──────────────────────────────────────────────────────
-    function calcularNota(total, limites) {
-        if (!limites) return { nota: '-', colorClass: '' };
-        if (total <= limites[10]) return { nota: '10', colorClass: 'bg-10' };
-        if (total <= limites[9])  return { nota: '9',  colorClass: 'bg-9'  };
-        if (total <= limites[8])  return { nota: '8',  colorClass: 'bg-8'  };
-        if (total <= limites[7])  return { nota: '7',  colorClass: 'bg-7'  };
-        return { nota: 'REPROVADO', colorClass: 'bg-fail' };
-    }
+    <!-- Overlay unificado -->
+    <div id="overlay">
+        <div class="modal-panel" id="introModal">
+            <div class="modal-title">Guia de Operação</div>
+            <div class="instruction-item">
+                <div class="step-num">1</div>
+                <div class="step-text"><strong>Configuração</strong>Selecione a idade do Bombeiro para carregar os
+                    critérios da avaliação.</div>
+            </div>
+            <div class="instruction-item">
+                <div class="step-num">2</div>
+                <div class="step-text"><strong>Início</strong>Toque no Play em qualquer teste para começar. O tempo é
+                    contínuo e compartilhado.</div>
+            </div>
+            <div class="instruction-item">
+                <div class="step-num">3</div>
+                <div class="step-text"><strong>Migração</strong>Toque no Play de outro teste para transferir a
+                    cronometragem. Você pode alternar livremente.</div>
+            </div>
+            <div class="instruction-item">
+                <div class="step-num">4</div>
+                <div class="step-text"><strong>Conclusão</strong>O cronômetro só para definitivamente ao clicar em
+                    "Encerrar Missão".</div>
+            </div>
+            <button class="btn-primary" onclick="fecharIntro()">Iniciar Operação</button>
+        </div>
 
-    // ─── Popoulate select de idades ───────────────────────────────────────────
-    function popularSelectIdade() {
-        const sel = document.getElementById('idade');
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'ESCOLHA A IDADE';
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        sel.appendChild(placeholder);
+        <!-- Modal de confirmação de encerramento -->
+        <div class="modal-panel" id="confirmModal">
+            <div class="modal-title" style="color:var(--red-hot);border-color:var(--steel);">ENCERRAR MISSÃO?</div>
+            <p
+                style="color:var(--text-dim);font-size:13px;font-family:'Share Tech Mono',monospace;margin-bottom:20px;line-height:1.5;">
+                O cronômetro será parado<br>e o resultado calculado.</p>
+            <button class="btn-danger" onclick="confirmarSim()" style="box-shadow:none;">Confirmar Encerramento</button>
+            <button class="btn-ghost" onclick="confirmarNao()">Voltar ao TAF</button>
+        </div>
 
-        for (let i = 18; i <= 65; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = `${i} ANOS`;
-            sel.appendChild(opt);
-        }
+        <div class="loader-wrap" id="loader">
+            <div class="loader-ring"></div>
+            <div style="font-family:'Share Tech Mono',monospace;font-weight:bold;">PROCESSANDO DADOS...</div>
+        </div>
 
-        sel.addEventListener('change', resetarContagem);
-    }
+        <div class="modal-panel" id="finalModal">
+            <div class="modal-title">RELATÓRIO TAF</div>
+            <div id="results-content"></div>
+            <button class="btn-export" style="background:var(--primary);border:none;" onclick="exportarImagem()">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+                    <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
+                </svg>
+                SALVAR COMO IMAGEM
+            </button>
+            <button class="btn-ghost" onclick="fecharModalCompleto()">NOVO TAF</button>
+        </div>
+    </div>
 
-    // ─── Toast helper ─────────────────────────────────────────────────────────
-    function showToast(msg, duration = 3000) {
-        const t = document.getElementById('toast');
-        t.innerText = msg;
-        t.style.display = 'block';
-        clearTimeout(t._timeout);
-        t._timeout = setTimeout(() => { t.style.display = 'none'; }, duration);
-    }
+    <div id="toast"></div>
 
-    // ─── Timeline / barra de progresso ───────────────────────────────────────
-    function resetarContagem() {
-        const idadeVal = document.getElementById('idade').value;
-        if (!idadeVal) return;
-        const limites = getLimites(Number(idadeVal));
-        document.getElementById('regressivo').innerText = formatTime(limites[7]);
-        document.getElementById('notaAtual').innerText  = 'NOTA: 10';
-        const bar = document.getElementById('progressBar');
-        bar.className   = 'timeline-bar bg-10';
-        bar.style.width = '0%';
-    }
+    <!-- Canvas oculto para exportação -->
+    <canvas id="exportCanvas" style="display:none;"></canvas>
 
-    function updateTimeline() {
-        const idadeVal = document.getElementById('idade').value;
-        if (!idadeVal) return;
+    <script>
+        // ─── Estado da aplicação ───────────────────────────────────────────────────
+        const EXERCISES = ['flexao', 'abdominal', 'polichinelo'];
 
-        const limites = getLimites(Number(idadeVal));
-        const total   = state.timers.flexao + state.timers.abdominal + state.timers.polichinelo;
-        const { nota, colorClass } = calcularNota(total, limites);
-
-        const bar     = document.getElementById('progressBar');
-        const notaTxt = document.getElementById('notaAtual');
-        const reg     = document.getElementById('regressivo');
-
-        bar.className   = 'timeline-bar ' + colorClass;
-        bar.style.width = Math.min((total / limites[7]) * 100, 100) + '%';
-        notaTxt.innerText = 'NOTA: ' + nota;
-        reg.innerText     = formatTime(Math.max(0, limites[7] - total));
-
-        if (nota === 'REPROVADO') {
-            reg.classList.add('critical-blink');
-            bar.classList.add('critical-blink');
-        } else {
-            reg.classList.remove('critical-blink');
-            bar.classList.remove('critical-blink');
-        }
-    }
-
-    // ─── Loop de animação (requestAnimationFrame) ──────────────────────────────
-    function rafLoop(timestamp) {
-        const ex = state.activeExercise;
-        if (!ex) return;
-
-        state.timers[ex] = Date.now() - state.startTimestamp;
-        document.getElementById(ex + 'Time').innerText = formatTime(state.timers[ex]);
-        updateTimeline();
-
-        state.rafId = requestAnimationFrame(rafLoop);
-    }
-
-    // ─── Ativar exercício ─────────────────────────────────────────────────────
-    function ativar(exercise) {
-        const idade = document.getElementById('idade').value;
-        if (!idade) { showToast('⚠️ SELECIONE A IDADE!'); return; }
-        if (state.activeExercise === exercise) return;
-
-        // Cancela o loop anterior
-        if (state.rafId) cancelAnimationFrame(state.rafId);
-
-        state.activeExercise = exercise;
-        state.startTimestamp  = Date.now() - state.timers[exercise];
-
-        state.rafId = requestAnimationFrame(rafLoop);
-        updateUI();
-    }
-
-    // ─── Atualiza visual dos cards/botões ─────────────────────────────────────
-    function updateUI() {
-        const playIcon = `<svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>`;
-
-        EXERCISES.forEach(ex => {
-            const card = document.getElementById('card-' + ex);
-            const btn  = document.getElementById('btn-'  + ex);
-            const isActive = state.activeExercise === ex;
-
-            card.classList.toggle('active', isActive);
-            btn.classList.toggle('running', isActive);
-            btn.innerHTML = playIcon;
-        });
-    }
-
-    // ─── Confirmação de encerramento ──────────────────────────────────────────
-    function confirmarEncerramento() {
-        const idade = document.getElementById('idade').value;
-        if (!idade) { showToast('⚠️ SELECIONE A IDADE!'); return; }
-
-        // Pausa o loop enquanto aguarda confirmação
-        if (state.rafId) cancelAnimationFrame(state.rafId);
-
-        const overlay = document.getElementById('overlay');
-        overlay.style.display = 'flex';
-        document.getElementById('confirmModal').style.display = 'block';
-        document.getElementById('introModal').style.display  = 'none';
-        document.getElementById('loader').style.display      = 'none';
-        document.getElementById('finalModal').style.display  = 'none';
-    }
-
-    function confirmarSim() {
-        document.getElementById('confirmModal').style.display = 'none';
-        finalizar();
-    }
-
-    function confirmarNao() {
-        document.getElementById('overlay').style.display      = 'none';
-        document.getElementById('confirmModal').style.display = 'none';
-
-        // Retoma o loop se havia exercício ativo
-        if (state.activeExercise) {
-            state.startTimestamp = Date.now() - state.timers[state.activeExercise];
-            state.rafId = requestAnimationFrame(rafLoop);
-        }
-    }
-
-    // ─── Finalizar TAF ────────────────────────────────────────────────────────
-    function finalizar() {
-        if (state.rafId) cancelAnimationFrame(state.rafId);
-        state.activeExercise = null;
-        updateUI();
-
-        const idadeVal = document.getElementById('idade').value;
-        if (!idadeVal) { showToast('⚠️ SELECIONE A IDADE!'); return; }
-
-        const limites = getLimites(Number(idadeVal));
-        const total   = state.timers.flexao + state.timers.abdominal + state.timers.polichinelo;
-        const { nota } = calcularNota(total, limites);
-
-        // Detalhamento de notas (diferença para próxima/anterior)
-        const notaNum = parseInt(nota);
-        let detalhe = '';
-        if (!isNaN(notaNum)) {
-            if (notaNum < 10) {
-                const faltou = total - limites[notaNum + 1];
-                detalhe = `<div class="nota-detail negativo">▲ ${formatTime(faltou)} além do limite da nota ${notaNum + 1}</div>`;
-            } else {
-                detalhe = `<div class="nota-detail positivo">✔ Nota máxima atingida</div>`;
-            }
-        } else {
-            const faltou = total - limites[7];
-            detalhe = `<div class="nota-detail negativo">▲ ${formatTime(faltou)} além do limite de aprovação</div>`;
-        }
-
-        // Guarda dados para exportação
-        state.finalData = {
-            idade: idadeVal,
-            timers: { ...state.timers },
-            total,
-            nota,
-            detalhe,
-            limites,
+        const state = {
+            activeExercise: null,
+            rafId: null,
+            startTimestamp: 0,
+            timers: { flexao: 0, abdominal: 0, polichinelo: 0 },
+            finalData: null,  // guarda dados para exportação
         };
 
-        document.getElementById('results-content').innerHTML = `
-            <div style="font-family:'JetBrains Mono';background:#000;padding:12px;border-radius:6px;border:1px solid #333;margin:10px 0;text-align:left;color:#fff;font-size:13px;">
-                FLEXÕES: ${formatTime(state.timers.flexao)}<br>
-                ABDOMINAIS: ${formatTime(state.timers.abdominal)}<br>
-                POLICHINELOS: ${formatTime(state.timers.polichinelo)}<br><br>
-                <span style="color:#aaa">TEMPO TOTAL:</span> ${formatTime(total)}
+        // ─── Limites por faixa etária (ms) ────────────────────────────────────────
+        function getLimites(idade) {
+            if (!idade) return null;
+            return Number(idade) < 40
+                ? { 10: 120000, 9: 140000, 8: 160000, 7: 180000 }
+                : { 10: 180000, 9: 200000, 8: 220000, 7: 240000 };
+        }
+
+        // ─── Formatação de tempo ───────────────────────────────────────────────────
+        function formatTime(ms) {
+            const absMs = Math.abs(ms);
+            const mins = Math.floor(absMs / 60000);
+            const secs = Math.floor((absMs % 60000) / 1000);
+            const cents = Math.floor((absMs % 1000) / 10);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(cents).padStart(2, '0')}`;
+        }
+
+        // ─── Cálculo de nota ──────────────────────────────────────────────────────
+        function calcularNota(total, limites) {
+            if (!limites) return { nota: '-', colorClass: '' };
+            if (total <= limites[10]) return { nota: '10', colorClass: 'ok' };
+            if (total <= limites[9]) return { nota: '9', colorClass: 'warn' };
+            if (total <= limites[8]) return { nota: '8', colorClass: 'warn' };
+            if (total <= limites[7]) return { nota: '7', colorClass: 'fail' };
+            return { nota: 'REPROVADO', colorClass: 'fail' };
+        }
+
+        // ─── Popoulate select de idades ───────────────────────────────────────────
+        function popularSelectIdade() {
+            const sel = document.getElementById('idade');
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'ESCOLHA A IDADE';
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            sel.appendChild(placeholder);
+
+            for (let i = 18; i <= 65; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `${i} ANOS`;
+                sel.appendChild(opt);
+            }
+
+            sel.addEventListener('change', resetarContagem);
+        }
+
+        // ─── Toast helper ─────────────────────────────────────────────────────────
+        function showToast(msg, duration = 3000) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            clearTimeout(t._timeout);
+            t._timeout = setTimeout(() => { t.style.display = 'none'; }, duration);
+        }
+
+        // ─── Timeline / barra de progresso ───────────────────────────────────────
+        function resetarContagem() {
+            const idadeVal = document.getElementById('idade').value;
+            if (!idadeVal) return;
+            const limites = getLimites(Number(idadeVal));
+            document.getElementById('regressivo').innerText = formatTime(limites[7]);
+            document.getElementById('notaAtual').innerText = 'NOTA: 10';
+            document.getElementById('notaAtual').style.color = 'var(--text-dim)';
+            const bar = document.getElementById('progressBar');
+            bar.className = 'strip-bar ok';
+            bar.style.width = '0%';
+        }
+
+        function updateTimeline() {
+            const idadeVal = document.getElementById('idade').value;
+            if (!idadeVal) return;
+
+            const limites = getLimites(Number(idadeVal));
+            const total = state.timers.flexao + state.timers.abdominal + state.timers.polichinelo;
+            const { nota, colorClass } = calcularNota(total, limites);
+
+            const bar = document.getElementById('progressBar');
+            const notaTxt = document.getElementById('notaAtual');
+            const reg = document.getElementById('regressivo');
+
+            bar.className = 'strip-bar ' + colorClass;
+            bar.style.width = Math.min((total / limites[7]) * 100, 100) + '%';
+            notaTxt.innerText = 'NOTA: ' + nota;
+
+            if (colorClass === 'ok') notaTxt.style.color = 'var(--green-ok)';
+            else if (colorClass === 'warn') notaTxt.style.color = 'var(--yellow-warn)';
+            else notaTxt.style.color = 'var(--red-hot)';
+
+            reg.innerText = formatTime(Math.max(0, limites[7] - total));
+
+            if (nota === 'REPROVADO') {
+                reg.classList.add('critical-blink');
+                bar.classList.add('critical-blink');
+            } else {
+                reg.classList.remove('critical-blink');
+                bar.classList.remove('critical-blink');
+            }
+        }
+
+        // ─── Loop de animação (requestAnimationFrame) ──────────────────────────────
+        function rafLoop(timestamp) {
+            const ex = state.activeExercise;
+            if (!ex) return;
+
+            state.timers[ex] = Date.now() - state.startTimestamp;
+            document.getElementById(ex + 'Time').innerText = formatTime(state.timers[ex]);
+            updateTimeline();
+
+            state.rafId = requestAnimationFrame(rafLoop);
+        }
+
+        // ─── Ativar exercício ─────────────────────────────────────────────────────
+        function ativar(exercise) {
+            const idade = document.getElementById('idade').value;
+            if (!idade) { showToast('⚠️ SELECIONE A IDADE!'); return; }
+            if (state.activeExercise === exercise) return;
+
+            if (state.rafId) cancelAnimationFrame(state.rafId);
+
+            state.activeExercise = exercise;
+            state.startTimestamp = Date.now() - state.timers[exercise];
+
+            state.rafId = requestAnimationFrame(rafLoop);
+            updateUI();
+        }
+
+        // ─── Atualiza visual dos cards/botões ─────────────────────────────────────
+        function updateUI() {
+            EXERCISES.forEach(ex => {
+                const card = document.getElementById('card-' + ex);
+                const btn = document.getElementById('btn-' + ex);
+                const isActive = state.activeExercise === ex;
+
+                card.classList.toggle('active', isActive);
+                btn.classList.toggle('running', isActive);
+                btn.innerHTML = isActive
+                    ? `<svg viewBox="0 0 24 24" width="24" height="24" style="color:#000"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="currentColor"/></svg><span class="trig-label" style="color:#000">ATIVO</span>`
+                    : `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161"/></svg><span class="trig-label">INICIAR</span>`;
+            });
+        }
+
+        // ─── Confirmação de encerramento ──────────────────────────────────────────
+        function confirmarEncerramento() {
+            const idade = document.getElementById('idade').value;
+            if (!idade) { showToast('⚠️ SELECIONE A IDADE!'); return; }
+
+            if (state.rafId) cancelAnimationFrame(state.rafId);
+
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = 'flex';
+            document.getElementById('confirmModal').style.display = 'block';
+            document.getElementById('introModal').style.display = 'none';
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('finalModal').style.display = 'none';
+        }
+
+        function confirmarSim() {
+            document.getElementById('confirmModal').style.display = 'none';
+            finalizar();
+        }
+
+        function confirmarNao() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmModal').style.display = 'none';
+
+            if (state.activeExercise) {
+                state.startTimestamp = Date.now() - state.timers[state.activeExercise];
+                state.rafId = requestAnimationFrame(rafLoop);
+            }
+        }
+
+        // ─── Finalizar TAF ────────────────────────────────────────────────────────
+        function finalizar() {
+            if (state.rafId) cancelAnimationFrame(state.rafId);
+            state.activeExercise = null;
+            updateUI();
+
+            const idadeVal = document.getElementById('idade').value;
+            if (!idadeVal) { showToast('⚠️ SELECIONE A IDADE!'); return; }
+
+            const limites = getLimites(Number(idadeVal));
+            const total = state.timers.flexao + state.timers.abdominal + state.timers.polichinelo;
+            const { nota } = calcularNota(total, limites);
+
+            const notaNum = parseInt(nota);
+            let detalhe = '';
+            if (!isNaN(notaNum)) {
+                if (notaNum < 10) {
+                    const faltou = total - limites[notaNum + 1];
+                    detalhe = `<div class="nota-detail negativo">▲ ${formatTime(faltou)} além do limite da nota ${notaNum + 1}</div>`;
+                } else {
+                    detalhe = `<div class="nota-detail positivo">✔ Nota máxima atingida</div>`;
+                }
+            } else {
+                const faltou = total - limites[7];
+                detalhe = `<div class="nota-detail negativo">▲ ${formatTime(faltou)} além do limite de aprovação</div>`;
+            }
+
+            state.finalData = {
+                idade: idadeVal,
+                timers: { ...state.timers },
+                total,
+                nota,
+                detalhe,
+                limites,
+            };
+
+            const bg = nota === 'REPROVADO' ? 'rgba(244, 67, 54, 0.1)' : (nota === '10' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)');
+            const color = nota === 'REPROVADO' ? 'var(--red-hot)' : (nota === '10' ? 'var(--green-ok)' : 'var(--yellow-warn)');
+
+            document.getElementById('results-content').innerHTML = `
+            <div style="background:${bg}; border:1px solid ${color}; color:${color}; text-align:center; padding:12px; border-radius:6px; margin-bottom:15px;">
+                <span style="font-family:Orbitron; font-size:24px; font-weight:900;">NOTA: ${nota}</span>
             </div>
-            <div style="margin-top:15px;font-size:40px;font-weight:bold;background:rgba(0,0,0,0.3);padding:15px;border-radius:8px;">
-                NOTA: ${nota}
+            <div class="result-rows">
+                <div class="result-row"><span class="rr-label">FLEXÕES:</span><span class="rr-val">${formatTime(state.timers.flexao)}</span></div>
+                <div class="result-row"><span class="rr-label">ABDOMINAIS:</span><span class="rr-val">${formatTime(state.timers.abdominal)}</span></div>
+                <div class="result-row"><span class="rr-label">POLICHINELOS:</span><span class="rr-val">${formatTime(state.timers.polichinelo)}</span></div>
+                <div class="result-row result-total"><span class="rr-label">TEMPO TOTAL:</span><span class="rr-val">${formatTime(total)}</span></div>
             </div>
             ${detalhe}
         `;
 
-        // Exibe loader e depois modal
-        const overlay = document.getElementById('overlay');
-        overlay.style.display = 'flex';
-        document.getElementById('loader').style.display = 'flex';
-        document.getElementById('finalModal').style.display = 'none';
-        document.getElementById('introModal').style.display = 'none';
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = 'flex';
+            document.getElementById('loader').style.display = 'flex';
+            document.getElementById('finalModal').style.display = 'none';
+            document.getElementById('introModal').style.display = 'none';
 
-        setTimeout(() => {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('finalModal').style.display = 'block';
-        }, 1200);
-    }
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('finalModal').style.display = 'block';
+            }, 1200);
+        }
 
-    // ─── Exportar resultado como imagem (Canvas) ──────────────────────────────
-    function exportarImagem() {
-        const d = state.finalData;
-        if (!d) return;
+        // ─── Exportar resultado como imagem (Canvas) ──────────────────────────────
+        function exportarImagem() {
+            const d = state.finalData;
+            if (!d) return;
 
-        const W = 640, H = 560;
-        const canvas = document.getElementById('exportCanvas');
-        canvas.width  = W;
-        canvas.height = H;
-        const ctx = canvas.getContext('2d');
+            const W = 640, H = 560;
+            const canvas = document.getElementById('exportCanvas');
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
 
-        // Fundo
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#1a1a1a');
-        bg.addColorStop(1, '#000000');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#141414');
+            bg.addColorStop(1, '#000000');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
 
-        // Faixa header vermelha
-        const hg = ctx.createLinearGradient(0, 0, 0, 70);
-        hg.addColorStop(0, '#d32f2f');
-        hg.addColorStop(1, '#8b0000');
-        ctx.fillStyle = hg;
-        ctx.fillRect(0, 0, W, 70);
+            ctx.fillStyle = '#222222';
+            ctx.fillRect(0, 0, W, 70);
 
-        // Divisa branca
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 70, W, 4);
+            ctx.fillStyle = '#454545';
+            ctx.fillRect(0, 70, W, 2);
 
-        // Título
-        ctx.fillStyle = '#ffffff';
-        ctx.font      = 'bold 26px Oswald, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('TAF - BA  |  BOMBEIROS DE AERÓDROMO', W / 2, 46);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 26px Oswald, Rajdhani, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('TAF - BA  |  MOD. FISIOLÓGICO', W / 2, 46);
 
-        // Subtítulo
-        ctx.font      = '16px Oswald, sans-serif';
-        ctx.fillStyle = '#ffcdd2';
-        ctx.fillText(`Bombeiro · ${d.idade} Anos`, W / 2, 66);
-
-        // Linha separadora
-        ctx.strokeStyle = '#454545';
-        ctx.lineWidth   = 1;
-
-        // Bloco de tempos
-        const exercicios = [
-            { label: 'FLEXÕES',      time: d.timers.flexao      },
-            { label: 'ABDOMINAIS',   time: d.timers.abdominal   },
-            { label: 'POLICHINELOS', time: d.timers.polichinelo },
-        ];
-
-        let y = 115;
-        ctx.textAlign = 'left';
-
-        exercicios.forEach((ex) => {
-            // fundo do bloco
-            ctx.fillStyle = '#1e1e1e';
-            roundRect(ctx, 40, y, W - 80, 62, 8);
-            ctx.fill();
+            ctx.font = '16px Oswald, Rajdhani, sans-serif';
+            ctx.fillStyle = '#aaaaaa';
+            ctx.fillText(`Bombeiro · ${d.idade} Anos`, W / 2, 66);
 
             ctx.strokeStyle = '#454545';
-            ctx.lineWidth   = 1;
-            roundRect(ctx, 40, y, W - 80, 62, 8);
+            ctx.lineWidth = 1;
+
+            const exercicios = [
+                { label: 'FLEXÕES', time: d.timers.flexao },
+                { label: 'ABDOMINAIS', time: d.timers.abdominal },
+                { label: 'POLICHINELOS', time: d.timers.polichinelo },
+            ];
+
+            let y = 115;
+            ctx.textAlign = 'left';
+
+            exercicios.forEach((ex) => {
+                ctx.fillStyle = '#1e1e1e';
+                roundRect(ctx, 40, y, W - 80, 62, 8);
+                ctx.fill();
+
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 1;
+                roundRect(ctx, 40, y, W - 80, 62, 8);
+                ctx.stroke();
+
+                ctx.fillStyle = '#888888';
+                ctx.font = '13px "Share Tech Mono", monospace';
+                ctx.fillText(ex.label, 60, y + 22);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 28px "Share Tech Mono", monospace';
+                ctx.fillText(formatTime(ex.time), 60, y + 50);
+
+                y += 78;
+            });
+
+            ctx.strokeStyle = '#454545';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(40, y);
+            ctx.lineTo(W - 40, y);
             ctx.stroke();
+            y += 18;
 
-            // label
-            ctx.fillStyle = '#999999';
-            ctx.font      = '13px Oswald, sans-serif';
-            ctx.fillText(ex.label, 60, y + 22);
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#aaaaaa';
+            ctx.font = '14px "Share Tech Mono", monospace';
+            ctx.fillText('TEMPO TOTAL', 40, y + 16);
 
-            // tempo
             ctx.fillStyle = '#ffffff';
-            ctx.font      = 'bold 28px "JetBrains Mono", monospace';
-            ctx.fillText(formatTime(ex.time), 60, y + 50);
+            ctx.font = 'bold 22px "Share Tech Mono", monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(formatTime(d.total), W - 40, y + 16);
+            y += 50;
 
-            y += 78;
-        });
+            const notaNum = parseInt(d.nota);
+            let notaColor = '#f44336';
+            if (d.nota === '10') notaColor = '#4caf50';
+            else if (d.nota === '9') notaColor = '#ffb300';
+            else if (d.nota === '8') notaColor = '#ff9800';
+            else if (d.nota === '7') notaColor = '#ff5722';
 
-        // Linha divisória total
-        ctx.strokeStyle = '#454545';
-        ctx.lineWidth   = 1;
-        ctx.beginPath();
-        ctx.moveTo(40, y);
-        ctx.lineTo(W - 40, y);
-        ctx.stroke();
-        y += 18;
+            ctx.fillStyle = notaColor;
+            roundRect(ctx, 40, y, W - 80, 80, 10);
+            ctx.fill();
 
-        // Tempo total
-        ctx.textAlign  = 'left';
-        ctx.fillStyle  = '#aaaaaa';
-        ctx.font       = '14px Oswald, sans-serif';
-        ctx.fillText('TEMPO TOTAL', 40, y + 16);
+            ctx.fillStyle = '#111111';
+            ctx.font = 'bold 42px Orbitron, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`NOTA: ${d.nota}`, W / 2, y + 56);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font      = 'bold 22px "JetBrains Mono", monospace';
-        ctx.textAlign = 'right';
-        ctx.fillText(formatTime(d.total), W - 40, y + 16);
-        y += 50;
+            y += 96;
 
-        // Bloco da nota
-        const notaNum  = parseInt(d.nota);
-        let notaColor  = '#f44336'; // reprovado
-        if (d.nota === '10') notaColor = '#2e7d32';
-        else if (d.nota === '9')  notaColor = '#ffc107';
-        else if (d.nota === '8')  notaColor = '#ff8f00';
-        else if (d.nota === '7')  notaColor = '#d32f2f';
+            const detalheTexto = gerarDetalheTexto(d);
+            ctx.font = '14px "Share Tech Mono", monospace';
+            ctx.fillStyle = notaColor === '#4caf50' ? '#4caf50' : '#f44336';
+            ctx.textAlign = 'center';
+            ctx.fillText(detalheTexto, W / 2, y);
 
-        ctx.fillStyle = notaColor;
-        roundRect(ctx, 40, y, W - 80, 80, 10);
-        ctx.fill();
+            ctx.fillStyle = '#555';
+            ctx.font = '12px "Share Tech Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, W / 2, H - 18);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font      = 'bold 42px Oswald, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`NOTA: ${d.nota}`, W / 2, y + 54);
-
-        y += 96;
-
-        // Detalhe margem
-        const detalheTexto = gerarDetalheTexto(d);
-        ctx.font      = '14px "JetBrains Mono", monospace';
-        ctx.fillStyle = notaColor === '#2e7d32' ? '#4caf50' : '#ef9a9a';
-        ctx.textAlign = 'center';
-        ctx.fillText(detalheTexto, W / 2, y);
-
-        // Rodapé
-        ctx.fillStyle = '#555';
-        ctx.font      = '12px Oswald, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, W / 2, H - 18);
-
-        // Download
-        const link = document.createElement('a');
-        link.download = `TAF-BA_Nota${d.nota}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    }
-
-    // Texto limpo para o canvas (sem HTML)
-    function gerarDetalheTexto(d) {
-        const notaNum = parseInt(d.nota);
-        if (!isNaN(notaNum)) {
-            if (notaNum < 10) {
-                const faltou = d.total - d.limites[notaNum + 1];
-                return `${formatTime(faltou)} além do limite da nota ${notaNum + 1}`;
-            }
-            return '✔ Nota máxima atingida';
+            const link = document.createElement('a');
+            link.download = `TAF-BA_Nota${d.nota}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
         }
-        const faltou = d.total - d.limites[7];
-        return `${formatTime(faltou)} além do limite de aprovação`;
-    }
 
-    // Utilitário: retângulo com cantos arredondados para Canvas
-    function roundRect(ctx, x, y, w, h, r) {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.lineTo(x + w - r, y);
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-        ctx.lineTo(x + w, y + h - r);
-        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        ctx.lineTo(x + r, y + h);
-        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-        ctx.lineTo(x, y + r);
-        ctx.quadraticCurveTo(x, y, x + r, y);
-        ctx.closePath();
-    }
+        function gerarDetalheTexto(d) {
+            const notaNum = parseInt(d.nota);
+            if (!isNaN(notaNum)) {
+                if (notaNum < 10) {
+                    const faltou = d.total - d.limites[notaNum + 1];
+                    return `${formatTime(faltou)} além do limite da nota ${notaNum + 1}`;
+                }
+                return '✔ Nota máxima atingida';
+            }
+            const faltou = d.total - d.limites[7];
+            return `${formatTime(faltou)} além do limite de aprovação`;
+        }
 
-    // ─── Reset completo ───────────────────────────────────────────────────────
-    function fecharModalCompleto() {
-        if (state.rafId) cancelAnimationFrame(state.rafId);
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
 
-        state.activeExercise = null;
-        state.rafId          = null;
-        state.timers         = { flexao: 0, abdominal: 0, polichinelo: 0 };
-        state.finalData      = null;
+        // ─── Reset completo ───────────────────────────────────────────────────────
+        function fecharModalCompleto() {
+            if (state.rafId) cancelAnimationFrame(state.rafId);
 
-        document.getElementById('idade').selectedIndex = 0;
-        document.querySelectorAll('.timer-display').forEach(d => { d.innerText = '00:00,00'; });
-        document.getElementById('regressivo').innerText = '00:00,00';
-        document.getElementById('notaAtual').innerText  = 'NOTA: -';
+            state.activeExercise = null;
+            state.rafId = null;
+            state.timers = { flexao: 0, abdominal: 0, polichinelo: 0 };
+            state.finalData = null;
 
-        const bar = document.getElementById('progressBar');
-        bar.style.width = '0%';
-        bar.className   = 'timeline-bar';
+            document.getElementById('idade').selectedIndex = 0;
+            document.querySelectorAll('.timer-val').forEach(d => { d.innerText = '00:00,00'; });
+            document.getElementById('regressivo').innerText = '00:00,00';
+            document.getElementById('notaAtual').innerText = 'NOTA: -';
+            document.getElementById('notaAtual').style.color = 'var(--text-dim)';
 
-        document.getElementById('overlay').style.display      = 'none';
-        document.getElementById('confirmModal').style.display = 'none';
-        updateUI();
-    }
+            const bar = document.getElementById('progressBar');
+            bar.style.width = '0%';
+            bar.className = 'strip-bar';
 
-    // ─── Fechar intro ─────────────────────────────────────────────────────────
-    function fecharIntro() {
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('introModal').style.display = 'none';
-    }
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('finalModal').style.display = 'none';
+            updateUI();
+        }
 
-    // ─── Init ─────────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-        popularSelectIdade();
-        document.getElementById('overlay').style.display = 'flex';
-        document.getElementById('introModal').style.display = 'block';
-    });
-</script>
+        // ─── Fechar intro ─────────────────────────────────────────────────────────
+        function fecharIntro() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('introModal').style.display = 'none';
+        }
+
+        // ─── Init ─────────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            popularSelectIdade();
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('introModal').style.display = 'block';
+        });
+    </script>
 </body>
+
 </html>
