@@ -13,9 +13,8 @@
         rel="stylesheet">
     <style>
         :root {
-            --amber: #d48806;
-            --amber-dim: #b8860b;
-            --amber-glow: rgba(212, 136, 6, 0.3);
+            --primary: rgb(20, 20, 20);
+            --primary-glow: rgba(20, 20, 20, 0.1);
             --red: #b22222;
             --red-hot: #d32f2f;
             --green-ok: #2e7d32;
@@ -26,10 +25,7 @@
             --grid: #00000005;
             --text: #1a1a1a;
             --text-dim: #616161;
-            --scan: #00000002;
             --yellow-warn: #f57c00;
-            --chumbo: #1a1a1a;
-            --chumbo-modal: #455a64;
         }
 
         * {
@@ -74,7 +70,7 @@
             z-index: 10;
             flex-shrink: 0;
             background: #fff;
-            border-bottom: 3px solid var(--amber);
+            border-bottom: 3px solid var(--primary);
             padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
             display: flex;
             align-items: center;
@@ -86,7 +82,7 @@
             font-family: 'Orbitron', monospace;
             font-size: 22px;
             font-weight: 900;
-            color: var(--chumbo);
+            color: var(--primary);
             letter-spacing: 2px;
         }
 
@@ -218,7 +214,7 @@
         .summary-val {
             font-family: 'Share Tech Mono', monospace;
             font-size: 32px;
-            color: var(--amber);
+            color: var(--primary);
             font-weight: bold;
         }
 
@@ -238,8 +234,8 @@
         }
 
         .ex-card.active {
-            border-color: var(--amber);
-            box-shadow: 0 4px 12px rgba(212, 136, 6, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(20, 20, 20, 0.1);
             transform: translateY(-2px);
         }
 
@@ -253,7 +249,7 @@
         }
 
         .ex-card.active .ex-stripe {
-            background: var(--amber);
+            background: var(--primary);
         }
 
         .ex-header {
@@ -290,7 +286,7 @@
         }
 
         .ex-card.active .ex-time {
-            color: var(--amber);
+            color: var(--primary);
         }
 
         .btn-trigger {
@@ -309,8 +305,8 @@
         }
 
         .btn-trigger.armed {
-            background: #fff8e1;
-            border-color: var(--amber);
+            background: #f5f5f5;
+            border-color: var(--primary);
         }
 
         .trig-label {
@@ -321,7 +317,7 @@
         }
 
         .btn-trigger.armed .trig-label {
-            color: var(--amber);
+            color: var(--primary);
         }
 
         .btn-terminate {
@@ -365,7 +361,7 @@
             background: #fff;
             width: 100%;
             max-width: 400px;
-            border-left: 8px solid var(--chumbo-modal);
+            border-left: 8px solid var(--primary);
             padding: 30px;
             border-radius: 8px;
             text-align: left;
@@ -374,7 +370,7 @@
         }
 
         .intro-modal h2 {
-            color: var(--chumbo-modal);
+            color: var(--primary);
             margin-bottom: 25px;
             font-size: 24px;
             text-transform: uppercase;
@@ -390,7 +386,7 @@
         }
 
         .step-num {
-            background: var(--chumbo-modal);
+            background: var(--primary);
             color: #fff;
             width: 28px;
             height: 28px;
@@ -430,20 +426,22 @@
 
         .modal-title {
             font-family: 'Orbitron', monospace;
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--amber);
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--primary);
             letter-spacing: 2px;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 1.5px solid #eee;
+            border-bottom: 2px solid #eee;
+            text-transform: uppercase;
+            text-align: center;
         }
 
         .btn-primary {
             width: 100%;
             padding: 16px;
             border: none;
-            background: var(--amber);
+            background: var(--primary);
             color: #fff;
             font-family: 'Rajdhani', sans-serif;
             font-size: 16px;
@@ -453,7 +451,7 @@
             border-radius: 6px;
             cursor: pointer;
             margin-top: 10px;
-            box-shadow: 0 4px 0 #b8860b;
+            box-shadow: 0 4px 0 #000;
         }
 
         .btn-danger {
@@ -499,7 +497,7 @@
             width: 56px;
             height: 56px;
             border: 4px solid #eee;
-            border-top-color: var(--amber);
+            border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -510,14 +508,64 @@
             }
         }
 
+        .result-rows {
+            background: #f9f9f9;
+            border: 1.5px solid #eee;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1.5px solid #ececec;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .rr-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 18px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .rr-val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 24px;
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .result-total {
+            border-top: 3px solid #ddd;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .result-total .rr-label {
+            color: var(--primary);
+        }
+
+        .result-total .rr-val {
+            color: var(--primary);
+            font-size: 32px;
+        }
+
         #toast {
             position: fixed;
             top: 12%;
             left: 50%;
             transform: translateX(-50%);
             background: #fff;
-            border: 2px solid var(--amber);
-            color: var(--amber);
+            border: 2px solid var(--primary);
+            color: var(--primary);
             font-family: 'Share Tech Mono', monospace;
             font-size: 14px;
             padding: 12px 24px;
@@ -658,8 +706,7 @@
                 </div>
             </div>
 
-            <button class="btn-primary" style="background-color: var(--chumbo-modal); box-shadow: 0 4px 0 #263238;"
-                onclick="fecharIntro()">Entendido, Iniciar</button>
+            <button class="btn-primary" onclick="fecharIntro()">Entendido, Iniciar</button>
         </div>
 
         <div class="modal-panel" id="confirmModal">
@@ -672,12 +719,12 @@
 
         <div class="loader-wrap" id="loader">
             <div class="loader-ring"></div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--amber);font-weight:bold;">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--primary);font-weight:bold;">
                 PROCESSANDO RESULTADOS...</div>
         </div>
 
         <div class="modal-panel" id="finalModal">
-            <div class="modal-title">◈ RELATÓRIO DE VESTIMENTA</div>
+            <div class="modal-title">RELATÓRIO FINAL</div>
             <div id="results-content"></div>
             <button class="btn-primary" onclick="resetar()">NOVA AFERIÇÃO</button>
         </div>
@@ -766,7 +813,7 @@
                 const btn = document.getElementById('btn-' + id);
                 btn.classList.toggle('armed', active);
                 btn.innerHTML = active
-                    ? `<svg viewBox="0 0 24 24" width="24" height="24" style="color:var(--amber)"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="currentColor"/></svg><span class="trig-label">ATIVO</span>`
+                    ? `<svg viewBox="0 0 24 24" width="24" height="24" style="color:var(--primary)"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="currentColor"/></svg><span class="trig-label">ATIVO</span>`
                     : `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161"/></svg><span class="trig-label">INICIAR</span>`;
             });
         }
@@ -821,11 +868,14 @@
                 document.getElementById('results-content').innerHTML = `
                 ${statusHtml}
                 <div class="result-rows">
-                    <div class="result-row"><span class="rr-label">Vestimenta TP</span><span class="rr-val">${formatTime(state.timers.tp)}</span></div>
-                    <div class="result-row"><span class="rr-label">Vestimenta EPR</span><span class="rr-val">${formatTime(state.timers.epr)}</span></div>
-                    <div class="result-row result-total"><span class="rr-label">Tempo Total</span><span class="rr-val">${formatTime(total)}</span></div>
+                    <div class="result-row"><span class="rr-label">VESTIMENTA TP:</span><span class="rr-val">${formatTime(state.timers.tp)}</span></div>
+                    <div class="result-row"><span class="rr-label">VESTIMENTA EPR:</span><span class="rr-val">${formatTime(state.timers.epr)}</span></div>
+                    <div class="result-row result-total"><span class="rr-label">TEMPO TOTAL:</span><span class="rr-val">${formatTime(total)}</span></div>
                 </div>
-                <p style="font-family:Rajdhani;font-size:13px;color:var(--text-dim);text-align:center;margin-top:10px;">Metas: < 01:00,00 (Aprov) | a 01:30,00 (Atenção)</p>
+                <div style="font-family:Rajdhani;font-size:14px;color:var(--text);text-align:center;margin-top:15px;font-weight:700;line-height:1.4;">
+                    META: TEMPO ABAIXO DE 01:00,00.<br>
+                    <span style="color:var(--text-dim)">CASO MAIOR, ANOTAR PONTOS DE MELHORIA.</span>
+                </div>
             `;
             }, 1200);
         }
