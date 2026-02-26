@@ -831,11 +831,8 @@
         let db = JSON.parse(localStorage.getItem('tp_epr_logs') || '[]');
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (!localStorage.getItem('tp_epr_intro_v2')) {
-                document.getElementById('overlay').style.display = 'flex';
-                document.getElementById('introModal').style.display = 'block';
-                localStorage.setItem('tp_epr_intro_v2', 'true');
-            }
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('introModal').style.display = 'block';
         });
 
         function formatTime(ms) {
@@ -1025,12 +1022,15 @@
 
                 html += `<div class="ba-group">
                 <div class="ba-name-header"><span>◈ ${ba}</span> <span style="font-size: 10px; color: var(--text-dim);">${baterias.length} Baterias</span></div>
-                ${baterias.sort((a, b) => b.id - a.id).map(b => {
+                ${baterias.sort((a, b) => a.id - b.id).map((b, idx) => {
+                    b.seq = idx + 1;
+                    return b;
+                }).sort((a, b) => b.id - a.id).map(b => {
                     const isBest = b.total === melhorTempo;
                     return `
                     <div class="ba-entry ${isBest ? 'best' : ''}" onclick='finalizar(${JSON.stringify(b)})'>
                         <div class="entry-info">
-                            <div style="font-weight: bold;">BAT. ${new Date(b.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                            <div style="font-weight: bold;">BATERIA ${b.seq}</div>
                             <div style="font-size: 10px; color: var(--text-dim);">${b.data.split(' ')[0]}</div>
                         </div>
                         <div style="text-align: right;">
