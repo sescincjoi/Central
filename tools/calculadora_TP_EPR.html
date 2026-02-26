@@ -1030,7 +1030,7 @@
                     return `
                     <div class="ba-entry ${isBest ? 'best' : ''}" onclick='finalizar(${JSON.stringify(b)})'>
                         <div class="entry-info">
-                            <div style="font-weight: bold;">BAT. ${new Date(b.id).toLocaleTimeString([], { hour: '2d', minute: '2d' })}</div>
+                            <div style="font-weight: bold;">BAT. ${new Date(b.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                             <div style="font-size: 10px; color: var(--text-dim);">${b.data.split(' ')[0]}</div>
                         </div>
                         <div style="text-align: right;">
