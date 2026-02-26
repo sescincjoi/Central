@@ -10,6 +10,7 @@
 
 import authCore from './auth-core.js';
 import authLock from './auth-lock.js';
+import authUI from './auth-ui.js';
 
 class AuthGuard {
   constructor() {
@@ -119,10 +120,15 @@ class AuthGuard {
           this.ensureLockOverlay();
 
           // Abrir modal e mostrar notificação se UI disponível
-          if (window.authUI) {
+          if (authUI) {
+            // Se o documento estiver escondido pelo Head Guard, mostrar agora para que o modal seja visível
+            if (document.documentElement.style.display === 'none') {
+              document.documentElement.style.display = '';
+            }
+
             // Notificação de ACESSO À PÁGINA
-            window.authUI.showNotification('Acesso restrito. Por favor, identifique-se para continuar.', 'error');
-            window.authUI.openModal('login');
+            authUI.showNotification('Acesso restrito. Por favor, identifique-se para continuar.', 'error');
+            authUI.openModal('login');
           }
           return;
         }
@@ -194,16 +200,16 @@ class AuthGuard {
           e.stopPropagation();
 
           // Mostrar notificação de INTERAÇÃO
-          if (window.authUI) {
+          if (authUI) {
             const message = isPageLocked
               ? 'Acesso restrito. Por favor, identifique-se para continuar.'
               : 'Ação bloqueada. É necessário estar autenticado para interagir.';
 
-            window.authUI.showNotification(message, 'error');
+            authUI.showNotification(message, 'error');
 
             // Garantir que o modal esteja aberto
-            if (!window.authUI.isOpen) {
-              window.authUI.openModal('login');
+            if (!authUI.isOpen) {
+              authUI.openModal('login');
             }
           }
         }
@@ -267,7 +273,7 @@ class AuthGuard {
         menu.classList.toggle('show');
       } else {
         // Abrir modal de login
-        window.authUI.openModal('login');
+        authUI.openModal('login');
       }
     });
 
