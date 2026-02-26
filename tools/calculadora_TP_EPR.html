@@ -13,11 +13,15 @@
         rel="stylesheet">
     <style>
         :root {
-            --primary: rgb(20, 20, 20);
-            --primary-glow: rgba(20, 20, 20, 0.1);
             --red: #b22222;
             --red-hot: #d32f2f;
             --green-ok: #2e7d32;
+            --yellow-warn: #f57c00;
+        }
+
+        :root[data-theme="light"] {
+            --primary: rgb(20, 20, 20);
+            --primary-glow: rgba(20, 20, 20, 0.1);
             --panel: #f4f4f4;
             --panel-mid: #ffffff;
             --panel-hi: #e0e0e0;
@@ -25,7 +29,22 @@
             --grid: #00000005;
             --text: #1a1a1a;
             --text-dim: #616161;
-            --yellow-warn: #f57c00;
+            --modal-bg-rgb: 0, 0, 0;
+            --btn-ghost-bg: transparent;
+        }
+
+        :root[data-theme="dark"] {
+            --primary: rgb(20, 20, 20);
+            --primary-glow: rgba(200, 200, 200, 0.1);
+            --panel: #0a0a0a;
+            --panel-mid: #141414;
+            --panel-hi: #2a2a2a;
+            --steel: #333333;
+            --grid: rgba(255, 255, 255, 0.03);
+            --text: #ffffff;
+            --text-dim: #888888;
+            --modal-bg-rgb: 0, 0, 0;
+            --btn-ghost-bg: transparent;
         }
 
         * {
@@ -69,7 +88,7 @@
             position: relative;
             z-index: 10;
             flex-shrink: 0;
-            background: #fff;
+            background: var(--panel-mid);
             border-bottom: 3px solid var(--primary);
             padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
             display: flex;
@@ -100,7 +119,7 @@
         }
 
         .btn-header {
-            background: #f5f5f5;
+            background: var(--panel);
             border: 1.5px solid var(--steel);
             color: var(--text);
             padding: 10px;
@@ -113,7 +132,7 @@
         }
 
         .btn-header:hover {
-            background: #eee;
+            background: var(--panel-hi);
             border-color: var(--primary);
         }
 
@@ -121,7 +140,7 @@
             position: relative;
             z-index: 10;
             flex-shrink: 0;
-            background: #fff;
+            background: var(--panel-mid);
             border-bottom: 1px solid var(--steel);
             height: 56px;
             display: flex;
@@ -218,7 +237,7 @@
         }
 
         .summary-card {
-            background: #fff;
+            background: var(--panel-mid);
             border: 1.5px solid var(--steel);
             border-radius: 6px;
             padding: 14px 18px;
@@ -244,7 +263,7 @@
 
         .ex-card {
             position: relative;
-            background: #fff;
+            background: var(--panel-mid);
             border: 1.5px solid var(--steel);
             border-radius: 6px;
             padding: 16px 20px;
@@ -318,7 +337,7 @@
             width: 56px;
             height: 56px;
             border-radius: 6px;
-            background: #eee;
+            background: var(--panel-hi);
             border: 1.5px solid var(--steel);
             cursor: pointer;
             display: flex;
@@ -330,7 +349,7 @@
         }
 
         .btn-trigger.armed {
-            background: #f5f5f5;
+            background: var(--panel);
             border-color: var(--primary);
         }
 
@@ -385,7 +404,7 @@
         .modal-panel {
             width: 100%;
             max-width: 400px;
-            background: #fff;
+            background: var(--panel-mid);
             border-radius: 8px;
             padding: 28px;
             position: relative;
@@ -484,7 +503,7 @@
         }
 
         .result-rows {
-            background: #f9f9f9;
+            background: var(--panel);
             border: 1.5px solid #eee;
             border-radius: 6px;
             padding: 20px;
@@ -497,7 +516,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1.5px solid #ececec;
+            border-bottom: 1.5px solid var(--steel);
         }
 
         .result-row:last-child {
@@ -558,7 +577,7 @@
         }
 
         .ba-entry {
-            background: #fff;
+            background: var(--panel-mid);
             border: 1px solid #eee;
             padding: 10px;
             border-radius: 4px;
@@ -621,7 +640,7 @@
             top: 12%;
             left: 50%;
             transform: translateX(-50%);
-            background: #fff;
+            background: var(--panel-mid);
             border: 2px solid var(--primary);
             color: var(--primary);
             font-family: 'Share Tech Mono', monospace;
@@ -662,6 +681,10 @@
             }
         }
     </style>
+    <script>
+        const savedTheme = localStorage.getItem('theme_preference_tp') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
 </head>
 
 <body>
@@ -680,6 +703,16 @@
             </div>
         </div>
         <div class="header-actions">
+            <button class="btn-header" onclick="toggleTheme()" title="Alternar Tema">
+                <svg id="theme-icon-light" style="display:none;" viewBox="0 0 24 24" width="20" height="20">
+                    <path
+                        d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.76 17.09,7.14 16.5,6.63L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.86,19 13.67,18.83 14.41,18.56L12,22Z" />
+                </svg>
+                <svg id="theme-icon-dark" style="display:none;" viewBox="0 0 24 24" width="20" height="20">
+                    <path
+                        d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.11,19.05C17.14,21 14.23,21.84 11.45,21.14C8.67,20.44 6.31,18.3 5.37,15.58C4.43,12.85 4.96,9.82 6.78,7.56C7.26,6.96 7.78,6.46 8.35,6C9.07,5.43 10.37,6.4 9.9,7.25C9.42,8.08 9.17,9.03 9.17,10C9.17,13.22 11.78,15.83 15,15.83C16.32,15.83 17.55,15.39 18.55,14.65C18.69,14.55 18.82,14.44 18.97,14.33C18.97,14.88 18.97,15.42 18.97,15.95Z" />
+                </svg>
+            </button>
             <button class="btn-header" onclick="abrirHistorico()" title="Histórico de Baterias">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -830,7 +863,22 @@
         // Carregar ou Inicializar Histórico
         let db = JSON.parse(localStorage.getItem('tp_epr_logs') || '[]');
 
+        function toggleTheme() {
+            const root = document.documentElement;
+            const newTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme_preference_tp', newTheme);
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            document.getElementById('theme-icon-light').style.display = theme === 'dark' ? 'block' : 'none';
+            document.getElementById('theme-icon-dark').style.display = theme === 'light' ? 'block' : 'none';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
             document.getElementById('overlay').style.display = 'flex';
             document.getElementById('introModal').style.display = 'block';
         });
