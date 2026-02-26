@@ -94,6 +94,29 @@
             margin-top: 2px;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-header {
+            background: #f5f5f5;
+            border: 1.5px solid var(--steel);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-header:hover {
+            background: #eee;
+            border-color: var(--primary);
+        }
+
         .mission-strip {
             position: relative;
             z-index: 10;
@@ -216,6 +239,7 @@
             font-size: 32px;
             color: var(--primary);
             font-weight: bold;
+            transition: all 0.3s;
         }
 
         .ex-card {
@@ -283,6 +307,7 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 36px;
             color: var(--text-dim);
+            transition: all 0.3s;
         }
 
         .ex-card.active .ex-time {
@@ -357,62 +382,6 @@
             backdrop-filter: blur(4px);
         }
 
-        .intro-modal {
-            background: #fff;
-            width: 100%;
-            max-width: 400px;
-            border-left: 8px solid var(--primary);
-            padding: 30px;
-            border-radius: 8px;
-            text-align: left;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            display: block;
-        }
-
-        .intro-modal h2 {
-            color: var(--primary);
-            margin-bottom: 25px;
-            font-size: 24px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Orbitron';
-        }
-
-        .instruction-item {
-            margin-bottom: 18px;
-            display: flex;
-            gap: 18px;
-            align-items: flex-start;
-        }
-
-        .step-num {
-            background: var(--primary);
-            color: #fff;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .step-text {
-            color: var(--text-dim);
-            font-size: 15px;
-            line-height: 1.5;
-        }
-
-        .step-text strong {
-            color: var(--text);
-            display: block;
-            margin-bottom: 3px;
-            font-size: 16px;
-        }
-
         .modal-panel {
             width: 100%;
             max-width: 400px;
@@ -422,6 +391,7 @@
             position: relative;
             display: none;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
         }
 
         .modal-title {
@@ -434,7 +404,6 @@
             padding-bottom: 12px;
             border-bottom: 2px solid #eee;
             text-transform: uppercase;
-            text-align: center;
         }
 
         .btn-primary {
@@ -470,6 +439,11 @@
             box-shadow: 0 4px 0 #8b0000;
         }
 
+        .btn-save {
+            background: #455a64;
+            box-shadow: 0 4px 0 #263238;
+        }
+
         .btn-ghost {
             width: 100%;
             padding: 14px;
@@ -491,6 +465,7 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            text-align: center;
         }
 
         .loader-ring {
@@ -514,6 +489,7 @@
             border-radius: 6px;
             padding: 20px;
             margin-bottom: 18px;
+            text-align: left;
         }
 
         .result-row {
@@ -558,6 +534,88 @@
             font-size: 32px;
         }
 
+        /* Estilos Histórico */
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .ba-group {
+            margin-bottom: 20px;
+        }
+
+        .ba-name-header {
+            background: var(--panel-hi);
+            padding: 8px 12px;
+            font-weight: bold;
+            font-family: 'Orbitron';
+            font-size: 14px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .ba-entry {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .ba-entry:hover {
+            border-color: var(--primary);
+        }
+
+        .ba-entry.best {
+            border: 2px solid var(--green-ok);
+            background: #e8f5e9;
+        }
+
+        .best-badge {
+            font-size: 9px;
+            background: var(--green-ok);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-family: 'Share Tech Mono';
+        }
+
+        .entry-info {
+            font-family: 'Share Tech Mono';
+            font-size: 13px;
+        }
+
+        .entry-time {
+            font-family: 'Orbitron';
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .input-ba {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--steel);
+            border-radius: 6px;
+            font-family: 'Rajdhani';
+            font-size: 18px;
+            font-weight: bold;
+            margin: 15px 0;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        .input-ba:focus {
+            border-color: var(--primary);
+        }
+
         #toast {
             position: fixed;
             top: 12%;
@@ -573,6 +631,21 @@
             display: none;
             z-index: 1000;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes timerFlow {
+            from {
+                filter: drop-shadow(0 0 2px rgba(20, 20, 20, 0.1));
+            }
+
+            to {
+                filter: drop-shadow(0 0 12px rgba(20, 20, 20, 0.5));
+            }
+        }
+
+        .active .ex-time,
+        .active-total {
+            animation: timerFlow 0.8s infinite alternate;
         }
 
         .blink {
@@ -595,8 +668,7 @@
 
     <div class="cmd-bar">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <button onclick="window.location.href='../'"
-                style="background: #f5f5f5; border: 1.5px solid var(--steel); color: var(--text); padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+            <button class="btn-header" onclick="window.location.href='../'">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="m15 18-6-6 6-6" />
@@ -606,6 +678,14 @@
                 <div class="id-callsign">TP/EPR - BA</div>
                 <div class="id-sub">AFEIRIÇÃO DE VESTIMENTA</div>
             </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-header" onclick="abrirHistorico()" title="Histórico de Baterias">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -670,78 +750,93 @@
         </button>
     </div>
 
-    <div class="overlay" id="overlay" style="display: flex;">
-        <div class="intro-modal" id="introModal">
+    <div class="overlay" id="overlay">
+        <!-- Modal Intro -->
+        <div class="intro-modal" id="introModal" style="display: none;">
             <h2>Guia de Operação</h2>
-
             <div class="instruction-item">
                 <div class="step-num">1</div>
-                <div class="step-text">
-                    <strong>Início da Aferição</strong>
-                    Toque no botão "Iniciar" de qualquer uma das etapas para iniciar a contagem do tempo total.
-                </div>
+                <div class="step-text"><strong>Início da Aferição</strong>Toque no botão "Iniciar" de qualquer etapa
+                    para começar.</div>
             </div>
             <div class="instruction-item">
                 <div class="step-num">2</div>
-                <div class="step-text">
-                    <strong>Alternância de Etapa</strong>
-                    As etapas podem ser alternadas a qualquer momento durante a aferição, seguindo a sequência
-                    individual de cada Bombeiro.
-                </div>
+                <div class="step-text"><strong>Alternância</strong>As etapas podem ser alternadas livremente conforme a
+                    sequência de cada BA.</div>
             </div>
             <div class="instruction-item">
                 <div class="step-num">3</div>
-                <div class="step-text">
-                    <strong>Metas de Tempo</strong>
-                    Aprovação: Abaixo de **01:00,00**. Entre **01:00,00** e **01:30,00** o status mudará para Atenção.
-                    Acima de 01:30,00 o status será Reprovado.
-                </div>
+                <div class="step-text"><strong>Metas</strong>Meta: Abaixo de 01:00,00 para Aprovado. Até 01:30,00 para
+                    Atenção.</div>
             </div>
             <div class="instruction-item">
                 <div class="step-num">4</div>
-                <div class="step-text">
-                    <strong>Encerramento</strong>
-                    Ao concluir a vestimenta, clique em "Encerrar Aferição" para visualizar o relatório final e o status
-                    de aprovação.
-                </div>
+                <div class="step-text"><strong>Histórico</strong>Salve a sessão para manter o histórico de diferentes
+                    BAs e baterias.</div>
             </div>
-
             <button class="btn-primary" onclick="fecharIntro()">Entendido, Iniciar</button>
         </div>
 
+        <!-- Modal Confirmação -->
         <div class="modal-panel" id="confirmModal">
-            <div class="modal-title" style="color:var(--red-hot);">⚠ CONFIRMAR ENCERRAMENTO</div>
-            <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-dim);line-height:1.7;">
-                ESTA AÇÃO FINALIZA A AFERIÇÃO E<br>CALCULA OS RESULTADOS FINAIS.</p>
-            <button class="btn-danger" style="margin-top:20px;" onclick="finalizar()">CONFIRMAR ENCERRAMENTO</button>
-            <button class="btn-ghost" onclick="cancelarEncerramento()">VOLTAR</button>
+            <div class="modal-title" style="color:var(--red-hot);">ENCERRAR AFERIÇÃO?</div>
+            <button class="btn-primary" onclick="finalizar()">Confirmar e Enviar</button>
+            <button class="btn-primary btn-save" onclick="abrirNomeBA()">Salvar no Histórico</button>
+            <button class="btn-ghost" style="color: var(--red); border-color: var(--red); font-weight: bold;"
+                onclick="resetar()">Nova Aferição</button>
+            <button class="btn-ghost" onclick="cancelarEncerramento()">Voltar</button>
         </div>
 
+        <!-- Modal Nome BA -->
+        <div class="modal-panel" id="nomeModal">
+            <div class="modal-title">IDENTIFICAÇÃO</div>
+            <p style="font-size: 13px; color: var(--text-dim);">Informe o nome do Bombeiro:</p>
+            <input type="text" id="nomeBA" class="input-ba" placeholder="NOME DO BA" autofocus>
+            <button class="btn-primary" onclick="salvarHistorico()">Salvar Bateria</button>
+            <button class="btn-ghost" onclick="fecharNomeBA()">Cancelar</button>
+        </div>
+
+        <!-- Modal Histórico -->
+        <div class="modal-panel" id="historicoModal">
+            <div class="modal-title">HISTÓRICO DE BATERIAS</div>
+            <div id="history-content" class="history-list"></div>
+            <button class="btn-danger" style="margin-top: 20px; padding: 12px; font-size: 13px;"
+                onclick="limparHistorico()">Limpar Todo Histórico</button>
+            <button class="btn-ghost" onclick="fecharHistorico()">Fechar</button>
+        </div>
+
+        <!-- Loader -->
         <div class="loader-wrap" id="loader">
             <div class="loader-ring"></div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--primary);font-weight:bold;">
-                PROCESSANDO RESULTADOS...</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-weight:bold;">PROCESSANDO...</div>
         </div>
 
+        <!-- Modal Relatório Final -->
         <div class="modal-panel" id="finalModal">
             <div class="modal-title">RELATÓRIO FINAL</div>
             <div id="results-content"></div>
-            <button class="btn-primary" onclick="resetar()">NOVA AFERIÇÃO</button>
+            <button class="btn-primary" onclick="resetar()">Nova Aferição</button>
+            <button class="btn-ghost" onclick="fecharRelatorio()">Voltar ao Histórico</button>
         </div>
     </div>
 
     <div id="toast"></div>
 
     <script>
-        const LIMITE = 90000; // 01:30,00
-        const METALOW = 60000; // 01:00,00
-        const state = {
-            activeId: null,
-            rafId: null,
-            globalStart: null,
-            timers: { tp: 0, epr: 0 },
-            lastSwitchTime: null
-        };
+        const LIMITE = 90000;
+        const METALOW = 60000;
+        let state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null };
+
+        // Carregar ou Inicializar Histórico
+        let db = JSON.parse(localStorage.getItem('tp_epr_logs') || '[]');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('tp_epr_intro_v2')) {
+                document.getElementById('overlay').style.display = 'flex';
+                document.getElementById('introModal').style.display = 'block';
+                localStorage.setItem('tp_epr_intro_v2', 'true');
+            }
+        });
 
         function formatTime(ms) {
             const abs = Math.abs(ms);
@@ -752,7 +847,9 @@
         function rafLoop() {
             const now = Date.now();
             const globalElapsed = now - state.globalStart;
-            document.getElementById('totalTime').innerText = formatTime(globalElapsed);
+            const totalEl = document.getElementById('totalTime');
+            totalEl.innerText = formatTime(globalElapsed);
+            totalEl.classList.add('active-total');
 
             const elapsedSinceSwitch = now - state.lastSwitchTime;
             const currentTotal = state.timers[state.activeId] + elapsedSinceSwitch;
@@ -765,43 +862,27 @@
         function updateTimeline(elapsed) {
             const remaining = Math.max(0, LIMITE - elapsed);
             document.getElementById('timerVal').innerText = formatTime(remaining);
-
             const bar = document.getElementById('stripBar');
             const label = document.getElementById('statusLabel');
 
             if (elapsed < METALOW) {
-                bar.className = 'strip-bar ok';
-                bar.style.width = ((remaining / LIMITE) * 100) + '%';
-                label.innerText = 'APROVADO';
-                label.style.color = '#2e7d32';
+                bar.className = 'strip-bar ok'; bar.style.width = ((remaining / LIMITE) * 100) + '%';
+                label.innerText = 'APROVADO'; label.style.color = 'var(--green-ok)';
             } else if (elapsed < LIMITE) {
-                bar.className = 'strip-bar warn';
-                bar.style.width = ((remaining / LIMITE) * 100) + '%';
-                label.innerText = 'ATENÇÃO';
-                label.style.color = '#f57c00';
+                bar.className = 'strip-bar warn'; bar.style.width = ((remaining / LIMITE) * 100) + '%';
+                label.innerText = 'ATENÇÃO'; label.style.color = 'var(--yellow-warn)';
             } else {
-                bar.className = 'strip-bar fail';
-                label.innerText = 'REPROVADO';
-                label.className = 'strip-status fail blink';
-                label.style.color = '#d32f2f';
+                bar.className = 'strip-bar fail'; label.innerText = 'REPROVADO'; label.className = 'strip-status fail blink'; label.style.color = 'var(--red-hot)';
             }
         }
 
         function ativar(id) {
             if (state.activeId === id) return;
-
             const now = Date.now();
-            if (!state.globalStart) {
-                state.globalStart = now;
-            }
-
-            if (state.activeId) {
-                state.timers[state.activeId] += (now - state.lastSwitchTime);
-            }
-
+            if (!state.globalStart) state.globalStart = now;
+            if (state.activeId) state.timers[state.activeId] += (now - state.lastSwitchTime);
             state.activeId = id;
             state.lastSwitchTime = now;
-
             updateUI();
             if (!state.rafId) state.rafId = requestAnimationFrame(rafLoop);
         }
@@ -818,18 +899,13 @@
             });
         }
 
-        function fecharIntro() {
-            document.getElementById('introModal').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
-        }
+        function fecharIntro() { document.getElementById('overlay').style.display = 'none'; document.getElementById('introModal').style.display = 'none'; }
 
         function confirmarEncerramento() {
             if (!state.globalStart) return;
-            if (state.rafId) cancelAnimationFrame(state.rafId);
-            state.rafId = null;
+            cancelAnimationFrame(state.rafId); state.rafId = null;
             document.getElementById('overlay').style.display = 'flex';
             document.getElementById('confirmModal').style.display = 'block';
-            document.getElementById('introModal').style.display = 'none';
         }
 
         function cancelarEncerramento() {
@@ -839,49 +915,168 @@
             state.rafId = requestAnimationFrame(rafLoop);
         }
 
-        function finalizar() {
-            const now = Date.now();
-            if (state.activeId) {
-                state.timers[state.activeId] += (now - state.lastSwitchTime);
-            }
-            const total = now - state.globalStart;
-
+        function abrirNomeBA() {
             document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('nomeModal').style.display = 'block';
+            document.getElementById('nomeBA').focus();
+        }
+
+        function fecharNomeBA() {
+            document.getElementById('nomeModal').style.display = 'none';
+            document.getElementById('confirmModal').style.display = 'block';
+        }
+
+        function salvarHistorico() {
+            const nome = document.getElementById('nomeBA').value.trim().toUpperCase();
+            if (!nome) { alert('Informe o nome do Bombeiro!'); return; }
+
+            const agora = Date.now();
+            if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
+            const total = agora - state.globalStart;
+
+            const registro = {
+                id: agora,
+                ba: nome,
+                tp: state.timers.tp,
+                epr: state.timers.epr,
+                total: total,
+                data: new Date().toLocaleString('pt-BR')
+            };
+
+            db.push(registro);
+            localStorage.setItem('tp_epr_logs', JSON.stringify(db));
+
+            showToast('BATERIA SALVA NO HISTÓRICO!');
+            resetar();
+        }
+
+        function finalizar(registroSelecionado = null) {
+            let dados;
+            if (registroSelecionado) {
+                dados = registroSelecionado;
+            } else {
+                const agora = Date.now();
+                if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
+                dados = { tp: state.timers.tp, epr: state.timers.epr, total: agora - state.globalStart };
+            }
+
+            document.querySelectorAll('.modal-panel').forEach(m => m.style.display = 'none');
+            document.getElementById('overlay').style.display = 'flex';
             document.getElementById('loader').style.display = 'flex';
 
             setTimeout(() => {
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('finalModal').style.display = 'block';
 
-                const prod = total < METALOW;
-                const skip = total >= METALOW && total <= LIMITE;
-
-                let statusHtml = '';
-                if (prod) {
-                    statusHtml = `<div style="background:#e8f5e9;border:1.5px solid #2e7d32;color:#2e7d32;text-align:center;padding:12px;border-radius:6px;margin-bottom:18px;"><span style="font-family:Orbitron;font-size:24px;font-weight:900;">APROVADO</span></div>`;
-                } else if (skip) {
-                    statusHtml = `<div style="background:#fff3e0;border:1.5px solid #f57c00;color:#f57c00;text-align:center;padding:12px;border-radius:6px;margin-bottom:18px;"><span style="font-family:Orbitron;font-size:24px;font-weight:900;">ATENÇÃO</span></div>`;
-                } else {
-                    statusHtml = `<div style="background:#ffebee;border:1.5px solid #d32f2f;color:#d32f2f;text-align:center;padding:12px;border-radius:6px;margin-bottom:18px;"><span style="font-family:Orbitron;font-size:24px;font-weight:900;">REPROVADO</span></div>`;
-                }
+                const total = dados.total;
+                const status = total < METALOW ? 'APROVADO' : (total <= LIMITE ? 'ATENÇÃO' : 'REPROVADO');
+                const color = status === 'APROVADO' ? 'var(--green-ok)' : (status === 'ATENÇÃO' ? 'var(--yellow-warn)' : 'var(--red-hot)');
+                const bg = status === 'APROVADO' ? '#e8f5e9' : (status === 'ATENÇÃO' ? '#fff3e0' : '#ffebee');
 
                 document.getElementById('results-content').innerHTML = `
-                ${statusHtml}
-                <div class="result-rows">
-                    <div class="result-row"><span class="rr-label">VESTIMENTA TP:</span><span class="rr-val">${formatTime(state.timers.tp)}</span></div>
-                    <div class="result-row"><span class="rr-label">VESTIMENTA EPR:</span><span class="rr-val">${formatTime(state.timers.epr)}</span></div>
-                    <div class="result-row result-total"><span class="rr-label">TEMPO TOTAL:</span><span class="rr-val">${formatTime(total)}</span></div>
+                <div style="background:${bg}; border:1.5px solid ${color}; color:${color}; text-align:center; padding:12px; border-radius:6px; margin-bottom:18px;">
+                    <span style="font-family:Orbitron; font-size:24px; font-weight:900;">${status}</span>
                 </div>
-                <div style="font-family:Rajdhani;font-size:14px;color:var(--text);text-align:center;margin-top:15px;font-weight:700;line-height:1.4;">
+                <div class="result-rows">
+                    <div class="result-row"><span class="rr-label">VESTIMENTA TP:</span><span class="rr-val">${formatTime(dados.tp)}</span></div>
+                    <div class="result-row"><span class="rr-label">VESTIMENTA EPR:</span><span class="rr-val">${formatTime(dados.epr)}</span></div>
+                    <div class="result-row result-total"><span class="rr-label">TEMPO TOTAL:</span><span class="rr-val">${formatTime(dados.total)}</span></div>
+                </div>
+                <div style="font-family:Rajdhani; font-size:14px; color:var(--text); text-align:center; margin-top:15px; font-weight:700; line-height:1.4;">
                     META: TEMPO ABAIXO DE 01:00,00.<br>
                     <span style="color:var(--text-dim)">CASO MAIOR, ANOTAR PONTOS DE MELHORIA.</span>
                 </div>
             `;
-            }, 1200);
+            }, 800);
+        }
+
+        function abrirHistorico() {
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('historicoModal').style.display = 'block';
+            renderHistorico();
+        }
+
+        function fecharHistorico() {
+            document.getElementById('historicoModal').style.display = 'none';
+            if (!state.globalStart) document.getElementById('overlay').style.display = 'none';
+            else document.getElementById('confirmModal').style.display = 'block'; // Volta pro fluxo de encerramento se estava nele
+        }
+
+        function fecharRelatorio() {
+            document.getElementById('finalModal').style.display = 'none';
+            abrirHistorico();
+        }
+
+        function renderHistorico() {
+            const wrap = document.getElementById('history-content');
+            if (db.length === 0) { wrap.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--text-dim);">Nenhum registro encontrado.</p>'; return; }
+
+            // Agrupar por BA
+            const grupos = db.reduce((acc, obj) => {
+                acc[obj.ba] = acc[obj.ba] || [];
+                acc[obj.ba].push(obj);
+                return acc;
+            }, {});
+
+            let html = '';
+            for (const ba in grupos) {
+                const baterias = grupos[ba];
+                const melhorTempo = Math.min(...baterias.map(b => b.total));
+
+                html += `<div class="ba-group">
+                <div class="ba-name-header"><span>◈ ${ba}</span> <span style="font-size: 10px; color: var(--text-dim);">${baterias.length} Baterias</span></div>
+                ${baterias.sort((a, b) => b.id - a.id).map(b => {
+                    const isBest = b.total === melhorTempo;
+                    return `
+                    <div class="ba-entry ${isBest ? 'best' : ''}" onclick='finalizar(${JSON.stringify(b)})'>
+                        <div class="entry-info">
+                            <div style="font-weight: bold;">BAT. ${new Date(b.id).toLocaleTimeString([], { hour: '2d', minute: '2d' })}</div>
+                            <div style="font-size: 10px; color: var(--text-dim);">${b.data.split(' ')[0]}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="entry-time" style="color: ${b.total < METALOW ? 'var(--green-ok)' : (b.total <= LIMITE ? 'var(--yellow-warn)' : 'var(--red-hot)')}">${formatTime(b.total)}</div>
+                            ${isBest ? '<span class="best-badge">MELHOR TEMPO</span>' : ''}
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>`;
+            }
+            wrap.innerHTML = html;
+        }
+
+        function limparHistorico() {
+            if (confirm('Deseja realmente apagar todo o histórico de baterias?')) {
+                db = [];
+                localStorage.setItem('tp_epr_logs', '[]');
+                renderHistorico();
+                showToast('HISTÓRICO LIMPO');
+            }
         }
 
         function resetar() {
-            location.reload();
+            if (state.rafId) cancelAnimationFrame(state.rafId);
+            state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null };
+
+            document.getElementById('totalTime').innerText = '00:00,00';
+            document.getElementById('totalTime').classList.remove('active-total');
+            document.getElementById('tpTime').innerText = '00:00,00';
+            document.getElementById('eprTime').innerText = '00:00,00';
+            document.getElementById('timerVal').innerText = '01:30,00';
+            document.getElementById('statusLabel').innerText = 'AGUARDANDO';
+            document.getElementById('statusLabel').classList.remove('blink');
+            document.getElementById('statusLabel').style.color = 'var(--text-dim)';
+            document.getElementById('stripBar').style.width = '0%';
+            document.getElementById('nomeBA').value = '';
+
+            document.querySelectorAll('.modal-panel').forEach(m => m.style.display = 'none');
+            document.getElementById('overlay').style.display = 'none';
+            updateUI();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
         }
     </script>
 </body>
