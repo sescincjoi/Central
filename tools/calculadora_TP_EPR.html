@@ -7,28 +7,34 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Calculadora TP EPR | Bombeiros de Aeródromo</title>
+    <title>Calculadora TP EPR</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Oswald:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --fire-red: #d32f2f;
-            --dark-red: #8b0000;
-            --coal: #121212;
-            --iron: #2a2a2a;
-            --steel: #454545;
-            --warning-amber: #ffc107;
-            --warning-orange: #ff8f00;
-            --success-green: #2e7d32;
-            --text-white: #f5f5f5;
+            --amber: #d48806;
+            --amber-dim: #b8860b;
+            --amber-glow: rgba(212, 136, 6, 0.3);
+            --red: #b22222;
+            --red-hot: #d32f2f;
+            --green-ok: #2e7d32;
+            --panel: #f4f4f4;
+            --panel-mid: #ffffff;
+            --panel-hi: #e0e0e0;
+            --steel: #bdbdbd;
+            --grid: #00000005;
+            --text: #1a1a1a;
+            --text-dim: #616161;
+            --scan: #00000002;
+            --yellow-warn: #f57c00;
         }
 
         * {
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
 
@@ -38,269 +44,494 @@
             width: 100%;
             overflow: hidden;
             position: fixed;
-            background-color: #000;
+            background: var(--panel);
         }
 
         body {
-            font-family: 'Oswald', sans-serif;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            color: var(--text-white);
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--panel);
+            color: var(--text);
             display: flex;
             flex-direction: column;
             height: 100vh;
             height: 100dvh;
         }
 
-        header {
-            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-red) 100%);
-            padding: calc(15px + env(safe-area-inset-top)) 10px 15px 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            flex-shrink: 0;
-            position: relative;
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 32px 32px;
         }
 
-        .back-btn {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 8px;
-            border-radius: 4px;
-            cursor: pointer;
+        .cmd-bar {
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+            background: #fff;
+            border-bottom: 3px solid var(--amber);
+            padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        header h1 {
-            margin: 0;
-            font-size: 20px;
+        .id-callsign {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--amber);
             letter-spacing: 2px;
+        }
+
+        .id-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        .status-pills {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .pill {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            padding: 3px 10px;
+            border-radius: 3px;
+            border: 1.5px solid;
             text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .pill-standby {
+            color: var(--text-dim);
+            border-color: var(--steel);
+            background: #eee;
+        }
+
+        .pill-running {
+            color: var(--red-hot);
+            border-color: var(--red-hot);
+            background: #ffebee;
+        }
+
+        .mission-strip {
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+            background: #fff;
+            border-bottom: 1px solid var(--steel);
+            height: 56px;
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+        }
+
+        .strip-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            opacity: 0.15;
+            transition: background-color 0.5s ease;
+            width: 0%;
+        }
+
+        .strip-bar.ok {
+            background: var(--green-ok);
+        }
+
+        .strip-bar.warn {
+            background: var(--yellow-warn);
+        }
+
+        .strip-bar.fail {
+            background: #000;
+            opacity: 1;
+        }
+
+        .strip-score {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            min-width: 150px;
+            padding: 0 16px;
+            border-right: 1px solid var(--steel);
+            flex-shrink: 0;
+        }
+
+        .strip-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .strip-status {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--green-ok);
+        }
+
+        .strip-status.warn {
+            color: var(--yellow-warn);
+        }
+
+        .strip-status.fail {
+            color: var(--red-hot);
+        }
+
+        .strip-timer {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .strip-time {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 24px;
+            color: var(--text);
+            font-weight: bold;
+        }
+
+        .main {
+            position: relative;
+            z-index: 5;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 16px;
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .summary-card {
+            background: #fff;
+            border: 1.5px solid var(--steel);
+            border-radius: 6px;
+            padding: 14px 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .summary-val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 32px;
+            color: var(--amber);
+            font-weight: bold;
+        }
+
+        .ex-card {
+            position: relative;
+            background: #fff;
+            border: 1.5px solid var(--steel);
+            border-radius: 6px;
+            padding: 16px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow: hidden;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .ex-card.active {
+            border-color: var(--amber);
+            box-shadow: 0 4px 12px rgba(212, 136, 6, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .ex-stripe {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: var(--steel);
+        }
+
+        .ex-card.active .ex-stripe {
+            background: var(--amber);
+        }
+
+        .ex-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ex-id {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+
+        .ex-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            text-transform: uppercase;
+        }
+
+        .ex-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+        }
+
+        .ex-time {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 36px;
+            color: var(--text-dim);
+        }
+
+        .ex-card.active .ex-time {
+            color: var(--amber);
+        }
+
+        .btn-trigger {
+            width: 56px;
+            height: 56px;
+            border-radius: 6px;
+            background: #eee;
+            border: 1.5px solid var(--steel);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: all 0.15s;
+        }
+
+        .btn-trigger.armed {
+            background: #fff8e1;
+            border-color: var(--amber);
+        }
+
+        .trig-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 8px;
+            color: var(--text-dim);
+            font-weight: bold;
+        }
+
+        .btn-trigger.armed .trig-label {
+            color: var(--amber);
+        }
+
+        .btn-terminate {
+            background: var(--red);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 18px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            margin-bottom: calc(12px + env(safe-area-inset-bottom));
+            box-shadow: 0 4px 0 #8b0000;
         }
 
-        .white-divider {
-            height: 3px;
-            background-color: #ffffff;
-            width: 100%;
-            flex-shrink: 0;
-        }
-
-        .timeline-container {
-            background: #000;
-            height: 38px;
-            width: 100%;
-            position: relative;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--steel);
-            flex-shrink: 0;
-        }
-
-        .timeline-bar {
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0.8;
-            transition: background-color 0.3s ease;
-        }
-
-        .bg-ok {
-            background-color: var(--success-green) !important;
-        }
-
-        .bg-warn {
-            background-color: var(--warning-amber) !important;
-        }
-
-        .bg-fail {
-            background-color: #000 !important;
-            border-right: 2px solid var(--fire-red);
-        }
-
-        .timeline-info {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 12px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .score-indicator {
-            font-size: 13px;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 1px 1px 2px #000;
-        }
-
-        .countdown-timer {
-            font-size: 18px;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 1px 1px 2px #000;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 12px;
-            max-width: 450px;
-            margin: 0 auto;
-            width: 100%;
-            gap: 15px;
-            overflow-y: auto;
-        }
-
-        .summary-banner {
-            background: var(--iron);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 5px solid var(--warning-amber);
-            text-align: center;
-        }
-
-        .summary-label {
-            font-size: 11px;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .summary-time {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 32px;
-            color: var(--warning-amber);
-            font-weight: bold;
-        }
-
-        .card {
-            background: linear-gradient(145deg, #222, #111);
-            border: 1px solid var(--steel);
-            border-radius: 8px;
-            padding: 12px 15px;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
-        }
-
-        .card.active {
-            border-color: var(--fire-red);
-            background: #1a0a0a;
-            box-shadow: 0 0 12px rgba(211, 47, 47, 0.25);
-        }
-
-        .exercise-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        .exercise-title {
-            text-transform: uppercase;
-            font-size: 12px;
-            font-weight: 700;
-            color: #aaa;
-        }
-
-        .timer-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .timer-display {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 36px;
-            color: #fff;
-        }
-
-        .active .timer-display {
-            color: var(--fire-red);
-        }
-
-        .btn-action {
-            background: var(--iron);
-            border: 1px solid var(--steel);
-            color: white;
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .btn-action.running {
-            background: var(--fire-red);
-            box-shadow: 0 0 10px var(--fire-red);
-        }
-
-        .final-btn {
-            background: var(--fire-red);
-            color: white;
-            border: none;
-            padding: 18px;
-            font-family: 'Oswald', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: auto;
-            margin-bottom: calc(10px + env(safe-area-inset-bottom));
+        .btn-terminate:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #8b0000;
         }
 
         .overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.97);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
             display: none;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            z-index: 100;
+            backdrop-filter: blur(4px);
         }
 
-        .modal {
-            background: var(--iron);
+        .intro-modal {
+            background: #fff;
             width: 100%;
-            max-width: 380px;
-            border: 2px solid #ffffff;
+            max-width: 400px;
+            border-left: 8px solid var(--amber);
+            padding: 30px;
             border-radius: 8px;
-            padding: 24px;
-            text-align: center;
-            display: none;
+            text-align: left;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            display: block;
+            /* Inicialmente visível */
         }
 
-        .loading-container {
+        .intro-modal h2 {
+            color: var(--text);
+            margin-bottom: 25px;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Orbitron';
+        }
+
+        .instruction-item {
+            margin-bottom: 18px;
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            background: var(--amber);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-text {
+            color: var(--text-dim);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .step-text strong {
+            color: var(--text);
+            display: block;
+            margin-bottom: 3px;
+            font-size: 16px;
+        }
+
+        .modal-panel {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 28px;
+            position: relative;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--amber);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1.5px solid #eee;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            background: var(--amber);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 0 #b8860b;
+        }
+
+        .btn-danger {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            background: var(--red);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8b0000;
+        }
+
+        .btn-ghost {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid var(--steel);
+            background: transparent;
+            color: var(--text-dim);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .loader-wrap {
             display: none;
             flex-direction: column;
             align-items: center;
             gap: 20px;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #fff;
+        .loader-ring {
+            width: 56px;
+            height: 56px;
+            border: 4px solid #eee;
+            border-top-color: var(--amber);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -309,23 +540,53 @@
             }
         }
 
-        #toast {
-            position: fixed;
-            top: 15%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--dark-red);
-            padding: 10px 20px;
+        .result-rows {
+            background: #f9f9f9;
+            border: 1.5px solid #eee;
             border-radius: 6px;
-            display: none;
-            z-index: 1000;
-            border: 1px solid var(--warning-amber);
-            font-weight: bold;
-            white-space: nowrap;
+            padding: 16px;
+            margin-bottom: 18px;
         }
 
-        .critical-blink {
-            animation: blinker 0.4s infinite alternate;
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .rr-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .rr-val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 18px;
+            color: var(--text);
+            font-weight: bold;
+        }
+
+        .result-total {
+            border-top: 2px solid #eee;
+            padding-top: 12px;
+            margin-top: 8px;
+        }
+
+        .result-total .rr-val {
+            color: var(--amber);
+            font-size: 24px;
+        }
+
+        .blink {
+            animation: blinker 0.45s infinite alternate;
         }
 
         @keyframes blinker {
@@ -334,131 +595,169 @@
             }
 
             to {
-                opacity: 0.3;
+                opacity: 0.2;
             }
         }
 
-        .btn-reset {
-            background: #ffffff;
-            color: #000000;
-            border: none;
-            padding: 15px;
-            width: 100%;
-            margin-top: 15px;
-            cursor: pointer;
-            font-weight: bold;
+        #toast {
+            position: fixed;
+            top: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border: 2px solid var(--amber);
+            color: var(--amber);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            padding: 12px 24px;
             border-radius: 6px;
-            text-transform: uppercase;
-            font-family: 'Oswald';
-        }
-
-        /* Resultado por nota */
-        .nota-detail {
-            font-size: 11px;
-            color: #aaa;
-            font-family: 'JetBrains Mono', monospace;
-            margin-top: 10px;
-        }
-
-        .nota-detail.negativo {
-            color: #f44336;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 
 <body>
 
-    <header>
-        <button class="back-btn" onclick="window.location.href='../'">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m15 18-6-6 6-6" />
-            </svg>
-        </button>
-        <h1>
-            <svg viewBox="0 0 24 24" width="22" height="22" style="fill:#fff;">
+    <div class="cmd-bar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button onclick="window.location.href='../'"
+                style="background: #f5f5f5; border: 1.5px solid var(--steel); color: var(--text); padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6" />
+                </svg>
+            </button>
+            <div>
+                <div class="id-callsign">TP/EPR - BA</div>
+                <div class="id-sub">AFEIRIÇÃO DE VESTIMENTA</div>
+            </div>
+        </div>
+        <div class="status-pills">
+            <div class="pill pill-standby" id="pillStandby">STANDBY</div>
+            <div class="pill pill-running" id="pillRunning" style="display:none">RUNNING</div>
+        </div>
+    </div>
+
+    <div class="mission-strip">
+        <div class="strip-bar ok" id="stripBar"></div>
+        <div class="strip-score">
+            <span class="strip-label" style="margin-right: 12px;">STATUS</span>
+            <span class="strip-status" id="statusLabel">AGUARDANDO</span>
+        </div>
+        <div class="strip-timer">
+            <span class="strip-label">META</span>
+            <span class="strip-time" id="timerVal">01:30,00</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="summary-card">
+            <span class="summary-label">TEMPO TOTAL (TP+EPR)</span>
+            <div class="summary-val" id="totalTime">00:00,00</div>
+        </div>
+
+        <div class="ex-card" id="card-tp">
+            <div class="ex-stripe"></div>
+            <div class="ex-header">
+                <span class="ex-id">TAREFA 01</span>
+            </div>
+            <div class="ex-name">Traje de Proteção (TP)</div>
+            <div class="ex-bottom">
+                <span class="ex-time" id="tpTime">00:00,00</span>
+                <button class="btn-trigger" id="btn-tp" onclick="ativar('tp')">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161" />
+                    </svg>
+                    <span class="trig-label">INICIAR</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="ex-card" id="card-epr">
+            <div class="ex-stripe"></div>
+            <div class="ex-header">
+                <span class="ex-id">TAREFA 02</span>
+            </div>
+            <div class="ex-name">Equip. Prot. Resp. (EPR)</div>
+            <div class="ex-bottom">
+                <span class="ex-time" id="eprTime">00:00,00</span>
+                <button class="btn-trigger" id="btn-epr" onclick="ativar('epr')">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161" />
+                    </svg>
+                    <span class="trig-label">INICIAR</span>
+                </button>
+            </div>
+        </div>
+
+        <button class="btn-terminate" onclick="confirmarEncerramento()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                 <path
-                    d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,3L19,6.11V11C19,15.33 16.25,19.43 12,20.93C7.75,19.43 5,15.33 5,11V6.11L12,3Z" />
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
             </svg>
-            TP/EPR - BA
-        </h1>
-    </header>
-
-    <div class="white-divider"></div>
-
-    <div class="timeline-container">
-        <div class="timeline-bar bg-ok" id="progressBar"></div>
-        <div class="timeline-info">
-            <span class="score-indicator" id="statusLabel">APROVADO</span>
-            <span class="countdown-timer" id="regressivo">01:30,00</span>
-        </div>
+            ENCERRAR AFERIÇÃO
+        </button>
     </div>
 
-    <div class="main-content">
-        <div class="summary-banner">
-            <span class="summary-label">TP Completo (TP+EPR)</span>
-            <div class="summary-time" id="totalTime">00:00,00</div>
-        </div>
+    <div class="overlay" id="overlay" style="display: flex;">
+        <div class="intro-modal" id="introModal">
+            <h2>Guia de Operação</h2>
 
-        <!-- TP -->
-        <div class="card" id="card-tp">
-            <div class="exercise-header">
-                <span class="exercise-title">TP (Traje de Proteção)</span>
+            <div class="instruction-item">
+                <div class="step-num">1</div>
+                <div class="step-text">
+                    <strong>Início da Aferição</strong>
+                    Toque no botão "Iniciar" de qualquer uma das etapas (TP ou EPR) para iniciar a contagem do tempo
+                    total.
+                </div>
             </div>
-            <div class="timer-row">
-                <div class="timer-display" id="tpTime">00:00,00</div>
-                <button class="btn-action" id="btn-tp" onclick="ativar('tp')">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
-                    </svg>
-                </button>
+            <div class="instruction-item">
+                <div class="step-num">2</div>
+                <div class="step-text">
+                    <strong>Transição de Etapa</strong>
+                    Ao terminar a primeira vestimenta, toque no "Iniciar" da etapa seguinte. O cronômetro registrará o
+                    tempo individual de cada uma.
+                </div>
             </div>
-        </div>
-
-        <!-- EPR -->
-        <div class="card" id="card-epr">
-            <div class="exercise-header">
-                <span class="exercise-title">EPR (Equipamento Prot. Resp.)</span>
+            <div class="instruction-item">
+                <div class="step-num">3</div>
+                <div class="step-text">
+                    <strong>Meta de Tempo</strong>
+                    A meta para aprovação é completar o conjunto (TP + EPR) em no máximo <strong>01:30,00</strong>.
+                </div>
             </div>
-            <div class="timer-row">
-                <div class="timer-display" id="eprTime">00:00,00</div>
-                <button class="btn-action" id="btn-epr" onclick="ativar('epr')">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
-                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
-                    </svg>
-                </button>
+            <div class="instruction-item">
+                <div class="step-num">4</div>
+                <div class="step-text">
+                    <strong>Encerramento</strong>
+                    Ao concluir ambas, clique em "Encerrar Aferição" para visualizar o relatório final e o status de
+                    aprovação.
+                </div>
             </div>
+
+            <button class="btn-primary" onclick="fecharIntro()">Entendido, Iniciar</button>
         </div>
 
-        <button class="final-btn" onclick="confirmarEncerramento()">Encerrar Aferição</button>
-    </div>
-
-    <div class="overlay" id="overlay">
-        <!-- Modal de confirmação -->
-        <div class="modal" id="confirmModal" style="border-color: var(--fire-red);">
-            <svg viewBox="0 0 24 24" width="40" height="40" fill="#d32f2f" style="margin-bottom:10px;">
-                <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
-            </svg>
-            <h2 style="text-transform:uppercase;color:#fff;font-size:18px;margin-bottom:8px;">Encerrar Aferição?</h2>
-            <p
-                style="color:#aaa;font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:20px;line-height:1.5;">
-                O cronômetro será parado<br>e os tempos registrados.</p>
-            <button onclick="finalizar()"
-                style="background:var(--fire-red);color:white;border:none;padding:14px;width:100%;cursor:pointer;font-weight:bold;border-radius:6px;text-transform:uppercase;font-family:'Oswald';font-size:15px;margin-bottom:10px;">Confirmar
-                Encerramento</button>
-            <button onclick="cancelarEncerramento()"
-                style="background:var(--iron);color:#ccc;border:1px solid var(--steel);padding:12px;width:100%;cursor:pointer;font-weight:bold;border-radius:6px;text-transform:uppercase;font-family:'Oswald';font-size:14px;">Voltar</button>
+        <div class="modal-panel" id="confirmModal">
+            <div class="modal-title" style="color:var(--red-hot);">⚠ CONFIRMAR ENCERRAMENTO</div>
+            <p style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-dim);line-height:1.7;">
+                ESTA AÇÃO FINALIZA A AFERIÇÃO E<br>CALCULA OS RESULTADOS FINAIS.</p>
+            <button class="btn-danger" style="margin-top:20px;" onclick="finalizar()">CONFIRMAR ENCERRAMENTO</button>
+            <button class="btn-ghost" onclick="cancelarEncerramento()">VOLTAR</button>
         </div>
 
-        <div class="loading-container" id="loader">
-            <div class="spinner"></div>
-            <p style="letter-spacing:2px;color:#fff;font-weight:bold;text-transform:uppercase;">Processando Dados...</p>
+        <div class="loader-wrap" id="loader">
+            <div class="loader-ring"></div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--amber);font-weight:bold;">
+                PROCESSANDO RESULTADOS...</div>
         </div>
 
-        <div class="modal" id="finalModal">
-            <h2 style="text-transform:uppercase;color:#fff;font-size:18px;margin-bottom:15px;">Relatório de Vestimenta
-            </h2>
+        <div class="modal-panel" id="finalModal">
+            <div class="modal-title">◈ RELATÓRIO DE VESTIMENTA</div>
             <div id="results-content"></div>
-            <button class="btn-reset" onclick="resetar()">Nova Aferição</button>
+            <button class="btn-primary" onclick="resetar()">NOVA AFERIÇÃO</button>
         </div>
     </div>
 
@@ -480,35 +779,12 @@
             return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(c).padStart(2, '0')}`;
         }
 
-        function updateTimeline(elapsed) {
-            const remaining = Math.max(0, LIMITE - elapsed);
-            document.getElementById('regressivo').innerText = formatTime(remaining);
-
-            const bar = document.getElementById('progressBar');
-            const label = document.getElementById('statusLabel');
-
-            if (remaining > 30000) {
-                bar.className = 'timeline-bar bg-ok';
-                bar.style.width = ((remaining / LIMITE) * 100) + '%';
-                label.innerText = 'APROVADO';
-                label.classList.remove('blink', 'critical-blink');
-            } else if (remaining > 0) {
-                bar.className = 'timeline-bar bg-warn';
-                bar.style.width = ((remaining / LIMITE) * 100) + '%';
-                label.innerText = 'ATENÇÃO';
-                label.classList.remove('blink', 'critical-blink');
-            } else {
-                bar.className = 'timeline-bar bg-fail';
-                label.innerText = 'REPROVADO';
-                label.classList.add('critical-blink');
-            }
-        }
-
         function rafLoop() {
             const now = Date.now();
             const globalElapsed = now - state.globalStart;
             document.getElementById('totalTime').innerText = formatTime(globalElapsed);
 
+            // Atualizar timer ativo
             const elapsedSinceSwitch = now - state.lastSwitchTime;
             const currentTotal = state.timers[state.activeId] + elapsedSinceSwitch;
             document.getElementById(state.activeId + 'Time').innerText = formatTime(currentTotal);
@@ -517,14 +793,45 @@
             state.rafId = requestAnimationFrame(rafLoop);
         }
 
+        function updateTimeline(elapsed) {
+            const remaining = Math.max(0, LIMITE - elapsed);
+            document.getElementById('timerVal').innerText = formatTime(remaining);
+
+            const bar = document.getElementById('stripBar');
+            const label = document.getElementById('statusLabel');
+
+            if (remaining > 30000) {
+                bar.className = 'strip-bar ok';
+                bar.style.width = ((remaining / LIMITE) * 100) + '%';
+                label.innerText = 'APROVADO';
+                label.className = 'strip-status';
+                label.style.color = '#2e7d32';
+            } else if (remaining > 0) {
+                bar.className = 'strip-bar warn';
+                bar.style.width = ((remaining / LIMITE) * 100) + '%';
+                label.innerText = 'ATENÇÃO';
+                label.className = 'strip-status warn';
+                label.style.color = '#f57c00';
+            } else {
+                bar.className = 'strip-bar fail';
+                label.innerText = 'REPROVADO';
+                label.className = 'strip-status fail blink';
+                label.style.color = '#d32f2f';
+            }
+        }
+
         function ativar(id) {
             if (state.activeId === id) return;
 
             const now = Date.now();
             if (!state.globalStart) {
                 state.globalStart = now;
+                document.getElementById('pillStandby').style.display = 'none';
+                document.getElementById('pillRunning').style.display = 'block';
+                document.getElementById('statusLabel').innerText = 'APROVADO';
             }
 
+            // Parar timer anterior se houver
             if (state.activeId) {
                 state.timers[state.activeId] += (now - state.lastSwitchTime);
             }
@@ -537,31 +844,36 @@
         }
 
         function updateUI() {
-            const playIcon = `<svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>`;
             ['tp', 'epr'].forEach(id => {
                 const active = state.activeId === id;
-                const card = document.getElementById('card-' + id);
+                document.getElementById('card-' + id).classList.toggle('active', active);
                 const btn = document.getElementById('btn-' + id);
-                card.classList.toggle('active', active);
-                btn.classList.toggle('running', active);
-                btn.innerHTML = playIcon;
+                btn.classList.toggle('armed', active);
+                btn.innerHTML = active
+                    ? `<svg viewBox="0 0 24 24" width="24" height="24" style="color:var(--amber)"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="currentColor"/></svg><span class="trig-label">ATIVO</span>`
+                    : `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161"/></svg><span class="trig-label">INICIAR</span>`;
             });
+        }
+
+        function fecharIntro() {
+            document.getElementById('introModal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
         }
 
         function confirmarEncerramento() {
             if (!state.globalStart) return;
             if (state.rafId) cancelAnimationFrame(state.rafId);
+            state.rafId = null;
             document.getElementById('overlay').style.display = 'flex';
             document.getElementById('confirmModal').style.display = 'block';
+            document.getElementById('introModal').style.display = 'none';
         }
 
         function cancelarEncerramento() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('confirmModal').style.display = 'none';
-            if (state.activeId) {
-                state.lastSwitchTime = Date.now();
-                state.rafId = requestAnimationFrame(rafLoop);
-            }
+            state.lastSwitchTime = Date.now();
+            state.rafId = requestAnimationFrame(rafLoop);
         }
 
         function finalizar() {
@@ -580,23 +892,17 @@
 
                 const prod = total <= LIMITE;
                 const statusHtml = prod
-                    ? `<div style="background:#003d1f;border:1px solid #00cc66;color:#00cc66;text-align:center;padding:15px;border-radius:6px;margin-bottom:15px;"><span style="font-family:Oswald;font-size:24px;font-weight:900;">APROVADO</span></div>`
-                    : `<div style="background:#1a0000;border:1px solid #cc2200;color:#ff4422;text-align:center;padding:15px;border-radius:6px;margin-bottom:15px;"><span style="font-family:Oswald;font-size:24px;font-weight:900;">REPROVADO</span></div>`;
-
-                let detalhe = '';
-                if (!prod) {
-                    const excedente = total - LIMITE;
-                    detalhe = `<div class="nota-detail negativo">▲ ${formatTime(excedente)} além do limite de vestimenta</div>`;
-                }
+                    ? `<div style="background:#e8f5e9;border:1.5px solid #2e7d32;color:#2e7d32;text-align:center;padding:12px;border-radius:6px;margin-bottom:18px;"><span style="font-family:Orbitron;font-size:24px;font-weight:900;">APROVADO</span></div>`
+                    : `<div style="background:#ffebee;border:1.5px solid #d32f2f;color:#d32f2f;text-align:center;padding:12px;border-radius:6px;margin-bottom:18px;"><span style="font-family:Orbitron;font-size:24px;font-weight:900;">REPROVADO</span></div>`;
 
                 document.getElementById('results-content').innerHTML = `
                 ${statusHtml}
-                <div style="font-family:'JetBrains Mono';background:#000;padding:12px;border-radius:6px;border:1px solid #333;margin:10px 0;text-align:left;color:#fff;font-size:13px;">
-                    TP: ${formatTime(state.timers.tp)}<br>
-                    EPR: ${formatTime(state.timers.epr)}<br><br>
-                    <span style="color:#aaa">TEMPO TOTAL:</span> ${formatTime(total)}
+                <div class="result-rows">
+                    <div class="result-row"><span class="rr-label">Vestimenta TP</span><span class="rr-val">${formatTime(state.timers.tp)}</span></div>
+                    <div class="result-row"><span class="rr-label">Vestimenta EPR</span><span class="rr-val">${formatTime(state.timers.epr)}</span></div>
+                    <div class="result-row result-total"><span class="rr-label">Tempo Total</span><span class="rr-val">${formatTime(total)}</span></div>
                 </div>
-                ${detalhe}
+                <p style="font-family:Rajdhani;font-size:13px;color:var(--text-dim);text-align:center;margin-top:10px;">Meta de Aprovação: 01:30,00</p>
             `;
             }, 1200);
         }
