@@ -1464,15 +1464,75 @@
         }
 
         async function editarNumeroRelatorio() {
-            const numeroAtual = document.getElementById('numeroRelatorioInput').value || document.getElementById('numeroRelatorio').textContent;
+            const numeroAtual = parseInt(document.getElementById('numeroRelatorioInput').value || document.getElementById('numeroRelatorio').textContent) || 1;
 
-            const novoNumero = await customPrompt('Editar Número do Relatório', 'Atenção: Apenas altere caso o sequencial esteja incorreto.', numeroAtual);
+            return new Promise((resolve) => {
+                // Criar overlay
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:10001;';
 
-            if (novoNumero !== null && novoNumero.trim() !== '') {
-                document.getElementById('numeroRelatorio').textContent = novoNumero.trim();
-                document.getElementById('numeroRelatorioInput').value = novoNumero.trim();
-                showToast('Número do relatório alterado (apenas para este salvamento).', 'success');
-            }
+                const box = document.createElement('div');
+                box.style.cssText = 'background:#fff;border-radius:20px;padding:28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+
+                const title = document.createElement('div');
+                title.style.cssText = 'font-size:18px;font-weight:700;color:#1d1d1f;margin-bottom:8px;';
+                title.textContent = 'Editar Número do Relatório';
+
+                const subtitle = document.createElement('div');
+                subtitle.style.cssText = 'font-size:13px;color:#86868b;margin-bottom:16px;';
+                subtitle.textContent = 'Atenção: Apenas altere caso o sequencial esteja incorreto.';
+
+                const select = document.createElement('select');
+                select.style.cssText = 'width:100%;padding:12px 16px;border:2px solid #d1d1d6;border-radius:12px;font-size:15px;font-family:Inter,sans-serif;margin-bottom:20px;appearance:auto;background:#fff;';
+
+                // Popular com 1 a 999
+                for (let i = 1; i <= 999; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = i;
+                    if (i === numeroAtual) opt.selected = true;
+                    select.appendChild(opt);
+                }
+
+                select.addEventListener('focus', () => {
+                    select.style.borderColor = '#007AFF';
+                    select.style.boxShadow = '0 0 0 4px rgba(0, 122, 255, 0.1)';
+                });
+
+                const btnRow = document.createElement('div');
+                btnRow.style.cssText = 'display:flex;gap:12px;';
+
+                const btnCancel = document.createElement('button');
+                btnCancel.style.cssText = 'flex:1;padding:12px 20px;border-radius:12px;font-weight:600;font-size:15px;border:none;cursor:pointer;background:#f5f5f7;color:#1d1d1f;';
+                btnCancel.textContent = 'Cancelar';
+
+                const btnConfirm = document.createElement('button');
+                btnConfirm.style.cssText = 'flex:1;padding:12px 20px;border-radius:12px;font-weight:600;font-size:15px;border:none;cursor:pointer;background:linear-gradient(135deg,#007AFF 0%,#5856D6 100%);color:#fff;';
+                btnConfirm.textContent = 'Confirmar';
+
+                btnCancel.onclick = () => {
+                    document.body.removeChild(overlay);
+                    resolve();
+                };
+
+                btnConfirm.onclick = () => {
+                    const novoNumero = select.value;
+                    document.getElementById('numeroRelatorio').textContent = novoNumero;
+                    document.getElementById('numeroRelatorioInput').value = novoNumero;
+                    showToast('Número do relatório alterado para ' + novoNumero + '.', 'success');
+                    document.body.removeChild(overlay);
+                    resolve();
+                };
+
+                btnRow.appendChild(btnCancel);
+                btnRow.appendChild(btnConfirm);
+                box.appendChild(title);
+                box.appendChild(subtitle);
+                box.appendChild(select);
+                box.appendChild(btnRow);
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+            });
         }
 
         async function novoEquipamento() {
