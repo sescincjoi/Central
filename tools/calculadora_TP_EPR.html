@@ -8,51 +8,52 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Calculadora TP EPR</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --red: #b22222;
-            --red-hot: #d32f2f;
-            --green-ok: #2e7d32;
-            --yellow-warn: #f57c00;
+            --red: #FF3B30;
+            --red-hot: #FF2D55;
+            --green-ok: #34C759;
+            --yellow-warn: #FF9500;
         }
 
         :root[data-theme="light"] {
-            --primary: rgb(20, 20, 20);
-            --primary-glow: rgba(20, 20, 20, 0.1);
+            --primary: #007AFF;
+            --primary-glow: rgba(0, 122, 255, 0.2);
             --btn-primary-text: #ffffff;
-            --btn-primary-sh: #000000;
-            --panel: #f4f4f4;
+            --btn-primary-sh: rgba(0, 122, 255, 0.3);
+            --panel: #f5f5f7;
             --panel-mid: #ffffff;
             --panel-hi: #e0e0e0;
-            --steel: #bdbdbd;
+            --steel: #e5e5ea;
             --grid: #00000005;
-            --text: #1a1a1a;
-            --text-dim: #616161;
+            --text: #1d1d1f;
+            --text-dim: #86868b;
             --modal-bg-rgb: 0, 0, 0;
             --btn-ghost-bg: transparent;
-            --loader-bg: #eee;
-            --best-bg: #e8f5e9;
+            --loader-bg: #e5e5ea;
+            --best-bg: #f2fbf4;
+            --nav-bg: rgba(255, 255, 255, 0.8);
         }
 
         :root[data-theme="dark"] {
-            --primary: #ffffff;
-            --primary-glow: rgba(255, 255, 255, 0.2);
-            --btn-primary-text: #000000;
-            --btn-primary-sh: #cccccc;
-            --panel: #0a0a0a;
-            --panel-mid: #141414;
-            --panel-hi: #2a2a2a;
-            --steel: #444444;
+            --primary: #0A84FF;
+            --primary-glow: rgba(10, 132, 255, 0.2);
+            --btn-primary-text: #ffffff;
+            --btn-primary-sh: rgba(10, 132, 255, 0.3);
+            --panel: #000000;
+            --panel-mid: #1c1c1e;
+            --panel-hi: #2c2c2e;
+            --steel: #38383a;
             --grid: rgba(255, 255, 255, 0.03);
-            --text: #ffffff;
-            --text-dim: #aaaaaa;
-            --modal-bg-rgb: 0, 0, 0;
+            --text: #f5f5f7;
+            --text-dim: #98989d;
+            --modal-bg-rgb: 255, 255, 255;
             --btn-ghost-bg: transparent;
-            --loader-bg: #333;
-            --best-bg: #1b3320;
+            --loader-bg: #38383a;
+            --best-bg: #112a15;
+            --nav-bg: rgba(28, 28, 30, 0.8);
         }
 
         * {
@@ -73,7 +74,7 @@
         }
 
         body {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--panel);
             color: var(--text);
             display: flex;
@@ -93,32 +94,33 @@
         }
 
         .cmd-bar {
+            background: var(--nav-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            padding: calc(15px + env(safe-area-inset-top)) 20px 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
             position: relative;
             z-index: 10;
-            flex-shrink: 0;
-            background: var(--panel-mid);
-            border-bottom: 3px solid var(--primary);
-            padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .id-callsign {
-            font-family: 'Orbitron', monospace;
-            font-size: 18px;
-            font-weight: 900;
-            color: var(--primary);
-            letter-spacing: 2px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            transition: color 0.3s;
         }
 
         .id-sub {
-            font-family: 'Share Tech Mono', monospace;
             font-size: 11px;
+            font-weight: 500;
             color: var(--text-dim);
-            letter-spacing: 1px;
-            margin-top: 2px;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
         }
 
         .header-actions {
@@ -140,20 +142,23 @@
         }
 
         .btn-header:hover {
-            background: var(--panel-hi);
-            border-color: var(--primary);
+            background: var(--steel);
+            border-color: var(--steel);
         }
 
         .mission-strip {
-            position: relative;
-            z-index: 10;
-            flex-shrink: 0;
-            background: var(--panel-mid);
-            border-bottom: 1px solid var(--steel);
-            height: 56px;
+            background: var(--panel);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+            padding: 12px 20px;
             display: flex;
-            align-items: stretch;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
             overflow: hidden;
+            transition: background-color 0.3s, border-color 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+            z-index: 5;
+            height: 56px;
         }
 
         .strip-bar {
@@ -191,17 +196,17 @@
         }
 
         .strip-label {
-            font-family: 'Share Tech Mono', monospace;
             font-size: 11px;
+            font-weight: 600;
             color: var(--text-dim);
             letter-spacing: 1px;
         }
 
         .strip-status {
-            font-family: 'Orbitron', monospace;
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--green-ok);
+            text-transform: uppercase;
         }
 
         .strip-status.warn {
@@ -224,10 +229,11 @@
         }
 
         .strip-time {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 21px;
+            font-variant-numeric: tabular-nums;
+            font-size: 20px;
+            font-weight: 800;
             color: var(--text);
-            font-weight: bold;
+            transition: color 0.3s;
         }
 
         .main {
@@ -253,8 +259,8 @@
         }
 
         .summary-label {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 600;
             color: var(--text-dim);
             letter-spacing: 1px;
             display: block;
@@ -262,31 +268,31 @@
         }
 
         .summary-val {
-            font-family: 'Share Tech Mono', monospace;
+            font-variant-numeric: tabular-nums;
             font-size: 32px;
             color: var(--primary);
-            font-weight: bold;
+            font-weight: 800;
             transition: all 0.3s;
         }
 
         .ex-card {
             position: relative;
             background: var(--panel-mid);
-            border: 1.5px solid var(--steel);
-            border-radius: 6px;
+            border-radius: 18px;
             padding: 16px 20px;
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 6px;
             overflow: hidden;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+            border: 1px solid transparent;
         }
 
         .ex-card.active {
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px rgba(20, 20, 20, 0.1);
+            border-color: var(--steel);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
             transform: translateY(-2px);
         }
 
@@ -310,17 +316,18 @@
         }
 
         .ex-id {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 10px;
+            font-size: 11px;
+            font-weight: 600;
             color: var(--text-dim);
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
 
         .ex-name {
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 800;
             color: var(--text);
             text-transform: uppercase;
+            letter-spacing: -0.5px;
         }
 
         .ex-bottom {
@@ -331,8 +338,10 @@
         }
 
         .ex-time {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 36px;
+            font-variant-numeric: tabular-nums;
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
             color: var(--text-dim);
             transition: all 0.3s;
         }
@@ -342,17 +351,17 @@
         }
 
         .btn-trigger {
-            width: 56px;
-            height: 56px;
-            border-radius: 6px;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
             background: var(--panel-hi);
-            border: 1.5px solid var(--steel);
+            border: 1px solid var(--steel);
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 3px;
+            gap: 2px;
             transition: all 0.15s;
         }
 
@@ -362,10 +371,9 @@
         }
 
         .trig-label {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 8px;
+            font-size: 9px;
             color: var(--text-dim);
-            font-weight: bold;
+            font-weight: 700;
         }
 
         .btn-trigger.armed .trig-label {
@@ -373,23 +381,22 @@
         }
 
         .btn-terminate {
-            background: var(--red);
+            background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
             border: none;
-            border-radius: 6px;
+            border-radius: 14px;
             color: #fff;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
-            letter-spacing: 1px;
             text-transform: uppercase;
-            padding: 18px;
+            padding: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: calc(12px + env(safe-area-inset-bottom));
-            box-shadow: 0 4px 0 #8b0000;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+            transition: all 0.2s;
         }
 
         .btn-terminate:active {
@@ -401,36 +408,36 @@
             position: fixed;
             inset: 0;
             z-index: 100;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(var(--modal-bg-rgb), 0.5);
             display: none;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .modal-panel {
             width: 100%;
             max-width: 400px;
             background: var(--panel-mid);
-            border-radius: 8px;
+            border-radius: 20px;
             padding: 28px;
             position: relative;
             display: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
             text-align: center;
         }
 
         .modal-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 18px;
-            font-weight: 900;
-            color: var(--primary);
-            letter-spacing: 2px;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 2px solid #eee;
-            text-transform: uppercase;
+            border-bottom: 1px solid var(--steel);
+            transition: color 0.3s, border-color 0.3s;
+            letter-spacing: -0.5px;
         }
 
         .btn-primary {
@@ -467,8 +474,8 @@
         }
 
         .btn-save {
-            background: #455a64;
-            box-shadow: 0 4px 0 #263238;
+            background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
         }
 
         .btn-ghost {
@@ -482,9 +489,10 @@
             font-weight: 600;
             letter-spacing: 1px;
             text-transform: uppercase;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             margin-top: 12px;
+            transition: all 0.3s;
         }
 
         .loader-wrap {
@@ -512,8 +520,7 @@
 
         .result-rows {
             background: var(--panel);
-            border: 1.5px solid var(--steel);
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 18px;
             text-align: left;
@@ -532,18 +539,17 @@
         }
 
         .rr-label {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 18px;
+            font-size: 14px;
             color: var(--text-dim);
             text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .rr-val {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 24px;
+            font-size: 18px;
             color: var(--text);
-            font-weight: 700;
+            font-weight: 800;
         }
 
         .result-total {
@@ -558,7 +564,8 @@
 
         .result-total .rr-val {
             color: var(--primary);
-            font-size: 32px;
+            font-size: 26px;
+            font-weight: 900;
         }
 
         .instruction-item {
@@ -587,7 +594,6 @@
         }
 
         .step-text {
-            font-family: 'Rajdhani', sans-serif;
             font-size: 14px;
             color: var(--text-dim);
             line-height: 1.4;
@@ -600,6 +606,7 @@
             font-size: 15px;
             margin-bottom: 2px;
             transition: color 0.3s;
+            font-weight: 700;
         }
 
         /* Estilos Histórico */
@@ -616,21 +623,21 @@
         .ba-name-header {
             background: var(--panel-hi);
             padding: 8px 12px;
-            font-weight: bold;
-            font-family: 'Orbitron';
+            font-weight: 800;
             font-size: 14px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
+            color: var(--text);
         }
 
         .ba-entry {
             background: var(--panel-mid);
             border: 1px solid var(--steel);
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 5px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;

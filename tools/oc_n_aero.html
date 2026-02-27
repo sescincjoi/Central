@@ -1,0 +1,2626 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>2
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Central SCI JOI</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-bar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d1d1d6;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            background: #ffffff;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .btn-add-area {
+            background: #007AFF;
+            color: white;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-add-area:hover {
+            background: #0051D5;
+        }
+
+        .btn-remove-area {
+            background: #FF3B30;
+            color: white;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-remove-area:hover {
+            background: #D70015;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #007AFF;
+            color: white;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ba-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .area-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 0.4fr;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: end;
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .ba-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .area-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(29, 29, 31, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-container {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e5ea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid #e5e5ea;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-close {
+            background: #f5f5f7;
+            border: none;
+            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #1d1d1f;
+        }
+        
+        .btn-close:hover {
+            background: #e8e8ed;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            
+            #conteudoRelatorio,
+            #conteudoRelatorio * {
+                visibility: visible;
+            }
+            
+            #conteudoRelatorio {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            
+            .modal-header,
+            .modal-footer {
+                display: none !important;
+            }
+        }
+
+        /* Modal de Histórico */
+        .historico-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+        
+        .historico-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .historico-container {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .historico-overlay.active .historico-container {
+            transform: scale(1);
+        }
+        
+        .historico-header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e5ea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .historico-search {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e5ea;
+        }
+        
+        .historico-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .historico-item {
+            background: #f5f5f7;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        
+        .historico-item:hover {
+            background: #e8e8ed;
+            border-color: #007AFF;
+            transform: translateX(4px);
+        }
+        
+        .historico-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .historico-item-numero {
+            font-weight: 700;
+            font-size: 16px;
+            color: #007AFF;
+        }
+        
+        .historico-item-data {
+            font-size: 13px;
+            color: #86868b;
+        }
+        
+        .historico-item-info {
+            font-size: 14px;
+            color: #1d1d1f;
+            line-height: 1.5;
+        }
+        
+        .historico-item-tipo {
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+        
+        .historico-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #86868b;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #d1d1d6;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Modal de Input Customizado */
+        .custom-prompt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-prompt-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .custom-prompt-box {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 28px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .custom-prompt-overlay.active .custom-prompt-box {
+            transform: scale(1);
+        }
+        
+        .custom-prompt-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+        }
+        
+        .custom-prompt-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #d1d1d6;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+        
+        .custom-prompt-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+        
+        .custom-prompt-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .custom-prompt-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .custom-prompt-btn-cancel {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+        
+        .custom-prompt-btn-cancel:hover {
+            background: #e8e8ed;
+        }
+        
+        .custom-prompt-btn-confirm {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+        }
+        
+        .custom-prompt-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between h-14">
+                <button onclick="window.history.back()" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    <span class="font-semibold">Voltar</span>
+                </button>
+                
+                <div class="flex items-center gap-3">
+                    <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq" 
+                         alt="SCI" 
+                         class="w-9 h-9 rounded-full"
+                         onerror="this.src='https://via.placeholder.com/150x150?text=SCI';">
+                    <span class="text-lg font-semibold text-gray-900">Relatórios</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 md:px-6 pb-24" style="padding-top: 76px;">
+        
+        <div class="card mb-6 p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">RELATÓRIO: Ocorrências não Aeronáuticas</h1>
+                    <p class="text-sm text-gray-500">Preencha os dados da ocorrência</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold text-gray-500 uppercase">Relatório Nº</span>
+                    <span id="numeroRelatorio" class="badge">Carregando...</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn-secondary" id="btnNovoRelatorio" style="display: none;" onclick="novoRelatorio()">
+                        <i data-lucide="file-plus" class="w-4 h-4 inline mr-1"></i>
+                        Novo Relatório
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="abrirHistorico()">
+                        <i data-lucide="history" class="w-4 h-4 inline mr-1"></i>
+                        Histórico
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <form id="formRelatorio" class="space-y-4">
+            
+            <!-- Localização -->
+            <div class="card p-5">
+                <div class="section-title">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-blue-600"></i>
+                    Local/Área do Evento (Mapa de Grade)
+                </div>
+                
+                <div class="space-y-3">
+                    <!-- Local -->
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="form-label">Local</label>
+                            <div id="locaisContainer" class="border border-gray-300 rounded-lg p-3 max-h-32 overflow-y-auto bg-white">
+                                <!-- Checkboxes serão inseridos aqui -->
+                            </div>
+                        </div>
+                        <button type="button" class="btn-secondary mt-6" onclick="novoLocal()">
+                            <i data-lucide="plus" class="w-4 h-4 inline"></i>
+                        </button>
+                    </div>
+
+                    <!-- Áreas do Grid -->
+                    <div id="areasContainer">
+                        <div class="area-row">
+                            <div>
+                                <label class="form-label">Área (Letra)</label>
+                                <select class="form-select area-letra" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Área (Número)</label>
+                                <select class="form-select area-numero" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button type="button" class="btn-add-area" onclick="adicionarArea()">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    Adicionar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados da Ocorrência -->
+            <div class="card p-5">
+                <div class="section-title">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
+                    Dados da Ocorrência
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="form-label">Tipo de Ocorrência</label>
+                            <select id="tipoOcorrencia" class="form-select" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn-secondary mt-6" onclick="novoTipo()">
+                            <i data-lucide="plus" class="w-4 h-4 inline"></i>
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Equipe</label>
+                        <select id="equipe" class="form-select" required>
+                            <option value="ALFA">ALFA</option>
+                            <option value="BRAVO">BRAVO</option>
+                            <option value="CHARLIE">CHARLIE</option>
+                            <option value="DELTA">DELTA</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Nome do Solicitante</label>
+                        <input type="text" id="nomeSolicitante" class="form-input" required>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="form-label">Empresa Envolvida</label>
+                            <select id="empresaEnvolvida" class="form-select" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn-secondary mt-6" onclick="novaEmpresa()">
+                            <i data-lucide="plus" class="w-4 h-4 inline"></i>
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Procedimentos Estabelecidos</label>
+                        <textarea id="procedimentos" class="form-textarea" required style="color: #9ca3af;"></textarea>
+                        <div id="botoesEdicao" class="flex gap-2 mt-2" style="display: none;">
+                            <button type="button" class="btn-secondary flex-1" onclick="editarUltimo()">
+                                <i data-lucide="edit-3" class="w-4 h-4 inline mr-1"></i>
+                                Editar Modelo
+                            </button>
+                            <button type="button" class="btn-secondary flex-1" onclick="novoTexto()">
+                                <i data-lucide="file-plus" class="w-4 h-4 inline mr-1"></i>
+                                Novo Texto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horários -->
+            <div class="card p-5">
+                <div class="section-title">
+                    <i data-lucide="clock" class="w-4 h-4 text-orange-600"></i>
+                    Registro de Horários
+                </div>
+                
+                <div class="time-inputs">
+                    <div>
+                        <label class="form-label">Acionamento</label>
+                        <input type="time" id="acionamento" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Saída</label>
+                        <input type="time" id="saida" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Chegada no Local</label>
+                        <input type="time" id="chegada" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Término</label>
+                        <input type="time" id="termino" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Retorno à SCI</label>
+                        <input type="time" id="retorno" class="form-input" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danos -->
+            <div class="card p-5">
+                <div class="section-title">
+                    <i data-lucide="file-warning" class="w-4 h-4 text-amber-600"></i>
+                    Relação de Danos
+                </div>
+                
+                <textarea id="relacaoDanos" class="form-textarea" placeholder="Descreva os danos observados..."></textarea>
+            </div>
+
+            <!-- Equipe Envolvida -->
+            <div class="card p-5">
+                <div class="section-title">
+                    <i data-lucide="users" class="w-4 h-4 text-purple-600"></i>
+                    Bombeiros Envolvidos
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="ba-row">
+                        <div>
+                            <label class="form-label">Função</label>
+                            <select id="funcao1" class="form-select">
+                                <option value="">-</option>
+                                <option value="BA-GS">BA-GS</option>
+                                <option value="BA-CE">BA-CE</option>
+                                <option value="BA-LR">BA-LR</option>
+                                <option value="BA-MC">BA-MC</option>
+                                <option value="BA-02">BA-02</option>
+                                <option value="BA-OC">BA-OC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Nome</label>
+                            <select id="nomeBa1" class="form-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ba-row">
+                        <div>
+                            <label class="form-label">Função</label>
+                            <select id="funcao2" class="form-select">
+                                <option value="">-</option>
+                                <option value="BA-GS">BA-GS</option>
+                                <option value="BA-CE">BA-CE</option>
+                                <option value="BA-LR">BA-LR</option>
+                                <option value="BA-MC">BA-MC</option>
+                                <option value="BA-02">BA-02</option>
+                                <option value="BA-OC">BA-OC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Nome</label>
+                            <select id="nomeBa2" class="form-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ba-row">
+                        <div>
+                            <label class="form-label">Função</label>
+                            <select id="funcao3" class="form-select">
+                                <option value="">-</option>
+                                <option value="BA-GS">BA-GS</option>
+                                <option value="BA-CE">BA-CE</option>
+                                <option value="BA-LR">BA-LR</option>
+                                <option value="BA-MC">BA-MC</option>
+                                <option value="BA-02">BA-02</option>
+                                <option value="BA-OC">BA-OC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Nome</label>
+                            <select id="nomeBa3" class="form-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ba-row">
+                        <div>
+                            <label class="form-label">Função</label>
+                            <select id="funcao4" class="form-select">
+                                <option value="">-</option>
+                                <option value="BA-GS">BA-GS</option>
+                                <option value="BA-CE">BA-CE</option>
+                                <option value="BA-LR">BA-LR</option>
+                                <option value="BA-MC">BA-MC</option>
+                                <option value="BA-02">BA-02</option>
+                                <option value="BA-OC">BA-OC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Nome</label>
+                            <select id="nomeBa4" class="form-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ba-row">
+                        <div>
+                            <label class="form-label">Função</label>
+                            <select id="funcao5" class="form-select">
+                                <option value="">-</option>
+                                <option value="BA-GS">BA-GS</option>
+                                <option value="BA-CE">BA-CE</option>
+                                <option value="BA-LR">BA-LR</option>
+                                <option value="BA-MC">BA-MC</option>
+                                <option value="BA-02">BA-02</option>
+                                <option value="BA-OC">BA-OC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Nome</label>
+                            <select id="nomeBa5" class="form-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ba-row">
+                        <div>
+                            <label class="form-label">Função</label>
+                            <select id="funcao6" class="form-select">
+                                <option value="">-</option>
+                                <option value="BA-GS">BA-GS</option>
+                                <option value="BA-CE">BA-CE</option>
+                                <option value="BA-LR">BA-LR</option>
+                                <option value="BA-MC">BA-MC</option>
+                                <option value="BA-02">BA-02</option>
+                                <option value="BA-OC">BA-OC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Nome</label>
+                            <select id="nomeBa6" class="form-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipamentos e Material -->
+            <div class="card p-5">
+                <div class="section-title">
+                    <i data-lucide="truck" class="w-4 h-4 text-green-600"></i>
+                    Equipamentos e Material
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="form-label">CCI e Equipamentos Utilizados</label>
+                            <div id="equipamentosContainer" class="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto bg-white">
+                                <!-- Checkboxes serão inseridos aqui -->
+                            </div>
+                        </div>
+                        <button type="button" class="btn-secondary mt-6" onclick="novoEquipamento()">
+                            <i data-lucide="plus" class="w-4 h-4 inline"></i>
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Tempo Gasto no Atendimento</label>
+                        <input type="text" id="tempoGasto" class="form-input" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" inputmode="numeric" required>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Material Utilizado</label>
+                        <textarea id="materialUtilizado" class="form-textarea" placeholder="Descreva os materiais utilizados..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Visualizar -->
+            <div class="card p-5">
+                <div class="text-center mb-3">
+                    <p class="text-sm text-amber-600 font-semibold flex items-center justify-center gap-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        Revise os dados antes de Enviar/Imprimir
+                    </p>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i data-lucide="eye" class="w-5 h-5 inline mr-2"></i>
+                    Visualizar Relatório
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Modal de Histórico de Relatórios -->
+    <div class="historico-overlay" id="modalHistorico">
+        <div class="historico-container">
+            <div class="historico-header">
+                <h2 class="text-xl font-bold text-gray-900">Histórico de Relatórios</h2>
+                <button type="button" class="btn-close" onclick="fecharHistorico()">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="historico-search">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchHistorico" 
+                    placeholder="Buscar por número, tipo, equipe..."
+                    oninput="filtrarHistorico()"
+                >
+            </div>
+            
+            <div class="historico-body" id="listaHistorico">
+                <div class="historico-empty">
+                    <i data-lucide="search" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+                    <p>Carregando relatórios...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Visualização -->
+    <div class="modal-overlay" id="modalRelatorio">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="text-xl font-bold text-gray-900">Visualização do Relatório</h2>
+                <button type="button" class="btn-close" onclick="fecharModal()">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" id="conteudoRelatorio">
+                <!-- Aqui vai entrar o layout da planilha -->
+                <div class="text-center py-12 text-gray-500">
+                    <i data-lucide="file-text" class="w-16 h-16 mx-auto mb-4 opacity-50"></i>
+                    <p>O layout do relatório será inserido aqui</p>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary flex-1" onclick="fecharModal()">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                    Voltar para Edição
+                </button>
+                <button type="button" class="btn-primary flex-1" onclick="enviarEImprimir()">
+                    <i data-lucide="printer" class="w-5 h-5 inline mr-2"></i>
+                    Enviar e Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Modal de Input Customizado -->
+    <div class="custom-prompt-overlay" id="customPrompt">
+        <div class="custom-prompt-box">
+            <div class="custom-prompt-title" id="promptTitle">Digite o valor</div>
+            <input type="text" class="custom-prompt-input" id="promptInput" placeholder="">
+            <div class="custom-prompt-buttons">
+                <button class="custom-prompt-btn custom-prompt-btn-cancel" onclick="fecharPrompt(false)">Cancelar</button>
+                <button class="custom-prompt-btn custom-prompt-btn-confirm" onclick="fecharPrompt(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyal0depSGSESznpVqxnv6FnwOsv2CZXWTdEtU59GB1eC359G3chsgNBnE8ywiXEJXgKw/exec';
+        
+        let configData = null;
+        let proximoNumero = null;
+        let areaCount = 1;
+        let relatoriosHistorico = [];
+        let relatorioEmEdicao = null;
+        
+        const EQUIPES = ['ALFA', 'BRAVO', 'CHARLIE', 'DELTA'];
+        const DATA_REF_FIXA = new Date('2026-01-15T17:00:00');
+        const EQUIPE_REF_FIXA = 'DELTA';
+        
+        function calcularEquipeAtual() {
+            const agora = new Date();
+            const diffHoras = (agora - DATA_REF_FIXA) / (1000 * 60 * 60);
+            const trocas = Math.floor(diffHoras / 12);
+            const idx = (EQUIPES.indexOf(EQUIPE_REF_FIXA) + trocas) % EQUIPES.length;
+            return EQUIPES[idx];
+        }
+        
+        async function carregarConfiguracoes() {
+            try {
+                showLoading();
+                
+                const response = await fetch(`${WEB_APP_URL}?action=getConfiguracoes`);
+                const data = await response.json();
+                
+                // DEBUG - ADICIONE ESTAS LINHAS
+                console.log('===== DEBUG CONFIGURAÇÕES =====');
+                console.log('Dados completos:', data);
+                if (data.success) {
+                    console.log('Locais recebidos:', data.config.locais);
+                    console.log('Tipos Ocorrência recebidos:', data.config.tiposOcorrencia);
+                    console.log('Empresas recebidas:', data.config.empresas);
+                    console.log('Equipamentos recebidos:', data.config.equipamentos);
+                }
+                console.log('===============================');
+                // FIM DEBUG
+                
+                if (data.success) {
+                    configData = data.config;
+                    preencherSelects();
+                }
+                
+                const responseNum = await fetch(`${WEB_APP_URL}?action=getProximoNumero`);
+                const dataNum = await responseNum.json();
+                
+                if (dataNum.success) {
+                    proximoNumero = dataNum.numero;
+                    document.getElementById('numeroRelatorio').textContent = proximoNumero;
+                }
+                
+                const equipeAtual = calcularEquipeAtual();
+                document.getElementById('equipe').value = equipeAtual;
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro ao carregar:', error);
+                showToast('Erro ao carregar configurações', 'error');
+                hideLoading();
+            }
+        }
+        
+        function preencherSelects() {
+            // Locais (com checkboxes)
+            const containerLocais = document.getElementById('locaisContainer');
+            if (configData.locais && Array.isArray(configData.locais)) {
+                containerLocais.innerHTML = '';
+                configData.locais.forEach((local, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 py-1';
+                    div.innerHTML = `
+                        <input type="checkbox" id="local_${index}" value="${local}" class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer">
+                        <label for="local_${index}" class="text-sm text-gray-700 cursor-pointer flex-1">${local}</label>
+                    `;
+                    containerLocais.appendChild(div);
+                });
+            } else {
+                console.warn('Nenhum local encontrado na configuração');
+            }
+            
+            // Grid Letras e Números (para todas as áreas)
+            preencherGridSelects();
+            
+            // Tipos de Ocorrência
+            const selectTipo = document.getElementById('tipoOcorrencia');
+            if (configData.tiposOcorrencia && Array.isArray(configData.tiposOcorrencia)) {
+                // Limpar opções existentes (exceto a primeira "Selecione...")
+                while (selectTipo.options.length > 1) {
+                    selectTipo.remove(1);
+                }
+                
+                configData.tiposOcorrencia.forEach(tipo => {
+                    const opt = document.createElement('option');
+                    opt.value = tipo;
+                    opt.textContent = tipo;
+                    selectTipo.appendChild(opt);
+                });
+            }
+            
+            // Empresas
+            const selectEmpresa = document.getElementById('empresaEnvolvida');
+            if (configData.empresas && Array.isArray(configData.empresas)) {
+                // Limpar opções existentes (exceto a primeira "Selecione...")
+                while (selectEmpresa.options.length > 1) {
+                    selectEmpresa.remove(1);
+                }
+                
+                configData.empresas.forEach(empresa => {
+                    const opt = document.createElement('option');
+                    opt.value = empresa;
+                    opt.textContent = empresa;
+                    selectEmpresa.appendChild(opt);
+                });
+            }
+            
+            // Efetivo
+            if (configData.efetivo && Array.isArray(configData.efetivo)) {
+                for (let i = 1; i <= 6; i++) {
+                    const select = document.getElementById(`nomeBa${i}`);
+                    
+                    // Limpar opções existentes (exceto a primeira "Selecione...")
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+                    
+                    configData.efetivo.forEach(nome => {
+                        const opt = document.createElement('option');
+                        opt.value = nome;
+                        opt.textContent = nome;
+                        select.appendChild(opt);
+                    });
+                }
+            }
+            
+            // Equipamentos (com checkboxes)
+            const containerEquip = document.getElementById('equipamentosContainer');
+            if (configData.equipamentos && Array.isArray(configData.equipamentos)) {
+                containerEquip.innerHTML = '';
+                configData.equipamentos.forEach((equip, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 py-1';
+                    div.innerHTML = `
+                        <input type="checkbox" id="equip_${index}" value="${equip}" class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer">
+                        <label for="equip_${index}" class="text-sm text-gray-700 cursor-pointer flex-1">${equip}</label>
+                    `;
+                    containerEquip.appendChild(div);
+                });
+            }
+        }
+        
+        function preencherGridSelects() {
+            const selectsLetra = document.querySelectorAll('.area-letra');
+            const selectsNumero = document.querySelectorAll('.area-numero');
+            
+            if (configData.gridLetras && Array.isArray(configData.gridLetras)) {
+                selectsLetra.forEach(select => {
+                    // Limpar options existentes exceto o primeiro
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+                    
+                    configData.gridLetras.forEach(letra => {
+                        const opt = document.createElement('option');
+                        opt.value = letra;
+                        opt.textContent = letra;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+            
+            if (configData.gridNumeros && Array.isArray(configData.gridNumeros)) {
+                selectsNumero.forEach(select => {
+                    // Limpar options existentes exceto o primeiro
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+                    
+                    configData.gridNumeros.forEach(num => {
+                        const opt = document.createElement('option');
+                        opt.value = num;
+                        opt.textContent = num;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+        }
+        
+        function adicionarArea() {
+            areaCount++;
+            const container = document.getElementById('areasContainer');
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'area-row';
+            newRow.innerHTML = `
+                <div>
+                    <label class="form-label">Área (Letra)</label>
+                    <select class="form-select area-letra" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Área (Número)</label>
+                    <select class="form-select area-numero" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="button" class="btn-remove-area" onclick="removerArea(this)">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                        Excluir
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(newRow);
+            
+            // Preencher apenas os novos selects
+            const novosSelectsLetra = newRow.querySelectorAll('.area-letra');
+            const novosSelectsNumero = newRow.querySelectorAll('.area-numero');
+            
+            if (configData.gridLetras && Array.isArray(configData.gridLetras)) {
+                novosSelectsLetra.forEach(select => {
+                    configData.gridLetras.forEach(letra => {
+                        const opt = document.createElement('option');
+                        opt.value = letra;
+                        opt.textContent = letra;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+            
+            if (configData.gridNumeros && Array.isArray(configData.gridNumeros)) {
+                novosSelectsNumero.forEach(select => {
+                    configData.gridNumeros.forEach(num => {
+                        const opt = document.createElement('option');
+                        opt.value = num;
+                        opt.textContent = num;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+            
+            lucide.createIcons();
+        }
+        
+        function removerArea(btn) {
+            if (areaCount > 1) {
+                btn.closest('.area-row').remove();
+                areaCount--;
+            }
+        }
+        
+        async function novoLocal() {
+            const valor = await customPrompt('Novo Local', 'Digite o nome do local...');
+            if (!valor) return;
+            
+            try {
+                showLoading();
+                
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'adicionarOpcao',
+                        tipo: 'local',
+                        valor: valor
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('locaisContainer');
+                    const index = container.children.length;
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 py-1';
+                    div.innerHTML = `
+                        <input type="checkbox" id="local_${index}" value="${valor}" class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer" checked>
+                        <label for="local_${index}" class="text-sm text-gray-700 cursor-pointer flex-1">${valor}</label>
+                    `;
+                    container.appendChild(div);
+                    
+                    showToast('Local adicionado com sucesso!', 'success');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao adicionar local', 'error');
+                hideLoading();
+            }
+        }
+        
+        async function novoTipo() {
+            const valor = await customPrompt('Novo Tipo de Ocorrência', 'Digite o tipo...');
+            if (!valor) return;
+            
+            try {
+                showLoading();
+                
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'adicionarOpcao',
+                        tipo: 'tipoOcorrencia',
+                        valor: valor
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('tipoOcorrencia');
+                    const opt = document.createElement('option');
+                    opt.value = valor;
+                    opt.textContent = valor;
+                    select.appendChild(opt);
+                    select.value = valor;
+                    
+                    showToast('Tipo adicionado com sucesso!', 'success');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao adicionar tipo', 'error');
+                hideLoading();
+            }
+        }
+        
+        async function novaEmpresa() {
+            const valor = await customPrompt('Nova Empresa', 'Digite o nome da empresa...');
+            if (!valor) return;
+            
+            try {
+                showLoading();
+                
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'adicionarOpcao',
+                        tipo: 'empresa',
+                        valor: valor
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('empresaEnvolvida');
+                    const opt = document.createElement('option');
+                    opt.value = valor;
+                    opt.textContent = valor;
+                    select.appendChild(opt);
+                    select.value = valor;
+                    
+                    showToast('Empresa adicionada com sucesso!', 'success');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao adicionar empresa', 'error');
+                hideLoading();
+            }
+        }
+        
+        async function novoEquipamento() {
+            const valor = await customPrompt('Novo Equipamento', 'Digite o nome do equipamento...');
+            if (!valor) return;
+            
+            try {
+                showLoading();
+                
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'adicionarOpcao',
+                        tipo: 'equipamento',
+                        valor: valor
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('equipamentosContainer');
+                    const index = container.children.length;
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 py-1';
+                    div.innerHTML = `
+                        <input type="checkbox" id="equip_${index}" value="${valor}" class="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer" checked>
+                        <label for="equip_${index}" class="text-sm text-gray-700 cursor-pointer flex-1">${valor}</label>
+                    `;
+                    container.appendChild(div);
+                    
+                    showToast('Equipamento adicionado com sucesso!', 'success');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao adicionar equipamento', 'error');
+                hideLoading();
+            }
+        }
+        
+        document.getElementById('formRelatorio').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validar formulário
+            if (!validarFormulario()) {
+                return;
+            }
+            
+            // Coletar dados
+            const dados = coletarDadosFormulario();
+            
+            // Preencher preview no modal
+            preencherPreviewRelatorio(dados);
+            
+            // Abrir modal
+            abrirModal();
+        });
+        
+        function validarFormulario() {
+            // Validação básica já é feita pelo HTML5
+            return true;
+        }
+        
+        function coletarDadosFormulario() {
+            // Pegar locais selecionados (checkboxes)
+            const checkboxesLocais = document.querySelectorAll('#locaisContainer input[type="checkbox"]:checked');
+            const locaisSelecionados = Array.from(checkboxesLocais)
+                .map(cb => cb.value)
+                .join(', ');
+            
+            // Pegar todas as áreas do grid
+            const areasLetra = document.querySelectorAll('.area-letra');
+            const areasNumero = document.querySelectorAll('.area-numero');
+            const areasGrade = [];
+            
+            for (let i = 0; i < areasLetra.length; i++) {
+                const letra = areasLetra[i].value;
+                const numero = areasNumero[i].value;
+                if (letra && numero) {
+                    areasGrade.push(letra + '-' + numero);
+                }
+            }
+            
+            const areasGradeString = areasGrade.join(', ');
+            
+            // Pegar equipamentos selecionados (checkboxes)
+            const checkboxesEquip = document.querySelectorAll('#equipamentosContainer input[type="checkbox"]:checked');
+            const equipamentosSelecionados = Array.from(checkboxesEquip)
+                .map(cb => cb.value)
+                .join(', ');
+            
+            return {
+                numero: relatorioEmEdicao ? relatorioEmEdicao.numeroOriginal : proximoNumero,
+                areasGrade: areasGradeString,
+                locais: locaisSelecionados,
+                tipoOcorrencia: document.getElementById('tipoOcorrencia').value,
+                equipe: document.getElementById('equipe').value,
+                nomeSolicitante: document.getElementById('nomeSolicitante').value,
+                empresaEnvolvida: document.getElementById('empresaEnvolvida').value,
+                procedimentos: document.getElementById('procedimentos').value,
+                acionamento: document.getElementById('acionamento').value,
+                saida: document.getElementById('saida').value,
+                chegada: document.getElementById('chegada').value,
+                termino: document.getElementById('termino').value,
+                retorno: document.getElementById('retorno').value,
+                relacaoDanos: document.getElementById('relacaoDanos').value,
+                funcao1: document.getElementById('funcao1').value,
+                nomeBa1: document.getElementById('nomeBa1').value,
+                funcao2: document.getElementById('funcao2').value,
+                nomeBa2: document.getElementById('nomeBa2').value,
+                funcao3: document.getElementById('funcao3').value,
+                nomeBa3: document.getElementById('nomeBa3').value,
+                funcao4: document.getElementById('funcao4').value,
+                nomeBa4: document.getElementById('nomeBa4').value,
+                funcao5: document.getElementById('funcao5').value,
+                nomeBa5: document.getElementById('nomeBa5').value,
+                funcao6: document.getElementById('funcao6').value,
+                nomeBa6: document.getElementById('nomeBa6').value,
+                equipamentos: equipamentosSelecionados,
+                tempoGasto: document.getElementById('tempoGasto').value,
+                materialUtilizado: document.getElementById('materialUtilizado').value
+            };
+        }
+        
+        async function preencherPreviewRelatorio(dados) {
+            // Mostrar loading
+            showLoading();
+            
+            // Formatar data e hora atual
+            const agora = new Date();
+            const dataFormatada = agora.toLocaleDateString('pt-BR');
+            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            // Montar lista de bombeiros
+            let bombeirosList = '';
+            for (let i = 1; i <= 6; i++) {
+                const funcao = dados[`funcao${i}`] || '';
+                const nome = dados[`nomeBa${i}`] || '';
+                bombeirosList += `
+                    <tr>
+                        <td class="ba-funcao">${funcao}</td>
+                        <td class="ba-nome" colspan="4">${nome}</td>
+                        ${i === 1 ? `<td class="ba-equipamentos" colspan="2" rowspan="6">${dados.equipamentos || ''}</td>` : ''}
+                    </tr>
+                `;
+            }
+            
+            // Criar elemento temporário para renderizar
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.width = '210mm';
+            tempDiv.style.padding = '10.5mm';
+            tempDiv.style.backgroundColor = 'white';
+            tempDiv.style.boxSizing = 'border-box';
+            
+            tempDiv.innerHTML = `
+                <style type="text/css">
+                * {
+                    box-sizing: border-box;
+                }
+                
+                .relatorio-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    width: 100%;
+                }
+                
+                .relatorio-table {
+                    width: 100%;
+                    max-width: 189mm;
+                    border-collapse: collapse;
+                    font-family: 'Calibri', Arial, sans-serif;
+                    background: #ffffff;
+                    border: 2px solid #434343;
+                }
+        
+                .relatorio-table td {
+                    color: #000000;
+                    vertical-align: middle;
+                    padding: 0 10px 5px 10px;
+                }
+        
+                .header-logo {
+                    border-bottom: 2px solid #434343;
+                    border-right: 1px solid #434343;
+                    text-align: center;
+                    vertical-align: middle;
+                    align-items: center;
+                    justify-content: center;
+                    height: 90px;
+                    width: 40%;
+                    padding: 0 5px 5px 5px;
+                }
+        
+                .header-logo img {
+                    max-height: 80px;
+                    max-width: 95%;
+                    vertical-align: middle;
+                    margin: auto;
+                }
+        
+                .header-info {
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    text-align: center;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 11pt;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .header-codigo {
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    text-align: center;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 11pt;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .header-title {
+                    border-bottom: 2px solid #434343;
+                    border-right: 1px solid #434343;
+                    text-align: center;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 11pt;
+                    padding: 0 5px 5px 5px;
+                    line-height: 1.3;
+                }
+        
+                .header-versao {
+                    border-bottom: 2px solid #434343;
+                    border-right: 1px solid #434343;
+                    text-align: center;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 11pt;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .header-data-criacao {
+                    border-bottom: 2px solid #434343;
+                    border-right: 1px solid #434343;
+                    text-align: center;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 10pt;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                /* Labels e valores */
+                .label-bold {
+                    text-align: right;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 10pt;
+                    border-bottom: 1px solid #434343;
+                    border-right: none;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .value-cell {
+                    text-align: center;
+                    vertical-align: middle;
+                    font-size: 11pt;
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    border-left: none;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .value-cell-end {
+                    text-align: center;
+                    vertical-align: middle;
+                    font-size: 11pt;
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    border-left: none;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                /* Células unificadas alinhadas à esquerda */
+                .unified-left {
+                    text-align: left;
+                    vertical-align: middle;
+                    font-size: 11pt;
+                    border-bottom: 2px solid #434343;
+                    border-right: 1px solid #434343;
+                    padding-left: 12px;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .unified-left strong {
+                    font-weight: bold;
+                    font-size: 10pt;
+                }
+        
+                /* TIPO DE OCORRÊNCIA - centralizado */
+                .unified-center {
+                    text-align: center;
+                    vertical-align: middle;
+                    font-size: 11pt;
+                    background-color: #dbe5f1;
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .unified-center strong {
+                    font-weight: bold;
+                    font-size: 11pt;
+                }
+        
+                /* Procedimentos e Danos */
+                .procedimentos-label {
+                    text-align: left;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 10pt;
+                    border-right: 1px solid #434343;
+                    border-bottom: none;
+                    padding: 0 10px 5px 12px;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .procedimentos-value {
+                    text-align: left;
+                    vertical-align: top;
+                    font-size: 10pt;
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    padding: 0 12px 10px 12px;
+                    min-height: 100px;
+                    white-space: pre-wrap;
+                    line-height: 1.4;
+                }
+        
+                .danos-label {
+                    text-align: left;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 10pt;
+                    border-right: 1px solid #434343;
+                    border-bottom: none;
+                    padding: 0 10px 5px 12px;
+                    height: 32px;
+                    line-height: 20px;
+                }
+        
+                .danos-value {
+                    text-align: left;
+                    vertical-align: top;
+                    font-size: 10pt;
+                    border-bottom: 2px solid #434343;
+                    border-right: 1px solid #434343;
+                    padding: 0 12px 20px 12px;
+                    min-height: 50px;
+                    white-space: pre-wrap;
+                    line-height: 2;
+                }
+        
+                /* Headers da tabela de bombeiros */
+                .table-header {
+                    text-align: center;
+                    vertical-align: middle;
+                    font-weight: bold;
+                    font-size: 11pt;
+                    background-color: #dbe5f1;
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .ba-funcao {
+                    text-align: center;
+                    vertical-align: middle;
+                    font-size: 10pt;
+                    border-right: 1px solid #434343;
+                    border-bottom: 1px solid #434343;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .ba-nome {
+                    text-align: center;
+                    vertical-align: middle;
+                    font-size: 10pt;
+                    border-right: 1px solid #434343;
+                    border-bottom: 1px solid #434343;
+                    height: 32px;
+                    line-height: 25.6px;
+                }
+        
+                .ba-equipamentos {
+                    text-align: center;
+                    vertical-align: top;
+                    font-size: 10pt;
+                    border-bottom: 1px solid #434343;
+                    border-right: 1px solid #434343;
+                    padding: 0 12px 10px 12px;
+                    white-space: pre-wrap;
+                    line-height: 1.4;
+                }
+        
+                .assinatura-cell {
+                    text-align: left;
+                    vertical-align: middle;
+                    font-size: 10pt;
+                    border-right: 1px solid #434343;
+                    min-height: 70px;
+                    padding: 0 12px 12px 12px;
+                    line-height: 3;
+                }
+        
+                .assinatura-cell strong {
+                    font-weight: bold;
+                }
+                </style>
+        
+                <div class="relatorio-container">
+                    <table class="relatorio-table">
+                        <tr>
+                            <td class="header-logo" colspan="3" rowspan="4">
+                                <img src="https://lh3.googleusercontent.com/d/10KY7h2T-K037kOmLOS4s2-iwcHvvpvQa" alt="Imagem">
+                            </td>
+                            <td class="header-info" colspan="2">FORMULÁRIO</td>
+                            <td class="header-codigo" colspan="2">CÓDIGO:</td>
+                        </tr>
+                        <tr>
+                            <td class="header-title" colspan="2" rowspan="3">Ocorrência não Aeronáutica</td>
+                            <td class="header-data-criacao" colspan="2">MMS.BR.BA.FOR.002</td>
+                        </tr>
+                        <tr>
+                            <td class="header-info">VERSÃO:</td>
+                            <td class="header-codigo">DATA CRIAÇÃO:</td>
+                        </tr>
+                        <tr>
+                            <td class="header-versao">0</td>
+                            <td class="header-title">06/2025</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="label-bold">Data:</td>
+                            <td class="value-cell" colspan="2">${dataFormatada}</td>
+                            <td class="label-bold">Hora:</td>
+                            <td class="value-cell">${horaFormatada}</td>
+                            <td class="label-bold">Relatório n°:</td>
+                            <td class="value-cell-end">${dados.numero}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Área do evento (Mapa de Grade):</strong> ${dados.locais}, ${dados.areasGrade}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="unified-center" colspan="7"><strong>TIPO DE OCORRÊNCIA:</strong> ${dados.tipoOcorrencia}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Equipe:</strong> ${dados.equipe}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Nome Solicitante:</strong> ${dados.nomeSolicitante}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Empresa Envolvida:</strong> ${dados.empresaEnvolvida}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="procedimentos-label" colspan="7">Procedimentos Estabelecidos:</td>
+                        </tr>
+                        <tr>
+                            <td class="procedimentos-value" colspan="7">${dados.procedimentos}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Acionamento:</strong> ${dados.acionamento}</td>
+                        </tr>
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Saída:</strong> ${dados.saida}</td>
+                        </tr>
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Chegada no local:</strong> ${dados.chegada}</td>
+                        </tr>
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Término da ocorrência:</strong> ${dados.termino}</td>
+                        </tr>
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Retorno à SCI:</strong> ${dados.retorno}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="danos-label" colspan="7">Relação de danos:</td>
+                        </tr>
+                        <tr>
+                            <td class="danos-value" colspan="7">${dados.relacaoDanos || ''}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="table-header">Função</td>
+                            <td class="table-header" colspan="4">Nomes dos Bombeiros Envolvidos</td>
+                            <td class="table-header" colspan="2">CCI e Equipamentos Utilizados</td>
+                        </tr>
+        
+                        ${bombeirosList}
+        
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Tempo Gasto no atendimento:</strong> ${dados.tempoGasto}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="unified-left" colspan="7"><strong>Material Utilizado:</strong> ${dados.materialUtilizado || ''}</td>
+                        </tr>
+        
+                        <tr>
+                            <td class="assinatura-cell" colspan="7"><strong>Assinatura do Chefe de Equipe:</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            
+            document.body.appendChild(tempDiv);
+            
+            // Aguardar o carregamento da imagem
+            const img = tempDiv.querySelector('img');
+            await new Promise((resolve) => {
+                if (img.complete) {
+                    resolve();
+                } else {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    setTimeout(resolve, 2000);
+                }
+            });
+            
+            try {
+                // Renderizar com html2canvas
+                const canvas = await html2canvas(tempDiv, {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    windowWidth: 794,
+                    windowHeight: 1123
+                });
+                
+                // Remover elemento temporário
+                document.body.removeChild(tempDiv);
+                
+                // Criar PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdfWidth = 210;
+                const pdfHeight = 297;
+                const imgWidth = 189;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                // Centralizar horizontalmente e verticalmente
+                const xOffset = (pdfWidth - imgWidth) / 2;
+                const yOffset = (pdfHeight - imgHeight) / 2;
+                
+                pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
+                
+                // Converter PDF para Blob e criar URL
+                const pdfBlob = pdf.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                
+                // Exibir PDF no modal
+                document.getElementById('conteudoRelatorio').innerHTML = `
+                    <iframe src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" style="width: 100%; height: 70vh; border: none;"></iframe>
+                `;
+                
+                // Armazenar o PDF para download/impressão
+                window.pdfGerado = pdf;
+                
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                if (document.body.contains(tempDiv)) {
+                    document.body.removeChild(tempDiv);
+                }
+                hideLoading();
+                showToast('Erro ao gerar PDF', 'error');
+            }
+        }
+        
+        function abrirModal() {
+            document.getElementById('modalRelatorio').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function fecharModal() {
+            document.getElementById('modalRelatorio').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        async function enviarEImprimir() {
+            const dados = coletarDadosFormulario();
+            
+            try {
+                showLoading();
+                
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: relatorioEmEdicao ? 'editarRelatorio' : 'salvarRelatorio',
+                        linha: relatorioEmEdicao ? relatorioEmEdicao.linha : null,
+                        ...dados
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    hideLoading();
+                    showToast(`Relatório #${result.numero} enviado com sucesso!`, 'success');
+                    
+                    // PRIMEIRO: Acionar impressão enquanto modal ainda está aberto
+                    if (window.pdfGerado) {
+                        const iframe = document.querySelector('#conteudoRelatorio iframe');
+                        
+                        if (iframe && iframe.contentWindow) {
+                            try {
+                                iframe.contentWindow.focus();
+                                iframe.contentWindow.print();
+                            } catch (e) {
+                                console.error('Erro ao imprimir:', e);
+                            }
+                        }
+                    }
+                    
+                    // DEPOIS: Fechar modal e resetar (após impressão)
+                        setTimeout(() => {
+                            fecharModal();
+                            
+                            // Resetar formulário
+                            document.getElementById('formRelatorio').reset();
+                            
+                            // Resetar áreas extras
+                            const container = document.getElementById('areasContainer');
+                            const firstRow = container.querySelector('.area-row');
+                            container.innerHTML = '';
+                            container.appendChild(firstRow);
+                            areaCount = 1;
+                            
+                            // Limpar procedimentos
+                            limparProcedimentos();
+                            
+                            carregarConfiguracoes();
+                            
+                           // Limpar modo edição
+                            relatorioEmEdicao = null;
+                            document.getElementById('numeroRelatorio').style.backgroundColor = '';
+                            document.getElementById('numeroRelatorio').style.color = '';
+                            
+                            // Esconder botão "Novo Relatório"
+                            document.getElementById('btnNovoRelatorio').style.display = 'none';
+                            
+                        }, 1000);
+                    
+                } else {
+                    hideLoading();
+                    showToast('Erro ao enviar relatório', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                hideLoading();
+                showToast('Erro ao enviar relatório', 'error');
+            }
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Sistema de Prompt Customizado
+        let promptResolve = null;
+        
+        function customPrompt(titulo, placeholder = '') {
+            return new Promise((resolve) => {
+                promptResolve = resolve;
+                
+                document.getElementById('promptTitle').textContent = titulo;
+                document.getElementById('promptInput').value = '';
+                document.getElementById('promptInput').placeholder = placeholder;
+                document.getElementById('customPrompt').classList.add('active');
+                
+                // Focar no input
+                setTimeout(() => {
+                    document.getElementById('promptInput').focus();
+                }, 100);
+            });
+        }
+        
+        function fecharPrompt(confirmed) {
+            const overlay = document.getElementById('customPrompt');
+            overlay.classList.remove('active');
+            
+            if (promptResolve) {
+                if (confirmed) {
+                    const valor = document.getElementById('promptInput').value.trim();
+                    promptResolve(valor || null);
+                } else {
+                    promptResolve(null);
+                }
+                promptResolve = null;
+            }
+        }
+        
+        // Enter para confirmar no prompt
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('customPrompt').classList.contains('active')) {
+                fecharPrompt(true);
+            }
+        });
+        
+        // Variável para controlar o estado do procedimento
+        let procedimentoOriginal = '';
+        let modoEdicao = false;
+        
+        // Listener para mudança no Tipo de Ocorrência
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectTipo = document.getElementById('tipoOcorrencia');
+            
+            selectTipo.addEventListener('change', async function() {
+                const tipoSelecionado = this.value;
+                
+                if (!tipoSelecionado) {
+                    limparProcedimentos();
+                    return;
+                }
+                
+                await carregarUltimoProcedimento(tipoSelecionado);
+            });
+        });
+        
+        async function carregarUltimoProcedimento(tipoOcorrencia) {
+            try {
+                showLoading();
+                
+                const response = await fetch(`${WEB_APP_URL}?action=getUltimoProcedimento&tipo=${encodeURIComponent(tipoOcorrencia)}`);
+                const data = await response.json();
+                
+                if (data.success && data.procedimento) {
+                    const textarea = document.getElementById('procedimentos');
+                    const botoes = document.getElementById('botoesEdicao');
+                    
+                    procedimentoOriginal = data.procedimento;
+                    textarea.value = data.procedimento;
+                    textarea.style.color = '#9ca3af'; // Cinza claro
+                    textarea.readOnly = true;
+                    botoes.style.display = 'flex';
+                    modoEdicao = false;
+                    
+                    // Recriar ícones do Lucide
+                    setTimeout(() => lucide.createIcons(), 100);
+                } else {
+                    limparProcedimentos();
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro ao carregar procedimento:', error);
+                limparProcedimentos();
+                hideLoading();
+            }
+        }
+        
+        function editarUltimo() {
+            const textarea = document.getElementById('procedimentos');
+            textarea.style.color = '#1d1d1f'; // Preto
+            textarea.readOnly = false;
+            modoEdicao = true;
+            textarea.focus();
+        }
+        
+        function novoTexto() {
+            const textarea = document.getElementById('procedimentos');
+            const botoes = document.getElementById('botoesEdicao');
+            
+            textarea.value = '';
+            textarea.style.color = '#1d1d1f'; // Preto
+            textarea.readOnly = false;
+            botoes.style.display = 'none';
+            modoEdicao = false;
+            textarea.focus();
+        }
+        
+        function limparProcedimentos() {
+            const textarea = document.getElementById('procedimentos');
+            const botoes = document.getElementById('botoesEdicao');
+            
+            textarea.value = '';
+            textarea.style.color = '#1d1d1f';
+            textarea.readOnly = false;
+            botoes.style.display = 'none';
+            procedimentoOriginal = '';
+            modoEdicao = false;
+        }
+
+        // ========== HISTÓRICO DE RELATÓRIOS ==========
+
+        async function abrirHistorico() {
+            try {
+                showLoading();
+                
+                const response = await fetch(`${WEB_APP_URL}?action=getRelatorios`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    relatoriosHistorico = data.relatorios;
+                    renderizarHistorico(relatoriosHistorico);
+                    document.getElementById('modalHistorico').classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    
+                    // Recriar ícones
+                    setTimeout(() => lucide.createIcons(), 100);
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+                showToast('Erro ao carregar histórico', 'error');
+                hideLoading();
+            }
+        }
+        
+        function fecharHistorico() {
+            document.getElementById('modalHistorico').classList.remove('active');
+            document.body.style.overflow = '';
+            document.getElementById('searchHistorico').value = '';
+        }
+        
+        function renderizarHistorico(relatorios) {
+            const container = document.getElementById('listaHistorico');
+            
+            if (!relatorios || relatorios.length === 0) {
+                container.innerHTML = `
+                    <div class="historico-empty">
+                        <i data-lucide="inbox" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+                        <p>Nenhum relatório encontrado</p>
+                    </div>
+                `;
+                setTimeout(() => lucide.createIcons(), 50);
+                return;
+            }
+            
+            container.innerHTML = relatorios.map(rel => `
+                <div class="historico-item" onclick="carregarRelatorio(${rel.linha})">
+                    <div class="historico-item-header">
+                        <span class="historico-item-numero">#${rel.numero}</span>
+                        <span class="historico-item-data">${formatarData(rel.dataHora)}</span>
+                    </div>
+                    <div class="historico-item-info">
+                        <div><span class="historico-item-tipo">${rel.tipoOcorrencia}</span></div>
+                        <div>Equipe: ${rel.equipe} • ${rel.locais || 'N/A'}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+        
+        function filtrarHistorico() {
+            const busca = document.getElementById('searchHistorico').value.toLowerCase();
+            
+            if (!busca) {
+                renderizarHistorico(relatoriosHistorico);
+                return;
+            }
+            
+            const filtrados = relatoriosHistorico.filter(rel => {
+                return (
+                    rel.numero.toString().includes(busca) ||
+                    rel.tipoOcorrencia.toLowerCase().includes(busca) ||
+                    rel.equipe.toLowerCase().includes(busca) ||
+                    (rel.locais && rel.locais.toLowerCase().includes(busca))
+                );
+            });
+            
+            renderizarHistorico(filtrados);
+        }
+        
+        async function carregarRelatorio(linha) {
+            try {
+                showLoading();
+                
+                const response = await fetch(`${WEB_APP_URL}?action=getRelatorio&linha=${linha}`);
+                const data = await response.json();
+                
+                if (data.success && data.relatorio) {
+                    const rel = data.relatorio;
+                    
+                    // Marcar como edição
+                    relatorioEmEdicao = {
+                        linha: linha,
+                        numeroOriginal: rel.numero
+                    };
+                    
+                    // Preencher formulário
+                    document.getElementById('numeroRelatorio').textContent = rel.numero + ' (EDITANDO)';
+                    document.getElementById('numeroRelatorio').style.backgroundColor = '#f59e0b';
+                    document.getElementById('numeroRelatorio').style.color = '#fff';
+
+                    // Mostrar botão "Novo Relatório"
+                    document.getElementById('btnNovoRelatorio').style.display = 'flex';
+                                        
+                    // Preencher locais (checkboxes)
+                    const locaisSelecionados = rel.locais ? rel.locais.split(', ') : [];
+                    document.querySelectorAll('#locaisContainer input[type="checkbox"]').forEach(cb => {
+                        cb.checked = locaisSelecionados.includes(cb.value);
+                    });
+                    
+                    // Preencher áreas do grid
+                    const areas = rel.areasGrade ? rel.areasGrade.split(', ') : [];
+                    const container = document.getElementById('areasContainer');
+                    container.innerHTML = '';
+                    
+                    if (areas.length > 0) {
+                        areas.forEach((area, index) => {
+                            const [letra, numero] = area.split('-');
+                            
+                            const newRow = document.createElement('div');
+                            newRow.className = 'area-row';
+                            newRow.innerHTML = `
+                                <div>
+                                    <label class="form-label">Área (Letra)</label>
+                                    <select class="form-select area-letra" required>
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Área (Número)</label>
+                                    <select class="form-select area-numero" required>
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    ${index === 0 ? `
+                                        <button type="button" class="btn-add-area" onclick="adicionarArea()">
+                                            <i data-lucide="plus" class="w-4 h-4"></i>
+                                            Adicionar
+                                        </button>
+                                    ` : `
+                                        <button type="button" class="btn-remove-area" onclick="removerArea(this)">
+                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                            Excluir
+                                        </button>
+                                    `}
+                                </div>
+                            `;
+                            
+                            container.appendChild(newRow);
+                            
+                            // Preencher selects de grid
+                            const selectLetra = newRow.querySelector('.area-letra');
+                            const selectNumero = newRow.querySelector('.area-numero');
+                            
+                            if (configData.gridLetras) {
+                                configData.gridLetras.forEach(l => {
+                                    const opt = document.createElement('option');
+                                    opt.value = l;
+                                    opt.textContent = l;
+                                    selectLetra.appendChild(opt);
+                                });
+                                selectLetra.value = letra;
+                            }
+                            
+                            if (configData.gridNumeros) {
+                                configData.gridNumeros.forEach(n => {
+                                    const opt = document.createElement('option');
+                                    opt.value = n;
+                                    opt.textContent = n;
+                                    selectNumero.appendChild(opt);
+                                });
+                                selectNumero.value = numero;
+                            }
+                        });
+                        
+                        areaCount = areas.length;
+                    }
+                    
+                    // Resto dos campos
+                    document.getElementById('tipoOcorrencia').value = rel.tipoOcorrencia || '';
+                    document.getElementById('equipe').value = rel.equipe || '';
+                    document.getElementById('nomeSolicitante').value = rel.nomeSolicitante || '';
+                    document.getElementById('empresaEnvolvida').value = rel.empresaEnvolvida || '';
+                    document.getElementById('procedimentos').value = rel.procedimentos || '';
+                    document.getElementById('procedimentos').style.color = '#1d1d1f';
+                    document.getElementById('procedimentos').readOnly = false;
+                    document.getElementById('botoesEdicao').style.display = 'none';
+                    
+                    document.getElementById('acionamento').value = rel.acionamento || '';
+                    document.getElementById('saida').value = rel.saida || '';
+                    document.getElementById('chegada').value = rel.chegada || '';
+                    document.getElementById('termino').value = rel.termino || '';
+                    document.getElementById('retorno').value = rel.retorno || '';
+                    document.getElementById('relacaoDanos').value = rel.relacaoDanos || '';
+                    
+                    // Bombeiros
+                    for (let i = 1; i <= 6; i++) {
+                        document.getElementById(`funcao${i}`).value = rel[`funcao${i}`] || '';
+                        document.getElementById(`nomeBa${i}`).value = rel[`nomeBa${i}`] || '';
+                    }
+                    
+                    // Equipamentos (checkboxes)
+                    const equipamentosSelecionados = rel.equipamentos ? rel.equipamentos.split(', ') : [];
+                    document.querySelectorAll('#equipamentosContainer input[type="checkbox"]').forEach(cb => {
+                        cb.checked = equipamentosSelecionados.includes(cb.value);
+                    });
+                    
+                    document.getElementById('tempoGasto').value = rel.tempoGasto || '';
+                    document.getElementById('materialUtilizado').value = rel.materialUtilizado || '';
+                    
+                    // Recriar ícones
+                    setTimeout(() => lucide.createIcons(), 100);
+                    
+                    // Fechar modal de histórico
+                    fecharHistorico();
+                    
+                    // Scroll para o topo
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    showToast('Relatório carregado para edição', 'success');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Erro ao carregar relatório:', error);
+                showToast('Erro ao carregar relatório', 'error');
+                hideLoading();
+            }
+        }
+        
+        function formatarData(dataStr) {
+            if (!dataStr) return 'N/A';
+            const data = new Date(dataStr);
+            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function novoRelatorio() {
+            // Resetar formulário
+            document.getElementById('formRelatorio').reset();
+            
+            // Resetar áreas extras
+            const container = document.getElementById('areasContainer');
+            const firstRow = container.querySelector('.area-row');
+            container.innerHTML = '';
+            container.appendChild(firstRow);
+            areaCount = 1;
+            
+            // Preencher grid selects da primeira área
+            preencherGridSelects();
+            
+            // Limpar procedimentos
+            limparProcedimentos();
+            
+            // Limpar modo edição
+            relatorioEmEdicao = null;
+            document.getElementById('numeroRelatorio').textContent = proximoNumero;
+            document.getElementById('numeroRelatorio').style.backgroundColor = '';
+            document.getElementById('numeroRelatorio').style.color = '';
+            
+            // Esconder botão "Novo Relatório"
+            document.getElementById('btnNovoRelatorio').style.display = 'none';
+            
+            // Recriar ícones
+            setTimeout(() => lucide.createIcons(), 100);
+            
+            // Scroll para o topo
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            showToast('Formulário resetado para novo relatório', 'success');
+        }
+
+        // Cálculo automático do Tempo Gasto
+        function calcularTempoGasto() {
+            const saida = document.getElementById('saida').value;
+            const retorno = document.getElementById('retorno').value;
+            
+            if (!saida || !retorno) {
+                return;
+            }
+            
+            // Converter horários para minutos
+            const [horaSaida, minutoSaida] = saida.split(':').map(Number);
+            const [horaRetorno, minutoRetorno] = retorno.split(':').map(Number);
+            
+            let totalMinutosSaida = horaSaida * 60 + minutoSaida;
+            let totalMinutosRetorno = horaRetorno * 60 + minutoRetorno;
+            
+            // Se retorno for menor que saída, passou da meia-noite
+            if (totalMinutosRetorno < totalMinutosSaida) {
+                totalMinutosRetorno += 24 * 60; // Adiciona 24 horas
+            }
+            
+            // Calcular diferença
+            const diferencaMinutos = totalMinutosRetorno - totalMinutosSaida;
+            
+            // Converter para HH:MM:SS
+            const horas = Math.floor(diferencaMinutos / 60);
+            const minutos = diferencaMinutos % 60;
+            const segundos = 0; // Mantém 00 pois cálculo é em minutos
+            
+            const tempoFormatado = 
+                String(horas).padStart(2, '0') + ':' +
+                String(minutos).padStart(2, '0') + ':' +
+                String(segundos).padStart(2, '0');
+            
+            document.getElementById('tempoGasto').value = tempoFormatado;
+        }
+        
+        // Adicionar listeners nos campos de horário
+        document.getElementById('saida').addEventListener('change', calcularTempoGasto);
+        document.getElementById('retorno').addEventListener('change', calcularTempoGasto);
+        
+        // Formatação automática do campo Tempo Gasto
+        document.getElementById('tempoGasto').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Remove não-números
+            
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + ':' + value.substring(2);
+            }
+            if (value.length >= 5) {
+                value = value.substring(0, 5) + ':' + value.substring(5);
+            }
+            
+            e.target.value = value.substring(0, 8); // Limita a HH:MM:SS
+        });
+        
+        document.getElementById('tempoGasto').addEventListener('blur', function(e) {
+            const value = e.target.value;
+            const regex = /^([0-9]{2}):([0-9]{2}):([0-9]{2})$/;
+            
+            if (value && !regex.test(value)) {
+                showToast('Formato inválido. Use HH:MM:SS (ex: 02:30:00)', 'error');
+                e.target.focus();
+            }
+        });
+
+        
+        window.addEventListener('load', () => {
+            carregarConfiguracoes();
+            lucide.createIcons();
+        });
+        
+    </script>
+
+</body>
+</html>

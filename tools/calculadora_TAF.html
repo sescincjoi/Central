@@ -8,42 +8,45 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TAF BA | Bombeiros de Aeródromo</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&family=Orbitron:wght@500;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --green-ok: #4caf50;
-            --yellow-warn: #ff9800;
-            --red-hot: #f44336;
+            --green-ok: #34C759;
+            --yellow-warn: #FF9500;
+            --red-hot: #FF3B30;
+        }
+
+        :root[data-theme="light"] {
+            --bg: #f5f5f7;
+            --panel: #ffffff;
+            --primary: #007AFF;
+            --primary-sh: rgba(0, 122, 255, 0.4);
+            --text: #1d1d1f;
+            --text-dim: #86868b;
+            --steel: #e5e5ea;
+            --btn-trig-bg: #f5f5f7;
+            --modal-bg-rgb: 0, 0, 0;
+            --input-bg: #f5f5f7;
+            --result-bg: #f5f5f7;
+            --panel-sh: rgba(0, 0, 0, 0.08);
+            --nav-bg: rgba(255, 255, 255, 0.8);
         }
 
         :root[data-theme="dark"] {
             --bg: #000000;
-            --panel: #141414;
-            --primary: rgb(20, 20, 20);
-            --text: #eaeaea;
-            --text-dim: #888888;
-            --steel: #333333;
-            --btn-trig-bg: #000;
-            --modal-bg-rgb: 0, 0, 0;
-            --input-bg: #000;
-            --result-bg: rgba(0, 0, 0, 0.5);
-            --panel-sh: rgba(0, 0, 0, 0.9);
-        }
-
-        :root[data-theme="light"] {
-            --bg: #f0f2f5;
-            --panel: #ffffff;
-            --primary: #f8f9fa;
-            --text: #1a1a1a;
-            --text-dim: #666666;
-            --steel: #e0e0e0;
-            --btn-trig-bg: #f8f9fa;
+            --panel: #1c1c1e;
+            --primary: #0A84FF;
+            --primary-sh: rgba(10, 132, 255, 0.4);
+            --text: #f5f5f7;
+            --text-dim: #98989d;
+            --steel: #38383a;
+            --btn-trig-bg: #2c2c2e;
             --modal-bg-rgb: 255, 255, 255;
-            --input-bg: #f8f9fa;
-            --result-bg: #f8f9fa;
-            --panel-sh: rgba(0, 0, 0, 0.1);
+            --input-bg: #2c2c2e;
+            --result-bg: rgba(255, 255, 255, 0.1);
+            --panel-sh: rgba(0, 0, 0, 0.5);
+            --nav-bg: rgba(28, 28, 30, 0.8);
         }
 
         * {
@@ -55,7 +58,7 @@
         }
 
         body {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
@@ -67,14 +70,17 @@
         }
 
         .cmd-bar {
-            background: var(--panel);
-            padding: calc(15px + env(safe-area-inset-top)) 15px 15px 15px;
+            background: var(--nav-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            padding: calc(15px + env(safe-area-inset-top)) 20px 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--steel);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
             flex-shrink: 0;
-            transition: background-color 0.3s, border-color 0.3s;
+            position: relative;
+            z-index: 10;
         }
 
         .sys-title {
@@ -89,20 +95,18 @@
         }
 
         .sys-name {
-            font-family: 'Orbitron', monospace;
             font-size: 16px;
-            font-weight: 900;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: -0.5px;
             color: var(--text);
             transition: color 0.3s;
         }
 
         .sys-sub {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 10px;
+            font-size: 11px;
+            font-weight: 500;
             color: var(--text-dim);
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             transition: color 0.3s;
         }
 
@@ -110,10 +114,10 @@
             background: transparent;
             border: 1px solid var(--steel);
             color: var(--text-dim);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 11px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -140,7 +144,8 @@
             transition: all 0.2s;
         }
 
-        .btn-theme:active {
+        .btn-theme:hover,
+        .btn-hist:hover {
             background: var(--steel);
         }
 
@@ -156,14 +161,16 @@
 
         .mission-strip {
             background: var(--panel);
-            border-bottom: 1px solid var(--steel);
-            padding: 10px 15px;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+            padding: 12px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: relative;
             overflow: hidden;
             transition: background-color 0.3s, border-color 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+            z-index: 5;
         }
 
         .strip-bg {
@@ -212,20 +219,19 @@
         }
 
         .strip-status {
-            font-family: 'Orbitron', monospace;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--text-dim);
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
             transition: color 0.3s;
         }
 
         .strip-time {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 18px;
-            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            font-size: 20px;
+            font-weight: 800;
             color: var(--text);
-            text-shadow: 0 0 10px rgba(128, 128, 128, 0.2);
             transition: color 0.3s;
         }
 
@@ -301,16 +307,17 @@
 
         .ex-card {
             background: var(--panel);
-            border: 1px solid var(--steel);
-            border-radius: 8px;
-            padding: 12px 15px;
+            border-radius: 18px;
+            padding: 16px 20px;
             position: relative;
             overflow: hidden;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+            border: 1px solid transparent;
         }
 
         .ex-card::before {
@@ -319,20 +326,19 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 4px;
+            width: 5px;
             background: var(--steel);
             transition: background 0.3s;
         }
 
         .ex-card.active {
-            border-color: var(--text-dim);
-            background: var(--bg);
-            box-shadow: 0 4px 15px var(--panel-sh);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--panel-sh), 0 2px 6px rgba(0, 0, 0, 0.04);
+            border-color: var(--steel);
         }
 
         .ex-card.active::before {
-            background: var(--text);
-            box-shadow: 0 0 10px var(--text);
+            background: var(--primary);
         }
 
         .ex-header {
@@ -343,21 +349,19 @@
         }
 
         .ex-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 11px;
-            font-weight: 900;
-            color: var(--text-dim);
-            letter-spacing: 1px;
-            text-transform: uppercase;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
             transition: color 0.3s;
         }
 
         .ex-target {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 10px;
-            background: var(--input-bg);
-            padding: 2px 6px;
-            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--bg);
+            padding: 4px 8px;
+            border-radius: 12px;
             color: var(--text-dim);
             border: 1px solid var(--steel);
             transition: all 0.3s;
@@ -370,18 +374,17 @@
         }
 
         .timer-val {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 38px;
+            font-variant-numeric: tabular-nums;
+            font-size: 42px;
             color: var(--text-dim);
-            font-weight: bold;
+            font-weight: 800;
             line-height: 1;
+            letter-spacing: -1px;
             transition: color 0.3s;
         }
 
         .ex-card.active .timer-val {
-            color: var(--text);
-            text-shadow: 0 0 12px rgba(128, 128, 128, 0.2);
-            animation: pulseTimer 2s infinite;
+            color: var(--primary);
         }
 
         @keyframes pulseTimer {
@@ -427,38 +430,36 @@
         }
 
         .btn-trigger.running {
-            background: var(--text);
-            border-color: var(--text);
-            box-shadow: 0 0 15px rgba(128, 128, 128, 0.2);
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--primary-sh);
         }
 
         .btn-trigger.running svg {
-            fill: var(--bg);
+            fill: #ffffff;
         }
 
         .btn-trigger.running .trig-label {
-            color: var(--bg);
+            color: #ffffff;
         }
 
         .btn-end {
-            background: var(--red-hot);
-            color: #fff;
+            background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
+            color: white;
             border: none;
-            padding: 18px;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 16px;
+            padding: 16px;
+            font-size: 15px;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 6px;
+            border-radius: 14px;
             margin-top: 5px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 4px 0 #b71c1c;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
             margin-bottom: env(safe-area-inset-bottom);
+            transition: all 0.2s;
         }
 
         .btn-end:active {
@@ -469,8 +470,9 @@
         #overlay {
             position: fixed;
             inset: 0;
-            background: rgba(var(--modal-bg-rgb), 0.85);
-            backdrop-filter: blur(4px);
+            background: rgba(var(--modal-bg-rgb), 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             display: none;
             justify-content: center;
             align-items: center;
@@ -482,27 +484,24 @@
             width: 100%;
             max-width: 400px;
             background: var(--panel);
-            border-radius: 8px;
+            border-radius: 20px;
             padding: 28px;
             position: relative;
             display: none;
-            box-shadow: 0 20px 50px var(--panel-sh);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
             text-align: center;
-            border: 1px solid var(--steel);
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: background-color 0.3s;
         }
 
         .modal-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 18px;
-            font-weight: 900;
+            font-size: 20px;
+            font-weight: 800;
             color: var(--text);
-            letter-spacing: 2px;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 2px solid var(--steel);
-            text-transform: uppercase;
+            border-bottom: 1px solid var(--steel);
             transition: color 0.3s, border-color 0.3s;
+            letter-spacing: -0.5px;
         }
 
         .instruction-item {
@@ -548,19 +547,17 @@
 
         .btn-primary {
             width: 100%;
-            padding: 16px;
-            border: 1px solid var(--steel);
-            background: var(--primary);
-            color: var(--text);
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            border-radius: 6px;
+            padding: 14px;
+            border: none;
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 12px;
             cursor: pointer;
             margin-top: 10px;
-            transition: background-color 0.3s, color 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+            transition: all 0.2s;
         }
 
         .btn-primary:active {
@@ -615,12 +612,12 @@
         }
 
         .loader-ring {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--steel);
-            border-top-color: var(--text);
+            width: 44px;
+            height: 44px;
+            border: 4px solid var(--steel);
+            border-top-color: var(--primary);
             border-radius: 50%;
-            animation: rot 1s linear infinite;
+            animation: rot 0.8s linear infinite;
         }
 
         @keyframes rot {
@@ -652,16 +649,15 @@
         }
 
         .rr-label {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 500;
             color: var(--text-dim);
             transition: color 0.3s;
         }
 
         .rr-val {
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: bold;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 15px;
             color: var(--text);
             transition: color 0.3s;
         }
@@ -674,14 +670,13 @@
 
         .result-total .rr-val {
             font-size: 20px;
-            color: var(--text);
-            font-family: 'Share Tech Mono', monospace;
-            font-weight: bold;
+            color: var(--primary);
+            font-weight: 800;
         }
 
         .nota-detail {
-            font-size: 12px;
-            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
             margin-top: 10px;
             margin-bottom: 15px;
         }
@@ -717,21 +712,21 @@
 
         #toast {
             position: fixed;
-            top: 15%;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--input-bg);
-            color: var(--text);
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
             padding: 12px 24px;
-            border-radius: 6px;
+            border-radius: 12px;
             display: none;
             z-index: 1000;
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: bold;
-            border: 1px solid var(--steel);
-            box-shadow: 0 4px 15px var(--panel-sh);
+            font-weight: 600;
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             font-size: 14px;
-            letter-spacing: 1px;
             white-space: nowrap;
             transition: all 0.3s;
         }
@@ -1184,11 +1179,11 @@
             ctx.fillRect(0, 70, W, 2);
 
             ctx.fillStyle = textColor;
-            ctx.font = 'bold 26px Oswald, Rajdhani, sans-serif';
+            ctx.font = '800 24px Inter, -apple-system, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('TAF - BA  |  MOD. FISIOLÓGICO', W / 2, 46);
 
-            ctx.font = '16px Oswald, Rajdhani, sans-serif';
+            ctx.font = '600 15px Inter, -apple-system, sans-serif';
             ctx.fillStyle = textDim;
             ctx.fillText(`Bombeiro · ${d.idade} Anos`, W / 2, 66);
 
@@ -1215,11 +1210,11 @@
                 ctx.stroke();
 
                 ctx.fillStyle = textDim;
-                ctx.font = '13px "Share Tech Mono", monospace';
+                ctx.font = '13px Inter, -apple-system, monospace';
                 ctx.fillText(ex.label, 60, y + 22);
 
                 ctx.fillStyle = textColor;
-                ctx.font = 'bold 28px "Share Tech Mono", monospace';
+                ctx.font = '800 28px Inter, -apple-system, monospace';
                 ctx.fillText(formatTime(ex.time), 60, y + 50);
 
                 y += 78;
@@ -1235,11 +1230,11 @@
 
             ctx.textAlign = 'left';
             ctx.fillStyle = textDim;
-            ctx.font = '14px "Share Tech Mono", monospace';
+            ctx.font = '600 14px Inter, -apple-system, monospace';
             ctx.fillText('TEMPO TOTAL', 40, y + 16);
 
             ctx.fillStyle = textColor;
-            ctx.font = 'bold 22px "Share Tech Mono", monospace';
+            ctx.font = '800 22px Inter, -apple-system, monospace';
             ctx.textAlign = 'right';
             ctx.fillText(formatTime(d.total), W - 40, y + 16);
             y += 50;
@@ -1256,20 +1251,20 @@
             ctx.fill();
 
             ctx.fillStyle = isDark ? '#111111' : '#ffffff';
-            ctx.font = 'bold 42px Orbitron, sans-serif';
+            ctx.font = '900 38px Inter, -apple-system, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(`NOTA: ${d.nota}`, W / 2, y + 56);
 
             y += 96;
 
             const detalheTexto = gerarDetalheTexto(d);
-            ctx.font = '14px "Share Tech Mono", monospace';
+            ctx.font = '600 14px Inter, -apple-system, monospace';
             ctx.fillStyle = notaColor === '#4caf50' ? '#4caf50' : '#f44336';
             ctx.textAlign = 'center';
             ctx.fillText(detalheTexto, W / 2, y);
 
             ctx.fillStyle = textDim;
-            ctx.font = '12px "Share Tech Mono", monospace';
+            ctx.font = '500 12px Inter, -apple-system, monospace';
             ctx.textAlign = 'center';
             ctx.fillText(`Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, W / 2, H - 18);
 
