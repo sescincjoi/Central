@@ -2396,45 +2396,45 @@
         async function carregarRelatorio(linha) {
             try {
                 showLoading();
-                try {
-                    const response = await fetch(`${WEB_APP_URL}?action=getRelatorio&linha=${linha}`);
-                    const data = await response.json();
+                const response = await fetch(`${WEB_APP_URL}?action=getRelatorio&linha=${linha}`);
+                const data = await response.json();
 
-                    if (data.success) {
-                        const rel = data.relatorio;
+                if (data.success) {
+                    const rel = data.relatorio;
 
-                        // Marcar como edição
-                        relatorioEmEdicao = {
-                            linha: linha,
-                            numeroOriginal: rel.numero
-                        };
+                    // Marcar como edição
+                    relatorioEmEdicao = {
+                        linha: linha,
+                        numeroOriginal: rel.numero
+                    };
 
-                        // Preencher formulário
-                        document.getElementById('numeroRelatorio').textContent = rel.numero + ' (EDITANDO)';
-                        document.getElementById('numeroRelatorio').style.backgroundColor = '#f59e0b';
-                        document.getElementById('numeroRelatorio').style.color = '#fff';
+                    // Preencher formulário
+                    document.getElementById('numeroRelatorio').textContent = rel.numero + ' (EDITANDO)';
+                    document.getElementById('numeroRelatorioInput').value = rel.numero;
+                    document.getElementById('numeroRelatorio').style.backgroundColor = '#f59e0b';
+                    document.getElementById('numeroRelatorio').style.color = '#fff';
 
-                        // Mostrar botão "Novo Relatório"
-                        document.getElementById('btnNovoRelatorio').style.display = 'flex';
+                    // Mostrar botão "Novo Relatório"
+                    document.getElementById('btnNovoRelatorio').style.display = 'flex';
 
-                        // Preencher locais (checkboxes)
-                        const locaisSelecionados = rel.locais ? rel.locais.split(', ') : [];
-                        document.querySelectorAll('#locaisContainer input[type="checkbox"]').forEach(cb => {
-                            cb.checked = locaisSelecionados.includes(cb.value);
-                        });
+                    // Preencher locais (checkboxes)
+                    const locaisSelecionados = rel.locais ? rel.locais.split(', ') : [];
+                    document.querySelectorAll('#locaisContainer input[type="checkbox"]').forEach(cb => {
+                        cb.checked = locaisSelecionados.includes(cb.value);
+                    });
 
-                        // Preencher áreas do grid
-                        const areas = rel.areasGrade ? rel.areasGrade.split(', ') : [];
-                        const container = document.getElementById('areasContainer');
-                        container.innerHTML = '';
+                    // Preencher áreas do grid
+                    const areas = rel.areasGrade ? rel.areasGrade.split(', ') : [];
+                    const container = document.getElementById('areasContainer');
+                    container.innerHTML = '';
 
-                        if (areas.length > 0) {
-                            areas.forEach((area, index) => {
-                                const [letra, numero] = area.split('-');
+                    if (areas.length > 0) {
+                        areas.forEach((area, index) => {
+                            const [letra, numero] = area.split('-');
 
-                                const newRow = document.createElement('div');
-                                newRow.className = 'area-row';
-                                newRow.innerHTML = `
+                            const newRow = document.createElement('div');
+                            newRow.className = 'area-row';
+                            newRow.innerHTML = `
                                 <div>
                                     <label class="form-label">Área (Letra)</label>
                                     <select class="form-select area-letra" required>
@@ -2462,85 +2462,83 @@
                                 </div>
                             `;
 
-                                container.appendChild(newRow);
+                            container.appendChild(newRow);
 
-                                // Preencher selects de grid
-                                const selectLetra = newRow.querySelector('.area-letra');
-                                const selectNumero = newRow.querySelector('.area-numero');
+                            // Preencher selects de grid
+                            const selectLetra = newRow.querySelector('.area-letra');
+                            const selectNumero = newRow.querySelector('.area-numero');
 
-                                if (configData.gridLetras) {
-                                    configData.gridLetras.forEach(l => {
-                                        const opt = document.createElement('option');
-                                        opt.value = l;
-                                        opt.textContent = l;
-                                        selectLetra.appendChild(opt);
-                                    });
-                                    selectLetra.value = letra;
-                                }
+                            if (configData.gridLetras) {
+                                configData.gridLetras.forEach(l => {
+                                    const opt = document.createElement('option');
+                                    opt.value = l;
+                                    opt.textContent = l;
+                                    selectLetra.appendChild(opt);
+                                });
+                                selectLetra.value = letra;
+                            }
 
-                                if (configData.gridNumeros) {
-                                    configData.gridNumeros.forEach(n => {
-                                        const opt = document.createElement('option');
-                                        opt.value = n;
-                                        opt.textContent = n;
-                                        selectNumero.appendChild(opt);
-                                    });
-                                    selectNumero.value = numero;
-                                }
-                            });
-
-                            areaCount = areas.length;
-                        }
-
-                        // Resto dos campos
-                        document.getElementById('tipoOcorrencia').value = rel.tipoOcorrencia || '';
-                        document.getElementById('equipe').value = rel.equipe || '';
-                        document.getElementById('nomeSolicitante').value = rel.nomeSolicitante || '';
-                        document.getElementById('empresaEnvolvida').value = rel.empresaEnvolvida || '';
-                        document.getElementById('procedimentos').value = rel.procedimentos || '';
-                        document.getElementById('procedimentos').style.color = '#1d1d1f';
-                        document.getElementById('procedimentos').readOnly = false;
-                        document.getElementById('botoesEdicao').style.display = 'none';
-
-                        document.getElementById('acionamento').value = rel.acionamento || '';
-                        document.getElementById('saida').value = rel.saida || '';
-                        document.getElementById('chegada').value = rel.chegada || '';
-                        document.getElementById('termino').value = rel.termino || '';
-                        document.getElementById('retorno').value = rel.retorno || '';
-                        document.getElementById('relacaoDanos').value = rel.relacaoDanos || '';
-
-                        // Bombeiros
-                        for (let i = 1; i <= 6; i++) {
-                            document.getElementById(`funcao${i}`).value = rel[`funcao${i}`] || '';
-                            document.getElementById(`nomeBa${i}`).value = rel[`nomeBa${i}`] || '';
-                        }
-
-                        // Equipamentos (checkboxes)
-                        const equipamentosSelecionados = rel.equipamentos ? rel.equipamentos.split(', ') : [];
-                        document.querySelectorAll('#equipamentosContainer input[type="checkbox"]').forEach(cb => {
-                            cb.checked = equipamentosSelecionados.includes(cb.value);
+                            if (configData.gridNumeros) {
+                                configData.gridNumeros.forEach(n => {
+                                    const opt = document.createElement('option');
+                                    opt.value = n;
+                                    opt.textContent = n;
+                                    selectNumero.appendChild(opt);
+                                });
+                                selectNumero.value = numero;
+                            }
                         });
 
-                        document.getElementById('tempoGasto').value = rel.tempoGasto || '';
-                        document.getElementById('materialUtilizado').value = rel.materialUtilizado || '';
-
-                        // Recriar ícones
-                        setTimeout(() => lucide.createIcons(), 100);
-
-                        // Fechar modal de histórico
-                        fecharHistorico();
-
-                        // Scroll para o topo
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                        showToast('Relatório carregado para edição', 'success');
+                        areaCount = areas.length;
                     }
-                    hideLoading();
 
+                    // Resto dos campos
+                    document.getElementById('tipoOcorrencia').value = rel.tipoOcorrencia || '';
+                    document.getElementById('equipe').value = rel.equipe || '';
+                    document.getElementById('nomeSolicitante').value = rel.nomeSolicitante || '';
+                    document.getElementById('empresaEnvolvida').value = rel.empresaEnvolvida || '';
+                    document.getElementById('procedimentos').value = rel.procedimentos || '';
+                    document.getElementById('procedimentos').style.color = '#1d1d1f';
+                    document.getElementById('procedimentos').readOnly = false;
+                    document.getElementById('botoesEdicao').style.display = 'none';
+
+                    document.getElementById('acionamento').value = rel.acionamento || '';
+                    document.getElementById('saida').value = rel.saida || '';
+                    document.getElementById('chegada').value = rel.chegada || '';
+                    document.getElementById('termino').value = rel.termino || '';
+                    document.getElementById('retorno').value = rel.retorno || '';
+                    document.getElementById('relacaoDanos').value = rel.relacaoDanos || '';
+
+                    // Bombeiros
+                    for (let i = 1; i <= 6; i++) {
+                        document.getElementById(`funcao${i}`).value = rel[`funcao${i}`] || '';
+                        document.getElementById(`nomeBa${i}`).value = rel[`nomeBa${i}`] || '';
+                    }
+
+                    // Equipamentos (checkboxes)
+                    const equipamentosSelecionados = rel.equipamentos ? rel.equipamentos.split(', ') : [];
+                    document.querySelectorAll('#equipamentosContainer input[type="checkbox"]').forEach(cb => {
+                        cb.checked = equipamentosSelecionados.includes(cb.value);
+                    });
+
+                    document.getElementById('tempoGasto').value = rel.tempoGasto || '';
+                    document.getElementById('materialUtilizado').value = rel.materialUtilizado || '';
+
+                    // Recriar ícones
+                    setTimeout(() => lucide.createIcons(), 100);
+
+                    // Fechar modal de histórico
+                    fecharHistorico();
+
+                    // Scroll para o topo
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    showToast('Relatório carregado para edição', 'success');
                 } else {
                     showToast('Erro ao buscar relatório', 'error');
-                    hideLoading();
                 }
+
+                hideLoading();
             } catch (error) {
                 console.error('Erro ao carregar relatório:', error);
                 showToast('Erro de conexão', 'error');
