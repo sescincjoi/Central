@@ -460,6 +460,7 @@
             box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
             margin-bottom: env(safe-area-inset-bottom);
             transition: all 0.2s;
+            text-transform: math-auto;
         }
 
         .btn-end:active {
@@ -556,6 +557,7 @@
             margin-top: 10px;
             box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
             transition: all 0.2s;
+            text-transform: math-auto;
         }
 
         .btn-primary:active {
@@ -576,6 +578,7 @@
             box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
             transition: all 0.2s;
             margin-top: 10px;
+            text-transform: math-auto;
         }
 
         .btn-danger:active {
@@ -592,7 +595,7 @@
             font-size: 14px;
             font-weight: 600;
             letter-spacing: 1px;
-            text-transform: uppercase;
+            text-transform: math-auto;
             border-radius: 12px;
             cursor: pointer;
             margin-top: 12px;
@@ -707,6 +710,7 @@
             transition: all 0.2s;
             font-size: 15px;
             box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+            text-transform: math-auto;
         }
 
         .btn-export:active {
@@ -1127,8 +1131,8 @@
             const color = nota === 'REPROVADO' ? 'var(--red-hot)' : (nota === '10' ? 'var(--green-ok)' : 'var(--yellow-warn)');
 
             document.getElementById('results-content').innerHTML = `
-            <div style="background:${bg}; border:1px solid ${color}; color:${color}; text-align:center; padding:12px; border-radius:6px; margin-bottom:15px;">
-                <span style="font-family:Orbitron; font-size:24px; font-weight:900;">NOTA: ${nota}</span>
+            <div style="background:${bg}; border:1px solid ${color}; color:${color}; text-align:center; padding:12px; border-radius:12px; margin-bottom:15px;">
+                <span style="font-size:24px; font-weight:900; letter-spacing: -0.5px;">NOTA: ${nota}</span>
             </div>
             <div class="result-rows">
                 <div class="result-row"><span class="rr-label">FLEXÕES:</span><span class="rr-val">${formatTime(state.timers.flexao)}</span></div>
