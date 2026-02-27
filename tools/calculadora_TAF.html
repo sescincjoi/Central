@@ -447,10 +447,10 @@
             background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
             color: white;
             border: none;
-            padding: 16px;
+            padding: 14px;
             font-size: 15px;
-            font-weight: 700;
-            border-radius: 14px;
+            font-weight: 600;
+            border-radius: 12px;
             margin-top: 5px;
             cursor: pointer;
             display: flex;
@@ -463,8 +463,8 @@
         }
 
         .btn-end:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #b71c1c;
+            transform: translateY(2px);
+            opacity: 0.9;
         }
 
         #overlay {
@@ -513,7 +513,6 @@
         }
 
         .step-num {
-            font-family: 'Share Tech Mono', monospace;
             background: var(--steel);
             color: var(--text);
             width: 24px;
@@ -530,7 +529,6 @@
         }
 
         .step-text {
-            font-family: 'Rajdhani', sans-serif;
             font-size: 14px;
             color: var(--text-dim);
             line-height: 1.4;
@@ -561,24 +559,28 @@
         }
 
         .btn-primary:active {
-            background: var(--steel);
+            transform: translateY(2px);
+            opacity: 0.9;
         }
 
         .btn-danger {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             border: none;
-            background: var(--red-hot);
-            color: #fff;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            border-radius: 6px;
+            background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 12px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #b71c1c;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+            transition: all 0.2s;
             margin-top: 10px;
+        }
+
+        .btn-danger:active {
+            transform: translateY(2px);
+            opacity: 0.9;
         }
 
         .btn-ghost {
@@ -587,12 +589,11 @@
             border: 1.5px solid var(--steel);
             background: transparent;
             color: var(--text-dim);
-            font-family: 'Rajdhani', sans-serif;
             font-size: 14px;
             font-weight: 600;
             letter-spacing: 1px;
             text-transform: uppercase;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             margin-top: 12px;
             transition: all 0.3s;
@@ -690,24 +691,27 @@
         }
 
         .btn-export {
-            background: var(--panel);
-            color: var(--text);
-            border: 1px solid var(--steel);
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            border: none;
             padding: 14px;
             width: 100%;
             margin-top: 10px;
             cursor: pointer;
-            font-weight: 700;
-            border-radius: 6px;
-            text-transform: uppercase;
-            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: background 0.2s;
-            font-size: 14px;
-            letter-spacing: 1px;
+            transition: all 0.2s;
+            font-size: 15px;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-export:active {
+            transform: translateY(2px);
+            opacity: 0.9;
         }
 
         #toast {
@@ -866,8 +870,7 @@
         <!-- Modal de confirmação de encerramento -->
         <div class="modal-panel" id="confirmModal">
             <div class="modal-title" style="color:var(--red-hot);border-color:var(--steel);">ENCERRAR MISSÃO?</div>
-            <p
-                style="color:var(--text-dim);font-size:13px;font-family:'Share Tech Mono',monospace;margin-bottom:20px;line-height:1.5;">
+            <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px;line-height:1.5;">
                 O cronômetro será parado<br>e o resultado calculado.</p>
             <button class="btn-danger" onclick="confirmarSim()" style="box-shadow:none;">Confirmar Encerramento</button>
             <button class="btn-ghost" onclick="confirmarNao()">Voltar ao TAF</button>
@@ -875,13 +878,13 @@
 
         <div class="loader-wrap" id="loader">
             <div class="loader-ring"></div>
-            <div style="font-family:'Share Tech Mono',monospace;font-weight:bold;">PROCESSANDO DADOS...</div>
+            <div style="font-weight:700; font-size: 14px; letter-spacing: 0.5px;">PROCESSANDO DADOS...</div>
         </div>
 
         <div class="modal-panel" id="finalModal">
             <div class="modal-title">RELATÓRIO TAF</div>
             <div id="results-content"></div>
-            <button class="btn-export" style="background:var(--primary);border:none;" onclick="exportarImagem()">
+            <button class="btn-export" onclick="exportarImagem()">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                     <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
                 </svg>
