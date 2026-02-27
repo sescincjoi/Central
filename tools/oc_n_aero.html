@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>2
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatórios - Central SCI JOI</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
+
     <style>
         * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        
-        body { 
+
+        body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f5f7;
             min-height: 100vh;
@@ -48,7 +50,9 @@
             letter-spacing: 0.5px;
         }
 
-        .form-input, .form-select, .form-textarea {
+        .form-input,
+        .form-select,
+        .form-textarea {
             width: 100%;
             padding: 10px 14px;
             border: 1px solid #d1d1d6;
@@ -59,7 +63,9 @@
             background: #ffffff;
         }
 
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
             outline: none;
             border-color: #007AFF;
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
@@ -199,7 +205,7 @@
             .ba-row {
                 grid-template-columns: 1fr;
             }
-            
+
             .area-row {
                 grid-template-columns: 1fr;
             }
@@ -237,7 +243,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .toast {
@@ -291,12 +299,12 @@
             transition: all 0.3s ease;
             padding: 20px;
         }
-        
+
         .modal-overlay.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .modal-container {
             background: #ffffff;
             border-radius: 20px;
@@ -309,11 +317,11 @@
             transform: scale(0.9);
             transition: transform 0.3s ease;
         }
-        
+
         .modal-overlay.active .modal-container {
             transform: scale(1);
         }
-        
+
         .modal-header {
             padding: 24px;
             border-bottom: 1px solid #e5e5ea;
@@ -321,20 +329,20 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .modal-body {
             padding: 24px;
             overflow-y: auto;
             flex: 1;
         }
-        
+
         .modal-footer {
             padding: 24px;
             border-top: 1px solid #e5e5ea;
             display: flex;
             gap: 12px;
         }
-        
+
         .btn-close {
             background: #f5f5f7;
             border: none;
@@ -348,28 +356,28 @@
             transition: all 0.2s ease;
             color: #1d1d1f;
         }
-        
+
         .btn-close:hover {
             background: #e8e8ed;
         }
-        
+
         @media print {
             body * {
                 visibility: hidden;
             }
-            
+
             #conteudoRelatorio,
             #conteudoRelatorio * {
                 visibility: visible;
             }
-            
+
             #conteudoRelatorio {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
             }
-            
+
             .modal-header,
             .modal-footer {
                 display: none !important;
@@ -394,12 +402,12 @@
             transition: all 0.3s ease;
             padding: 20px;
         }
-        
+
         .historico-overlay.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .historico-container {
             background: #ffffff;
             border-radius: 20px;
@@ -412,11 +420,11 @@
             transform: scale(0.9);
             transition: transform 0.3s ease;
         }
-        
+
         .historico-overlay.active .historico-container {
             transform: scale(1);
         }
-        
+
         .historico-header {
             padding: 24px;
             border-bottom: 1px solid #e5e5ea;
@@ -424,18 +432,18 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .historico-search {
             padding: 16px 24px;
             border-bottom: 1px solid #e5e5ea;
         }
-        
+
         .historico-body {
             padding: 24px;
             overflow-y: auto;
             flex: 1;
         }
-        
+
         .historico-item {
             background: #f5f5f7;
             border-radius: 12px;
@@ -445,48 +453,48 @@
             transition: all 0.2s ease;
             border: 2px solid transparent;
         }
-        
+
         .historico-item:hover {
             background: #e8e8ed;
             border-color: #007AFF;
             transform: translateX(4px);
         }
-        
+
         .historico-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
         }
-        
+
         .historico-item-numero {
             font-weight: 700;
             font-size: 16px;
             color: #007AFF;
         }
-        
+
         .historico-item-data {
             font-size: 13px;
             color: #86868b;
         }
-        
+
         .historico-item-info {
             font-size: 14px;
             color: #1d1d1f;
             line-height: 1.5;
         }
-        
+
         .historico-item-tipo {
             font-weight: 600;
             color: #1d1d1f;
         }
-        
+
         .historico-empty {
             text-align: center;
             padding: 60px 20px;
             color: #86868b;
         }
-        
+
         .search-input {
             width: 100%;
             padding: 12px 16px;
@@ -496,7 +504,7 @@
             font-family: 'Inter', sans-serif;
             transition: all 0.2s ease;
         }
-        
+
         .search-input:focus {
             outline: none;
             border-color: #007AFF;
@@ -520,12 +528,12 @@
             visibility: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .custom-prompt-overlay.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .custom-prompt-box {
             background: #ffffff;
             border-radius: 20px;
@@ -536,18 +544,18 @@
             transform: scale(0.9);
             transition: transform 0.3s ease;
         }
-        
+
         .custom-prompt-overlay.active .custom-prompt-box {
             transform: scale(1);
         }
-        
+
         .custom-prompt-title {
             font-size: 18px;
             font-weight: 700;
             color: #1d1d1f;
             margin-bottom: 16px;
         }
-        
+
         .custom-prompt-input {
             width: 100%;
             padding: 12px 16px;
@@ -558,18 +566,18 @@
             transition: all 0.2s ease;
             margin-bottom: 20px;
         }
-        
+
         .custom-prompt-input:focus {
             outline: none;
             border-color: #007AFF;
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
-        
+
         .custom-prompt-buttons {
             display: flex;
             gap: 12px;
         }
-        
+
         .custom-prompt-btn {
             flex: 1;
             padding: 12px 20px;
@@ -580,43 +588,42 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .custom-prompt-btn-cancel {
             background: #f5f5f7;
             color: #1d1d1f;
         }
-        
+
         .custom-prompt-btn-cancel:hover {
             background: #e8e8ed;
         }
-        
+
         .custom-prompt-btn-confirm {
             background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
             color: white;
         }
-        
+
         .custom-prompt-btn-confirm:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
         }
-        
     </style>
 </head>
+
 <body>
 
     <div class="nav-bar fixed top-0 left-0 right-0 z-50">
         <div class="max-w-4xl mx-auto px-4 md:px-6">
             <div class="flex items-center justify-between h-14">
-                <button onclick="window.history.back()" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors">
+                <button onclick="window.history.back()"
+                    class="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                     <span class="font-semibold">Voltar</span>
                 </button>
-                
+
                 <div class="flex items-center gap-3">
-                    <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq" 
-                         alt="SCI" 
-                         class="w-9 h-9 rounded-full"
-                         onerror="this.src='https://via.placeholder.com/150x150?text=SCI';">
+                    <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq" alt="SCI"
+                        class="w-9 h-9 rounded-full" onerror="this.src='https://via.placeholder.com/150x150?text=SCI';">
                     <span class="text-lg font-semibold text-gray-900">Relatórios</span>
                 </div>
             </div>
@@ -624,10 +631,11 @@
     </div>
 
     <div class="max-w-4xl mx-auto px-4 md:px-6 pb-24" style="padding-top: 76px;">
-        
+
         <div class="card mb-6 p-5">
             <div class="flex items-center gap-3 mb-3">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <div
+                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
                 </div>
                 <div>
@@ -635,14 +643,20 @@
                     <p class="text-sm text-gray-500">Preencha os dados da ocorrência</p>
                 </div>
             </div>
-            
+
             <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-semibold text-gray-500 uppercase">Relatório Nº</span>
                     <span id="numeroRelatorio" class="badge">Carregando...</span>
+                    <button type="button" class="text-blue-600 hover:text-blue-800 transition-colors ml-1"
+                        onclick="editarNumeroRelatorio()" title="Editar Número do Relatório">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                    </button>
+                    <input type="hidden" id="numeroRelatorioInput" value="">
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" class="btn-secondary" id="btnNovoRelatorio" style="display: none;" onclick="novoRelatorio()">
+                    <button type="button" class="btn-secondary" id="btnNovoRelatorio" style="display: none;"
+                        onclick="novoRelatorio()">
                         <i data-lucide="file-plus" class="w-4 h-4 inline mr-1"></i>
                         Novo Relatório
                     </button>
@@ -655,20 +669,21 @@
         </div>
 
         <form id="formRelatorio" class="space-y-4">
-            
+
             <!-- Localização -->
             <div class="card p-5">
                 <div class="section-title">
                     <i data-lucide="map-pin" class="w-4 h-4 text-blue-600"></i>
                     Local/Área do Evento (Mapa de Grade)
                 </div>
-                
+
                 <div class="space-y-3">
                     <!-- Local -->
                     <div class="flex gap-2">
                         <div class="flex-1">
                             <label class="form-label">Local</label>
-                            <div id="locaisContainer" class="border border-gray-300 rounded-lg p-3 max-h-32 overflow-y-auto bg-white">
+                            <div id="locaisContainer"
+                                class="border border-gray-300 rounded-lg p-3 max-h-32 overflow-y-auto bg-white">
                                 <!-- Checkboxes serão inseridos aqui -->
                             </div>
                         </div>
@@ -709,7 +724,7 @@
                     <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
                     Dados da Ocorrência
                 </div>
-                
+
                 <div class="space-y-3">
                     <div class="flex gap-2">
                         <div class="flex-1">
@@ -773,7 +788,7 @@
                     <i data-lucide="clock" class="w-4 h-4 text-orange-600"></i>
                     Registro de Horários
                 </div>
-                
+
                 <div class="time-inputs">
                     <div>
                         <label class="form-label">Acionamento</label>
@@ -804,8 +819,9 @@
                     <i data-lucide="file-warning" class="w-4 h-4 text-amber-600"></i>
                     Relação de Danos
                 </div>
-                
-                <textarea id="relacaoDanos" class="form-textarea" placeholder="Descreva os danos observados..."></textarea>
+
+                <textarea id="relacaoDanos" class="form-textarea"
+                    placeholder="Descreva os danos observados..."></textarea>
             </div>
 
             <!-- Equipe Envolvida -->
@@ -814,7 +830,7 @@
                     <i data-lucide="users" class="w-4 h-4 text-purple-600"></i>
                     Bombeiros Envolvidos
                 </div>
-                
+
                 <div class="space-y-3">
                     <div class="ba-row">
                         <div>
@@ -950,12 +966,13 @@
                     <i data-lucide="truck" class="w-4 h-4 text-green-600"></i>
                     Equipamentos e Material
                 </div>
-                
+
                 <div class="space-y-3">
                     <div class="flex gap-2">
                         <div class="flex-1">
                             <label class="form-label">CCI e Equipamentos Utilizados</label>
-                            <div id="equipamentosContainer" class="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto bg-white">
+                            <div id="equipamentosContainer"
+                                class="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto bg-white">
                                 <!-- Checkboxes serão inseridos aqui -->
                             </div>
                         </div>
@@ -966,12 +983,14 @@
 
                     <div>
                         <label class="form-label">Tempo Gasto no Atendimento</label>
-                        <input type="text" id="tempoGasto" class="form-input" placeholder="HH:MM:SS" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" inputmode="numeric" required>
+                        <input type="text" id="tempoGasto" class="form-input" placeholder="HH:MM:SS"
+                            pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" inputmode="numeric" required>
                     </div>
 
                     <div>
                         <label class="form-label">Material Utilizado</label>
-                        <textarea id="materialUtilizado" class="form-textarea" placeholder="Descreva os materiais utilizados..."></textarea>
+                        <textarea id="materialUtilizado" class="form-textarea"
+                            placeholder="Descreva os materiais utilizados..."></textarea>
                     </div>
                 </div>
             </div>
@@ -1002,17 +1021,12 @@
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            
+
             <div class="historico-search">
-                <input 
-                    type="text" 
-                    class="search-input" 
-                    id="searchHistorico" 
-                    placeholder="Buscar por número, tipo, equipe..."
-                    oninput="filtrarHistorico()"
-                >
+                <input type="text" class="search-input" id="searchHistorico"
+                    placeholder="Buscar por número, tipo, equipe..." oninput="filtrarHistorico()">
             </div>
-            
+
             <div class="historico-body" id="listaHistorico">
                 <div class="historico-empty">
                     <i data-lucide="search" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
@@ -1021,7 +1035,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Modal de Visualização -->
     <div class="modal-overlay" id="modalRelatorio">
         <div class="modal-container">
@@ -1031,7 +1045,7 @@
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body" id="conteudoRelatorio">
                 <!-- Aqui vai entrar o layout da planilha -->
                 <div class="text-center py-12 text-gray-500">
@@ -1039,7 +1053,7 @@
                     <p>O layout do relatório será inserido aqui</p>
                 </div>
             </div>
-            
+
             <div class="modal-footer">
                 <button type="button" class="btn-secondary flex-1" onclick="fecharModal()">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
@@ -1052,7 +1066,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
     </div>
@@ -1063,27 +1077,29 @@
             <div class="custom-prompt-title" id="promptTitle">Digite o valor</div>
             <input type="text" class="custom-prompt-input" id="promptInput" placeholder="">
             <div class="custom-prompt-buttons">
-                <button class="custom-prompt-btn custom-prompt-btn-cancel" onclick="fecharPrompt(false)">Cancelar</button>
-                <button class="custom-prompt-btn custom-prompt-btn-confirm" onclick="fecharPrompt(true)">Confirmar</button>
+                <button class="custom-prompt-btn custom-prompt-btn-cancel"
+                    onclick="fecharPrompt(false)">Cancelar</button>
+                <button class="custom-prompt-btn custom-prompt-btn-confirm"
+                    onclick="fecharPrompt(true)">Confirmar</button>
             </div>
         </div>
     </div>
-    
+
     <div class="toast" id="toast"></div>
 
     <script>
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyal0depSGSESznpVqxnv6FnwOsv2CZXWTdEtU59GB1eC359G3chsgNBnE8ywiXEJXgKw/exec';
-        
+
         let configData = null;
         let proximoNumero = null;
         let areaCount = 1;
         let relatoriosHistorico = [];
         let relatorioEmEdicao = null;
-        
+
         const EQUIPES = ['ALFA', 'BRAVO', 'CHARLIE', 'DELTA'];
         const DATA_REF_FIXA = new Date('2026-01-15T17:00:00');
         const EQUIPE_REF_FIXA = 'DELTA';
-        
+
         function calcularEquipeAtual() {
             const agora = new Date();
             const diffHoras = (agora - DATA_REF_FIXA) / (1000 * 60 * 60);
@@ -1091,14 +1107,14 @@
             const idx = (EQUIPES.indexOf(EQUIPE_REF_FIXA) + trocas) % EQUIPES.length;
             return EQUIPES[idx];
         }
-        
+
         async function carregarConfiguracoes() {
             try {
                 showLoading();
-                
+
                 const response = await fetch(`${WEB_APP_URL}?action=getConfiguracoes`);
                 const data = await response.json();
-                
+
                 // DEBUG - ADICIONE ESTAS LINHAS
                 console.log('===== DEBUG CONFIGURAÇÕES =====');
                 console.log('Dados completos:', data);
@@ -1110,31 +1126,39 @@
                 }
                 console.log('===============================');
                 // FIM DEBUG
-                
+
                 if (data.success) {
                     configData = data.config;
                     preencherSelects();
                 }
-                
-                const responseNum = await fetch(`${WEB_APP_URL}?action=getProximoNumero`);
-                const dataNum = await responseNum.json();
-                
-                if (dataNum.success) {
-                    proximoNumero = dataNum.numero;
+                try {
+                    const response = await fetch(`${WEB_APP_URL}?action=getProximoNumero`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        document.getElementById('numeroRelatorio').textContent = data.numero;
+                        document.getElementById('numeroRelatorioInput').value = data.numero;
+                        proximoNumero = data.numero;
+                    } else {
+                        document.getElementById('numeroRelatorio').textContent = proximoNumero;
+                    }
+
+                    const equipeAtual = calcularEquipeAtual();
+                    document.getElementById('equipe').value = equipeAtual;
+
+                    hideLoading();
+                } catch (error) {
+                    console.error('Erro ao buscar próximo número:', error);
                     document.getElementById('numeroRelatorio').textContent = proximoNumero;
+                    hideLoading();
                 }
-                
-                const equipeAtual = calcularEquipeAtual();
-                document.getElementById('equipe').value = equipeAtual;
-                
-                hideLoading();
             } catch (error) {
-                console.error('Erro ao carregar:', error);
+                console.error('Erro ao carregar configurações:', error);
                 showToast('Erro ao carregar configurações', 'error');
                 hideLoading();
             }
         }
-        
+
         function preencherSelects() {
             // Locais (com checkboxes)
             const containerLocais = document.getElementById('locaisContainer');
@@ -1152,10 +1176,10 @@
             } else {
                 console.warn('Nenhum local encontrado na configuração');
             }
-            
+
             // Grid Letras e Números (para todas as áreas)
             preencherGridSelects();
-            
+
             // Tipos de Ocorrência
             const selectTipo = document.getElementById('tipoOcorrencia');
             if (configData.tiposOcorrencia && Array.isArray(configData.tiposOcorrencia)) {
@@ -1163,7 +1187,7 @@
                 while (selectTipo.options.length > 1) {
                     selectTipo.remove(1);
                 }
-                
+
                 configData.tiposOcorrencia.forEach(tipo => {
                     const opt = document.createElement('option');
                     opt.value = tipo;
@@ -1171,7 +1195,7 @@
                     selectTipo.appendChild(opt);
                 });
             }
-            
+
             // Empresas
             const selectEmpresa = document.getElementById('empresaEnvolvida');
             if (configData.empresas && Array.isArray(configData.empresas)) {
@@ -1179,7 +1203,7 @@
                 while (selectEmpresa.options.length > 1) {
                     selectEmpresa.remove(1);
                 }
-                
+
                 configData.empresas.forEach(empresa => {
                     const opt = document.createElement('option');
                     opt.value = empresa;
@@ -1187,17 +1211,17 @@
                     selectEmpresa.appendChild(opt);
                 });
             }
-            
+
             // Efetivo
             if (configData.efetivo && Array.isArray(configData.efetivo)) {
                 for (let i = 1; i <= 6; i++) {
                     const select = document.getElementById(`nomeBa${i}`);
-                    
+
                     // Limpar opções existentes (exceto a primeira "Selecione...")
                     while (select.options.length > 1) {
                         select.remove(1);
                     }
-                    
+
                     configData.efetivo.forEach(nome => {
                         const opt = document.createElement('option');
                         opt.value = nome;
@@ -1206,7 +1230,7 @@
                     });
                 }
             }
-            
+
             // Equipamentos (com checkboxes)
             const containerEquip = document.getElementById('equipamentosContainer');
             if (configData.equipamentos && Array.isArray(configData.equipamentos)) {
@@ -1222,18 +1246,18 @@
                 });
             }
         }
-        
+
         function preencherGridSelects() {
             const selectsLetra = document.querySelectorAll('.area-letra');
             const selectsNumero = document.querySelectorAll('.area-numero');
-            
+
             if (configData.gridLetras && Array.isArray(configData.gridLetras)) {
                 selectsLetra.forEach(select => {
                     // Limpar options existentes exceto o primeiro
                     while (select.options.length > 1) {
                         select.remove(1);
                     }
-                    
+
                     configData.gridLetras.forEach(letra => {
                         const opt = document.createElement('option');
                         opt.value = letra;
@@ -1242,14 +1266,14 @@
                     });
                 });
             }
-            
+
             if (configData.gridNumeros && Array.isArray(configData.gridNumeros)) {
                 selectsNumero.forEach(select => {
                     // Limpar options existentes exceto o primeiro
                     while (select.options.length > 1) {
                         select.remove(1);
                     }
-                    
+
                     configData.gridNumeros.forEach(num => {
                         const opt = document.createElement('option');
                         opt.value = num;
@@ -1259,11 +1283,11 @@
                 });
             }
         }
-        
+
         function adicionarArea() {
             areaCount++;
             const container = document.getElementById('areasContainer');
-            
+
             const newRow = document.createElement('div');
             newRow.className = 'area-row';
             newRow.innerHTML = `
@@ -1286,13 +1310,13 @@
                     </button>
                 </div>
             `;
-            
+
             container.appendChild(newRow);
-            
+
             // Preencher apenas os novos selects
             const novosSelectsLetra = newRow.querySelectorAll('.area-letra');
             const novosSelectsNumero = newRow.querySelectorAll('.area-numero');
-            
+
             if (configData.gridLetras && Array.isArray(configData.gridLetras)) {
                 novosSelectsLetra.forEach(select => {
                     configData.gridLetras.forEach(letra => {
@@ -1303,7 +1327,7 @@
                     });
                 });
             }
-            
+
             if (configData.gridNumeros && Array.isArray(configData.gridNumeros)) {
                 novosSelectsNumero.forEach(select => {
                     configData.gridNumeros.forEach(num => {
@@ -1314,24 +1338,24 @@
                     });
                 });
             }
-            
+
             lucide.createIcons();
         }
-        
+
         function removerArea(btn) {
             if (areaCount > 1) {
                 btn.closest('.area-row').remove();
                 areaCount--;
             }
         }
-        
+
         async function novoLocal() {
             const valor = await customPrompt('Novo Local', 'Digite o nome do local...');
             if (!valor) return;
-            
+
             try {
                 showLoading();
-                
+
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -1340,9 +1364,9 @@
                         valor: valor
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const container = document.getElementById('locaisContainer');
                     const index = container.children.length;
@@ -1353,10 +1377,10 @@
                         <label for="local_${index}" class="text-sm text-gray-700 cursor-pointer flex-1">${valor}</label>
                     `;
                     container.appendChild(div);
-                    
+
                     showToast('Local adicionado com sucesso!', 'success');
                 }
-                
+
                 hideLoading();
             } catch (error) {
                 console.error('Erro:', error);
@@ -1364,14 +1388,14 @@
                 hideLoading();
             }
         }
-        
+
         async function novoTipo() {
             const valor = await customPrompt('Novo Tipo de Ocorrência', 'Digite o tipo...');
             if (!valor) return;
-            
+
             try {
                 showLoading();
-                
+
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -1380,9 +1404,9 @@
                         valor: valor
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const select = document.getElementById('tipoOcorrencia');
                     const opt = document.createElement('option');
@@ -1390,10 +1414,10 @@
                     opt.textContent = valor;
                     select.appendChild(opt);
                     select.value = valor;
-                    
+
                     showToast('Tipo adicionado com sucesso!', 'success');
                 }
-                
+
                 hideLoading();
             } catch (error) {
                 console.error('Erro:', error);
@@ -1401,14 +1425,14 @@
                 hideLoading();
             }
         }
-        
+
         async function novaEmpresa() {
             const valor = await customPrompt('Nova Empresa', 'Digite o nome da empresa...');
             if (!valor) return;
-            
+
             try {
                 showLoading();
-                
+
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -1417,9 +1441,9 @@
                         valor: valor
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const select = document.getElementById('empresaEnvolvida');
                     const opt = document.createElement('option');
@@ -1427,10 +1451,10 @@
                     opt.textContent = valor;
                     select.appendChild(opt);
                     select.value = valor;
-                    
+
                     showToast('Empresa adicionada com sucesso!', 'success');
                 }
-                
+
                 hideLoading();
             } catch (error) {
                 console.error('Erro:', error);
@@ -1438,14 +1462,26 @@
                 hideLoading();
             }
         }
-        
+
+        async function editarNumeroRelatorio() {
+            const numeroAtual = document.getElementById('numeroRelatorioInput').value || document.getElementById('numeroRelatorio').textContent;
+
+            const novoNumero = await customPrompt('Editar Número do Relatório', 'Atenção: Apenas altere caso o sequencial esteja incorreto.', numeroAtual);
+
+            if (novoNumero !== null && novoNumero.trim() !== '') {
+                document.getElementById('numeroRelatorio').textContent = novoNumero.trim();
+                document.getElementById('numeroRelatorioInput').value = novoNumero.trim();
+                showToast('Número do relatório alterado (apenas para este salvamento).', 'success');
+            }
+        }
+
         async function novoEquipamento() {
             const valor = await customPrompt('Novo Equipamento', 'Digite o nome do equipamento...');
             if (!valor) return;
-            
+
             try {
                 showLoading();
-                
+
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -1454,9 +1490,9 @@
                         valor: valor
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const container = document.getElementById('equipamentosContainer');
                     const index = container.children.length;
@@ -1467,10 +1503,10 @@
                         <label for="equip_${index}" class="text-sm text-gray-700 cursor-pointer flex-1">${valor}</label>
                     `;
                     container.appendChild(div);
-                    
+
                     showToast('Equipamento adicionado com sucesso!', 'success');
                 }
-                
+
                 hideLoading();
             } catch (error) {
                 console.error('Erro:', error);
@@ -1478,42 +1514,42 @@
                 hideLoading();
             }
         }
-        
+
         document.getElementById('formRelatorio').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Validar formulário
             if (!validarFormulario()) {
                 return;
             }
-            
+
             // Coletar dados
             const dados = coletarDadosFormulario();
-            
+
             // Preencher preview no modal
             preencherPreviewRelatorio(dados);
-            
+
             // Abrir modal
             abrirModal();
         });
-        
+
         function validarFormulario() {
             // Validação básica já é feita pelo HTML5
             return true;
         }
-        
+
         function coletarDadosFormulario() {
             // Pegar locais selecionados (checkboxes)
             const checkboxesLocais = document.querySelectorAll('#locaisContainer input[type="checkbox"]:checked');
             const locaisSelecionados = Array.from(checkboxesLocais)
                 .map(cb => cb.value)
                 .join(', ');
-            
+
             // Pegar todas as áreas do grid
             const areasLetra = document.querySelectorAll('.area-letra');
             const areasNumero = document.querySelectorAll('.area-numero');
             const areasGrade = [];
-            
+
             for (let i = 0; i < areasLetra.length; i++) {
                 const letra = areasLetra[i].value;
                 const numero = areasNumero[i].value;
@@ -1521,17 +1557,17 @@
                     areasGrade.push(letra + '-' + numero);
                 }
             }
-            
+
             const areasGradeString = areasGrade.join(', ');
-            
+
             // Pegar equipamentos selecionados (checkboxes)
             const checkboxesEquip = document.querySelectorAll('#equipamentosContainer input[type="checkbox"]:checked');
             const equipamentosSelecionados = Array.from(checkboxesEquip)
                 .map(cb => cb.value)
                 .join(', ');
-            
+
             return {
-                numero: relatorioEmEdicao ? relatorioEmEdicao.numeroOriginal : proximoNumero,
+                numero: document.getElementById('numeroRelatorioInput').value || document.getElementById('numeroRelatorio').textContent,
                 areasGrade: areasGradeString,
                 locais: locaisSelecionados,
                 tipoOcorrencia: document.getElementById('tipoOcorrencia').value,
@@ -1562,16 +1598,16 @@
                 materialUtilizado: document.getElementById('materialUtilizado').value
             };
         }
-        
+
         async function preencherPreviewRelatorio(dados) {
             // Mostrar loading
             showLoading();
-            
+
             // Formatar data e hora atual
             const agora = new Date();
             const dataFormatada = agora.toLocaleDateString('pt-BR');
             const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            
+
             // Montar lista de bombeiros
             let bombeirosList = '';
             for (let i = 1; i <= 6; i++) {
@@ -1585,7 +1621,7 @@
                     </tr>
                 `;
             }
-            
+
             // Criar elemento temporário para renderizar
             const tempDiv = document.createElement('div');
             tempDiv.style.position = 'absolute';
@@ -1594,7 +1630,7 @@
             tempDiv.style.padding = '10.5mm';
             tempDiv.style.backgroundColor = 'white';
             tempDiv.style.boxSizing = 'border-box';
-            
+
             tempDiv.innerHTML = `
                 <style type="text/css">
                 * {
@@ -1976,9 +2012,9 @@
                     </table>
                 </div>
             `;
-            
+
             document.body.appendChild(tempDiv);
-            
+
             // Aguardar o carregamento da imagem
             const img = tempDiv.querySelector('img');
             await new Promise((resolve) => {
@@ -1990,7 +2026,7 @@
                     setTimeout(resolve, 2000);
                 }
             });
-            
+
             try {
                 // Renderizar com html2canvas
                 const canvas = await html2canvas(tempDiv, {
@@ -2002,40 +2038,40 @@
                     windowWidth: 794,
                     windowHeight: 1123
                 });
-                
+
                 // Remover elemento temporário
                 document.body.removeChild(tempDiv);
-                
+
                 // Criar PDF
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                
+
                 const imgData = canvas.toDataURL('image/png');
                 const pdfWidth = 210;
                 const pdfHeight = 297;
                 const imgWidth = 189;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
+
                 // Centralizar horizontalmente e verticalmente
                 const xOffset = (pdfWidth - imgWidth) / 2;
                 const yOffset = (pdfHeight - imgHeight) / 2;
-                
+
                 pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
-                
+
                 // Converter PDF para Blob e criar URL
                 const pdfBlob = pdf.output('blob');
                 const pdfUrl = URL.createObjectURL(pdfBlob);
-                
+
                 // Exibir PDF no modal
                 document.getElementById('conteudoRelatorio').innerHTML = `
                     <iframe src="${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" style="width: 100%; height: 70vh; border: none;"></iframe>
                 `;
-                
+
                 // Armazenar o PDF para download/impressão
                 window.pdfGerado = pdf;
-                
+
                 hideLoading();
-                
+
             } catch (error) {
                 console.error('Erro ao gerar PDF:', error);
                 if (document.body.contains(tempDiv)) {
@@ -2045,23 +2081,23 @@
                 showToast('Erro ao gerar PDF', 'error');
             }
         }
-        
+
         function abrirModal() {
             document.getElementById('modalRelatorio').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
+
         function fecharModal() {
             document.getElementById('modalRelatorio').classList.remove('active');
             document.body.style.overflow = '';
         }
-        
+
         async function enviarEImprimir() {
             const dados = coletarDadosFormulario();
-            
+
             try {
                 showLoading();
-                
+
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -2070,17 +2106,17 @@
                         ...dados
                     })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     hideLoading();
                     showToast(`Relatório #${result.numero} enviado com sucesso!`, 'success');
-                    
+
                     // PRIMEIRO: Acionar impressão enquanto modal ainda está aberto
                     if (window.pdfGerado) {
                         const iframe = document.querySelector('#conteudoRelatorio iframe');
-                        
+
                         if (iframe && iframe.contentWindow) {
                             try {
                                 iframe.contentWindow.focus();
@@ -2090,36 +2126,36 @@
                             }
                         }
                     }
-                    
+
                     // DEPOIS: Fechar modal e resetar (após impressão)
-                        setTimeout(() => {
-                            fecharModal();
-                            
-                            // Resetar formulário
-                            document.getElementById('formRelatorio').reset();
-                            
-                            // Resetar áreas extras
-                            const container = document.getElementById('areasContainer');
-                            const firstRow = container.querySelector('.area-row');
-                            container.innerHTML = '';
-                            container.appendChild(firstRow);
-                            areaCount = 1;
-                            
-                            // Limpar procedimentos
-                            limparProcedimentos();
-                            
-                            carregarConfiguracoes();
-                            
-                           // Limpar modo edição
-                            relatorioEmEdicao = null;
-                            document.getElementById('numeroRelatorio').style.backgroundColor = '';
-                            document.getElementById('numeroRelatorio').style.color = '';
-                            
-                            // Esconder botão "Novo Relatório"
-                            document.getElementById('btnNovoRelatorio').style.display = 'none';
-                            
-                        }, 1000);
-                    
+                    setTimeout(() => {
+                        fecharModal();
+
+                        // Resetar formulário
+                        document.getElementById('formRelatorio').reset();
+
+                        // Resetar áreas extras
+                        const container = document.getElementById('areasContainer');
+                        const firstRow = container.querySelector('.area-row');
+                        container.innerHTML = '';
+                        container.appendChild(firstRow);
+                        areaCount = 1;
+
+                        // Limpar procedimentos
+                        limparProcedimentos();
+
+                        carregarConfiguracoes();
+
+                        // Limpar modo edição
+                        relatorioEmEdicao = null;
+                        document.getElementById('numeroRelatorio').style.backgroundColor = '';
+                        document.getElementById('numeroRelatorio').style.color = '';
+
+                        // Esconder botão "Novo Relatório"
+                        document.getElementById('btnNovoRelatorio').style.display = 'none';
+
+                    }, 1000);
+
                 } else {
                     hideLoading();
                     showToast('Erro ao enviar relatório', 'error');
@@ -2130,20 +2166,20 @@
                 showToast('Erro ao enviar relatório', 'error');
             }
         }
-        
+
         function showLoading() {
             document.getElementById('loadingOverlay').classList.add('active');
         }
-        
+
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.remove('active');
         }
-        
+
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = `toast ${type} show`;
-            
+
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
@@ -2151,27 +2187,27 @@
 
         // Sistema de Prompt Customizado
         let promptResolve = null;
-        
+
         function customPrompt(titulo, placeholder = '') {
             return new Promise((resolve) => {
                 promptResolve = resolve;
-                
+
                 document.getElementById('promptTitle').textContent = titulo;
                 document.getElementById('promptInput').value = '';
                 document.getElementById('promptInput').placeholder = placeholder;
                 document.getElementById('customPrompt').classList.add('active');
-                
+
                 // Focar no input
                 setTimeout(() => {
                     document.getElementById('promptInput').focus();
                 }, 100);
             });
         }
-        
+
         function fecharPrompt(confirmed) {
             const overlay = document.getElementById('customPrompt');
             overlay.classList.remove('active');
-            
+
             if (promptResolve) {
                 if (confirmed) {
                     const valor = document.getElementById('promptInput').value.trim();
@@ -2182,58 +2218,58 @@
                 promptResolve = null;
             }
         }
-        
+
         // Enter para confirmar no prompt
-        document.addEventListener('keypress', function(e) {
+        document.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && document.getElementById('customPrompt').classList.contains('active')) {
                 fecharPrompt(true);
             }
         });
-        
+
         // Variável para controlar o estado do procedimento
         let procedimentoOriginal = '';
         let modoEdicao = false;
-        
+
         // Listener para mudança no Tipo de Ocorrência
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const selectTipo = document.getElementById('tipoOcorrencia');
-            
-            selectTipo.addEventListener('change', async function() {
+
+            selectTipo.addEventListener('change', async function () {
                 const tipoSelecionado = this.value;
-                
+
                 if (!tipoSelecionado) {
                     limparProcedimentos();
                     return;
                 }
-                
+
                 await carregarUltimoProcedimento(tipoSelecionado);
             });
         });
-        
+
         async function carregarUltimoProcedimento(tipoOcorrencia) {
             try {
                 showLoading();
-                
+
                 const response = await fetch(`${WEB_APP_URL}?action=getUltimoProcedimento&tipo=${encodeURIComponent(tipoOcorrencia)}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.procedimento) {
                     const textarea = document.getElementById('procedimentos');
                     const botoes = document.getElementById('botoesEdicao');
-                    
+
                     procedimentoOriginal = data.procedimento;
                     textarea.value = data.procedimento;
                     textarea.style.color = '#9ca3af'; // Cinza claro
                     textarea.readOnly = true;
                     botoes.style.display = 'flex';
                     modoEdicao = false;
-                    
+
                     // Recriar ícones do Lucide
                     setTimeout(() => lucide.createIcons(), 100);
                 } else {
                     limparProcedimentos();
                 }
-                
+
                 hideLoading();
             } catch (error) {
                 console.error('Erro ao carregar procedimento:', error);
@@ -2241,7 +2277,7 @@
                 hideLoading();
             }
         }
-        
+
         function editarUltimo() {
             const textarea = document.getElementById('procedimentos');
             textarea.style.color = '#1d1d1f'; // Preto
@@ -2249,11 +2285,11 @@
             modoEdicao = true;
             textarea.focus();
         }
-        
+
         function novoTexto() {
             const textarea = document.getElementById('procedimentos');
             const botoes = document.getElementById('botoesEdicao');
-            
+
             textarea.value = '';
             textarea.style.color = '#1d1d1f'; // Preto
             textarea.readOnly = false;
@@ -2261,11 +2297,11 @@
             modoEdicao = false;
             textarea.focus();
         }
-        
+
         function limparProcedimentos() {
             const textarea = document.getElementById('procedimentos');
             const botoes = document.getElementById('botoesEdicao');
-            
+
             textarea.value = '';
             textarea.style.color = '#1d1d1f';
             textarea.readOnly = false;
@@ -2279,20 +2315,20 @@
         async function abrirHistorico() {
             try {
                 showLoading();
-                
+
                 const response = await fetch(`${WEB_APP_URL}?action=getRelatorios`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     relatoriosHistorico = data.relatorios;
                     renderizarHistorico(relatoriosHistorico);
                     document.getElementById('modalHistorico').classList.add('active');
                     document.body.style.overflow = 'hidden';
-                    
+
                     // Recriar ícones
                     setTimeout(() => lucide.createIcons(), 100);
                 }
-                
+
                 hideLoading();
             } catch (error) {
                 console.error('Erro ao carregar histórico:', error);
@@ -2300,16 +2336,16 @@
                 hideLoading();
             }
         }
-        
+
         function fecharHistorico() {
             document.getElementById('modalHistorico').classList.remove('active');
             document.body.style.overflow = '';
             document.getElementById('searchHistorico').value = '';
         }
-        
+
         function renderizarHistorico(relatorios) {
             const container = document.getElementById('listaHistorico');
-            
+
             if (!relatorios || relatorios.length === 0) {
                 container.innerHTML = `
                     <div class="historico-empty">
@@ -2320,7 +2356,7 @@
                 setTimeout(() => lucide.createIcons(), 50);
                 return;
             }
-            
+
             container.innerHTML = relatorios.map(rel => `
                 <div class="historico-item" onclick="carregarRelatorio(${rel.linha})">
                     <div class="historico-item-header">
@@ -2333,18 +2369,18 @@
                     </div>
                 </div>
             `).join('');
-            
+
             setTimeout(() => lucide.createIcons(), 50);
         }
-        
+
         function filtrarHistorico() {
             const busca = document.getElementById('searchHistorico').value.toLowerCase();
-            
+
             if (!busca) {
                 renderizarHistorico(relatoriosHistorico);
                 return;
             }
-            
+
             const filtrados = relatoriosHistorico.filter(rel => {
                 return (
                     rel.numero.toString().includes(busca) ||
@@ -2353,52 +2389,52 @@
                     (rel.locais && rel.locais.toLowerCase().includes(busca))
                 );
             });
-            
+
             renderizarHistorico(filtrados);
         }
-        
+
         async function carregarRelatorio(linha) {
             try {
                 showLoading();
-                
-                const response = await fetch(`${WEB_APP_URL}?action=getRelatorio&linha=${linha}`);
-                const data = await response.json();
-                
-                if (data.success && data.relatorio) {
-                    const rel = data.relatorio;
-                    
-                    // Marcar como edição
-                    relatorioEmEdicao = {
-                        linha: linha,
-                        numeroOriginal: rel.numero
-                    };
-                    
-                    // Preencher formulário
-                    document.getElementById('numeroRelatorio').textContent = rel.numero + ' (EDITANDO)';
-                    document.getElementById('numeroRelatorio').style.backgroundColor = '#f59e0b';
-                    document.getElementById('numeroRelatorio').style.color = '#fff';
+                try {
+                    const response = await fetch(`${WEB_APP_URL}?action=getRelatorio&linha=${linha}`);
+                    const data = await response.json();
 
-                    // Mostrar botão "Novo Relatório"
-                    document.getElementById('btnNovoRelatorio').style.display = 'flex';
-                                        
-                    // Preencher locais (checkboxes)
-                    const locaisSelecionados = rel.locais ? rel.locais.split(', ') : [];
-                    document.querySelectorAll('#locaisContainer input[type="checkbox"]').forEach(cb => {
-                        cb.checked = locaisSelecionados.includes(cb.value);
-                    });
-                    
-                    // Preencher áreas do grid
-                    const areas = rel.areasGrade ? rel.areasGrade.split(', ') : [];
-                    const container = document.getElementById('areasContainer');
-                    container.innerHTML = '';
-                    
-                    if (areas.length > 0) {
-                        areas.forEach((area, index) => {
-                            const [letra, numero] = area.split('-');
-                            
-                            const newRow = document.createElement('div');
-                            newRow.className = 'area-row';
-                            newRow.innerHTML = `
+                    if (data.success) {
+                        const rel = data.relatorio;
+
+                        // Marcar como edição
+                        relatorioEmEdicao = {
+                            linha: linha,
+                            numeroOriginal: rel.numero
+                        };
+
+                        // Preencher formulário
+                        document.getElementById('numeroRelatorio').textContent = rel.numero + ' (EDITANDO)';
+                        document.getElementById('numeroRelatorio').style.backgroundColor = '#f59e0b';
+                        document.getElementById('numeroRelatorio').style.color = '#fff';
+
+                        // Mostrar botão "Novo Relatório"
+                        document.getElementById('btnNovoRelatorio').style.display = 'flex';
+
+                        // Preencher locais (checkboxes)
+                        const locaisSelecionados = rel.locais ? rel.locais.split(', ') : [];
+                        document.querySelectorAll('#locaisContainer input[type="checkbox"]').forEach(cb => {
+                            cb.checked = locaisSelecionados.includes(cb.value);
+                        });
+
+                        // Preencher áreas do grid
+                        const areas = rel.areasGrade ? rel.areasGrade.split(', ') : [];
+                        const container = document.getElementById('areasContainer');
+                        container.innerHTML = '';
+
+                        if (areas.length > 0) {
+                            areas.forEach((area, index) => {
+                                const [letra, numero] = area.split('-');
+
+                                const newRow = document.createElement('div');
+                                newRow.className = 'area-row';
+                                newRow.innerHTML = `
                                 <div>
                                     <label class="form-label">Área (Letra)</label>
                                     <select class="form-select area-letra" required>
@@ -2425,89 +2461,93 @@
                                     `}
                                 </div>
                             `;
-                            
-                            container.appendChild(newRow);
-                            
-                            // Preencher selects de grid
-                            const selectLetra = newRow.querySelector('.area-letra');
-                            const selectNumero = newRow.querySelector('.area-numero');
-                            
-                            if (configData.gridLetras) {
-                                configData.gridLetras.forEach(l => {
-                                    const opt = document.createElement('option');
-                                    opt.value = l;
-                                    opt.textContent = l;
-                                    selectLetra.appendChild(opt);
-                                });
-                                selectLetra.value = letra;
-                            }
-                            
-                            if (configData.gridNumeros) {
-                                configData.gridNumeros.forEach(n => {
-                                    const opt = document.createElement('option');
-                                    opt.value = n;
-                                    opt.textContent = n;
-                                    selectNumero.appendChild(opt);
-                                });
-                                selectNumero.value = numero;
-                            }
+
+                                container.appendChild(newRow);
+
+                                // Preencher selects de grid
+                                const selectLetra = newRow.querySelector('.area-letra');
+                                const selectNumero = newRow.querySelector('.area-numero');
+
+                                if (configData.gridLetras) {
+                                    configData.gridLetras.forEach(l => {
+                                        const opt = document.createElement('option');
+                                        opt.value = l;
+                                        opt.textContent = l;
+                                        selectLetra.appendChild(opt);
+                                    });
+                                    selectLetra.value = letra;
+                                }
+
+                                if (configData.gridNumeros) {
+                                    configData.gridNumeros.forEach(n => {
+                                        const opt = document.createElement('option');
+                                        opt.value = n;
+                                        opt.textContent = n;
+                                        selectNumero.appendChild(opt);
+                                    });
+                                    selectNumero.value = numero;
+                                }
+                            });
+
+                            areaCount = areas.length;
+                        }
+
+                        // Resto dos campos
+                        document.getElementById('tipoOcorrencia').value = rel.tipoOcorrencia || '';
+                        document.getElementById('equipe').value = rel.equipe || '';
+                        document.getElementById('nomeSolicitante').value = rel.nomeSolicitante || '';
+                        document.getElementById('empresaEnvolvida').value = rel.empresaEnvolvida || '';
+                        document.getElementById('procedimentos').value = rel.procedimentos || '';
+                        document.getElementById('procedimentos').style.color = '#1d1d1f';
+                        document.getElementById('procedimentos').readOnly = false;
+                        document.getElementById('botoesEdicao').style.display = 'none';
+
+                        document.getElementById('acionamento').value = rel.acionamento || '';
+                        document.getElementById('saida').value = rel.saida || '';
+                        document.getElementById('chegada').value = rel.chegada || '';
+                        document.getElementById('termino').value = rel.termino || '';
+                        document.getElementById('retorno').value = rel.retorno || '';
+                        document.getElementById('relacaoDanos').value = rel.relacaoDanos || '';
+
+                        // Bombeiros
+                        for (let i = 1; i <= 6; i++) {
+                            document.getElementById(`funcao${i}`).value = rel[`funcao${i}`] || '';
+                            document.getElementById(`nomeBa${i}`).value = rel[`nomeBa${i}`] || '';
+                        }
+
+                        // Equipamentos (checkboxes)
+                        const equipamentosSelecionados = rel.equipamentos ? rel.equipamentos.split(', ') : [];
+                        document.querySelectorAll('#equipamentosContainer input[type="checkbox"]').forEach(cb => {
+                            cb.checked = equipamentosSelecionados.includes(cb.value);
                         });
-                        
-                        areaCount = areas.length;
+
+                        document.getElementById('tempoGasto').value = rel.tempoGasto || '';
+                        document.getElementById('materialUtilizado').value = rel.materialUtilizado || '';
+
+                        // Recriar ícones
+                        setTimeout(() => lucide.createIcons(), 100);
+
+                        // Fechar modal de histórico
+                        fecharHistorico();
+
+                        // Scroll para o topo
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                        showToast('Relatório carregado para edição', 'success');
                     }
-                    
-                    // Resto dos campos
-                    document.getElementById('tipoOcorrencia').value = rel.tipoOcorrencia || '';
-                    document.getElementById('equipe').value = rel.equipe || '';
-                    document.getElementById('nomeSolicitante').value = rel.nomeSolicitante || '';
-                    document.getElementById('empresaEnvolvida').value = rel.empresaEnvolvida || '';
-                    document.getElementById('procedimentos').value = rel.procedimentos || '';
-                    document.getElementById('procedimentos').style.color = '#1d1d1f';
-                    document.getElementById('procedimentos').readOnly = false;
-                    document.getElementById('botoesEdicao').style.display = 'none';
-                    
-                    document.getElementById('acionamento').value = rel.acionamento || '';
-                    document.getElementById('saida').value = rel.saida || '';
-                    document.getElementById('chegada').value = rel.chegada || '';
-                    document.getElementById('termino').value = rel.termino || '';
-                    document.getElementById('retorno').value = rel.retorno || '';
-                    document.getElementById('relacaoDanos').value = rel.relacaoDanos || '';
-                    
-                    // Bombeiros
-                    for (let i = 1; i <= 6; i++) {
-                        document.getElementById(`funcao${i}`).value = rel[`funcao${i}`] || '';
-                        document.getElementById(`nomeBa${i}`).value = rel[`nomeBa${i}`] || '';
-                    }
-                    
-                    // Equipamentos (checkboxes)
-                    const equipamentosSelecionados = rel.equipamentos ? rel.equipamentos.split(', ') : [];
-                    document.querySelectorAll('#equipamentosContainer input[type="checkbox"]').forEach(cb => {
-                        cb.checked = equipamentosSelecionados.includes(cb.value);
-                    });
-                    
-                    document.getElementById('tempoGasto').value = rel.tempoGasto || '';
-                    document.getElementById('materialUtilizado').value = rel.materialUtilizado || '';
-                    
-                    // Recriar ícones
-                    setTimeout(() => lucide.createIcons(), 100);
-                    
-                    // Fechar modal de histórico
-                    fecharHistorico();
-                    
-                    // Scroll para o topo
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    
-                    showToast('Relatório carregado para edição', 'success');
+                    hideLoading();
+
+                } else {
+                    showToast('Erro ao buscar relatório', 'error');
+                    hideLoading();
                 }
-                
-                hideLoading();
             } catch (error) {
                 console.error('Erro ao carregar relatório:', error);
-                showToast('Erro ao carregar relatório', 'error');
+                showToast('Erro de conexão', 'error');
                 hideLoading();
             }
         }
-        
+
         function formatarData(dataStr) {
             if (!dataStr) return 'N/A';
             const data = new Date(dataStr);
@@ -2517,35 +2557,35 @@
         function novoRelatorio() {
             // Resetar formulário
             document.getElementById('formRelatorio').reset();
-            
+
             // Resetar áreas extras
             const container = document.getElementById('areasContainer');
             const firstRow = container.querySelector('.area-row');
             container.innerHTML = '';
             container.appendChild(firstRow);
             areaCount = 1;
-            
+
             // Preencher grid selects da primeira área
             preencherGridSelects();
-            
+
             // Limpar procedimentos
             limparProcedimentos();
-            
+
             // Limpar modo edição
             relatorioEmEdicao = null;
             document.getElementById('numeroRelatorio').textContent = proximoNumero;
             document.getElementById('numeroRelatorio').style.backgroundColor = '';
             document.getElementById('numeroRelatorio').style.color = '';
-            
+
             // Esconder botão "Novo Relatório"
             document.getElementById('btnNovoRelatorio').style.display = 'none';
-            
+
             // Recriar ícones
             setTimeout(() => lucide.createIcons(), 100);
-            
+
             // Scroll para o topo
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            
+
             showToast('Formulário resetado para novo relatório', 'success');
         }
 
@@ -2553,74 +2593,75 @@
         function calcularTempoGasto() {
             const saida = document.getElementById('saida').value;
             const retorno = document.getElementById('retorno').value;
-            
+
             if (!saida || !retorno) {
                 return;
             }
-            
+
             // Converter horários para minutos
             const [horaSaida, minutoSaida] = saida.split(':').map(Number);
             const [horaRetorno, minutoRetorno] = retorno.split(':').map(Number);
-            
+
             let totalMinutosSaida = horaSaida * 60 + minutoSaida;
             let totalMinutosRetorno = horaRetorno * 60 + minutoRetorno;
-            
+
             // Se retorno for menor que saída, passou da meia-noite
             if (totalMinutosRetorno < totalMinutosSaida) {
                 totalMinutosRetorno += 24 * 60; // Adiciona 24 horas
             }
-            
+
             // Calcular diferença
             const diferencaMinutos = totalMinutosRetorno - totalMinutosSaida;
-            
+
             // Converter para HH:MM:SS
             const horas = Math.floor(diferencaMinutos / 60);
             const minutos = diferencaMinutos % 60;
             const segundos = 0; // Mantém 00 pois cálculo é em minutos
-            
-            const tempoFormatado = 
+
+            const tempoFormatado =
                 String(horas).padStart(2, '0') + ':' +
                 String(minutos).padStart(2, '0') + ':' +
                 String(segundos).padStart(2, '0');
-            
+
             document.getElementById('tempoGasto').value = tempoFormatado;
         }
-        
+
         // Adicionar listeners nos campos de horário
         document.getElementById('saida').addEventListener('change', calcularTempoGasto);
         document.getElementById('retorno').addEventListener('change', calcularTempoGasto);
-        
+
         // Formatação automática do campo Tempo Gasto
-        document.getElementById('tempoGasto').addEventListener('input', function(e) {
+        document.getElementById('tempoGasto').addEventListener('input', function (e) {
             let value = e.target.value.replace(/\D/g, ''); // Remove não-números
-            
+
             if (value.length >= 2) {
                 value = value.substring(0, 2) + ':' + value.substring(2);
             }
             if (value.length >= 5) {
                 value = value.substring(0, 5) + ':' + value.substring(5);
             }
-            
+
             e.target.value = value.substring(0, 8); // Limita a HH:MM:SS
         });
-        
-        document.getElementById('tempoGasto').addEventListener('blur', function(e) {
+
+        document.getElementById('tempoGasto').addEventListener('blur', function (e) {
             const value = e.target.value;
             const regex = /^([0-9]{2}):([0-9]{2}):([0-9]{2})$/;
-            
+
             if (value && !regex.test(value)) {
                 showToast('Formato inválido. Use HH:MM:SS (ex: 02:30:00)', 'error');
                 e.target.focus();
             }
         });
 
-        
+
         window.addEventListener('load', () => {
             carregarConfiguracoes();
             lucide.createIcons();
         });
-        
+
     </script>
 
 </body>
+
 </html>
