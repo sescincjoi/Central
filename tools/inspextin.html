@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <script>
+    (function () {
+      const key = Object.keys(localStorage).find(k => k.startsWith('firebase:authUser'));
+      const savedUser = key ? localStorage.getItem(key) : null;
+      if (!savedUser) document.documentElement.style.display = 'none';
+    })();
+  </script>
+  <link rel="manifest" href="../pwa/manifest.json">
+  <meta name="theme-color" content="#f5f5f7">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="apple-touch-icon" href="../pwa/icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="UTF-8">
+  <title>Inspeção de Extintores</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f7;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      padding-top: env(safe-area-inset-top);
+    }
+
+    body.auth-ready { opacity: 1; }
+
+    /* ── Nav ── */
+    .nav-bar {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.5px solid rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      padding-top: env(safe-area-inset-top);
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Progress bar ── */
+    .progress-track {
+      background: #e5e5ea;
+      border-radius: 100px;
+      height: 7px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, #34C759, #30D158);
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+    .progress-fill.warn { background: linear-gradient(90deg, #FF9500, #FF6B00); }
+    .progress-fill.danger { background: linear-gradient(90deg, #FF3B30, #FF2D55); }
+
+    /* ── Search input ── */
+    .search-wrap { position: relative; }
+    .search-wrap svg {
+      position: absolute;
+      left: 12px; top: 50%;
+      transform: translateY(-50%);
+      color: #86868b;
+      pointer-events: none;
+    }
+    .search-input {
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 10px 14px 10px 38px;
+      font-size: 15px;
+      width: 100%;
+      outline: none;
+      font-family: inherit;
+      color: #1d1d1f;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+    .search-input:focus {
+      border-color: #007AFF;
+      box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+    }
+    .search-input::placeholder { color: #86868b; }
+
+    /* ── Building select ── */
+    .select-wrap { position: relative; }
+    .select-wrap svg {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: #86868b;
+    }
+    .building-select {
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 10px 36px 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+      font-family: inherit;
+      outline: none;
+      appearance: none;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+    .building-select:focus {
+      border-color: #007AFF;
+      box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+    }
+
+    /* ── Inspector badge / name ── */
+    .nome-input {
+      background: rgba(0,122,255,0.06);
+      border: 1px solid rgba(0,122,255,0.2);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #007AFF;
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+    .nome-input:focus {
+      border-color: #007AFF;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+      background: rgba(0,122,255,0.08);
+    }
+    .nome-input::placeholder { color: rgba(0,122,255,0.5); font-weight: 500; }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #86868b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      margin-top: 20px;
+      padding: 0 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* ── Extintor row ── */
+    .ext-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #ffffff;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      border: 1.5px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    .ext-row::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: #e5e5ea;
+      transition: background 0.2s;
+    }
+    .ext-row.inspected::before { background: #34C759; }
+    .ext-row.pending::before { background: #007AFF; }
+
+    .ext-row:hover {
+      transform: translateX(3px);
+      border-color: rgba(0,122,255,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .ext-row.inspected:hover { border-color: rgba(52,199,89,0.2); }
+    .ext-row:active { transform: scale(0.99); }
+
+    /* ── Status dot ── */
+    .status-dot {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .status-dot.done { background: rgba(52,199,89,0.12); }
+    .status-dot.pending { background: rgba(0,0,0,0.05); }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-blue { background: rgba(0,122,255,0.1); color: #007AFF; }
+    .badge-green { background: rgba(52,199,89,0.12); color: #34C759; }
+    .badge-orange { background: rgba(255,149,0,0.1); color: #FF9500; }
+    .badge-gray { background: rgba(0,0,0,0.06); color: #86868b; }
+
+    /* ── Building progress card ── */
+    #building-info-card { transition: all 0.3s ease; }
+
+    /* ── Reset button ── */
+    .reset-btn {
+      background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(255,59,48,0.25);
+      font-family: inherit;
+    }
+    .reset-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,59,48,0.35); }
+    .reset-btn:active { transform: scale(0.98); }
+
+    /* ── Confirm reset overlay ── */
+    #confirmReset {
+      position: fixed;
+      background: #1d1d1f;
+      color: #ffffff;
+      width: calc(100% - 48px);
+      max-width: 360px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 28px 24px;
+      text-align: center;
+      border-radius: 20px;
+      box-shadow: 0 0 0 100vw rgba(0,0,0,0.65);
+      z-index: 99999;
+      display: none;
+    }
+    #confirmReset h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    #confirmReset p { font-size: 13px; color: #98989d; line-height: 1.5; margin-bottom: 20px; }
+
+    /* ── Modal ── */
+    #modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: none;
+      justify-content: center;
+      align-items: flex-end;
+      z-index: 9999;
+    }
+    #modalContent {
+      background: #ffffff;
+      padding: 24px 20px;
+      width: 100%;
+      max-height: 92dvh;
+      overflow-y: auto;
+      border-radius: 24px 24px 0 0;
+      animation: slideUp 0.35s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0.8; }
+      to   { transform: translateY(0);   opacity: 1;   }
+    }
+    @media (min-width: 768px) {
+      #modal { align-items: center; padding: 20px; }
+      #modalContent { border-radius: 20px; max-width: 500px; animation: zoomIn 0.3s cubic-bezier(0.4,0,0.2,1); }
+      @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    }
+
+    /* Modal form elements */
+    #modal h2 { margin: 0 0 4px; font-size: 1.4rem; font-weight: 800; color: #1d1d1f; }
+    #modal h2::before { content: "🧯 "; }
+    #modalTipo { font-size: 14px; font-weight: 600; color: #007AFF; margin-bottom: 2px; }
+    #modalDescricao { font-size: 13px; color: #86868b; margin-bottom: 0; }
+
+    #formInspecao { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+
+    .pergunta {
+      font-size: 15px;
+      margin-bottom: 14px;
+      background: #f9f9fb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .pergunta label {
+      display: block;
+      padding: 10px 14px 8px;
+      background: rgba(0,0,0,0.03);
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+      border-radius: 12px 12px 0 0;
+    }
+    .pergunta label p {
+      font-size: 12px;
+      font-weight: 400;
+      color: #86868b;
+      margin: 4px 0 0;
+      line-height: 1.4;
+    }
+    .pergunta div {
+      display: flex;
+      align-items: center;
+      padding: 8px 14px;
+    }
+    label.opcoes-nc {
+      display: flex !important;
+      padding: 6px 14px !important;
+      background: none !important;
+      font-size: 14px !important;
+      margin-bottom: 0 !important;
+      border-radius: 0 !important;
+      align-items: center;
+      font-weight: 500 !important;
+    }
+    input[type="radio"] {
+      width: 20px; height: 20px;
+      margin-left: 0; margin-right: 10px;
+      accent-color: #007AFF;
+    }
+    .pergunta select, .pergunta input[type="month"], .pergunta input[type="number"], .pergunta textarea {
+      width: calc(100% - 28px);
+      margin: 0 14px 12px;
+      font-size: 14px;
+      padding: 8px 12px;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      color: #1d1d1f;
+      font-weight: 600;
+      background: #ffffff;
+      font-family: inherit;
+      box-sizing: border-box;
+      display: block;
+    }
+    .pergunta textarea { min-height: 70px; resize: vertical; }
+
+    /* Checkbox custom */
+    .custom-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; padding: 5px 0; }
+    .custom-checkbox input { display: none; }
+    .custom-checkbox span {
+      width: 18px; height: 18px;
+      border: 2px solid #c7c7cc;
+      border-radius: 50%;
+      display: inline-block;
+      transition: all .15s ease;
+      flex-shrink: 0;
+    }
+    .custom-checkbox input:checked + span {
+      background: #007AFF;
+      border-color: #007AFF;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+    }
+
+    /* Modal buttons */
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .btn-enviar {
+      flex: 2;
+      background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 12px rgba(52,199,89,0.3);
+      transition: all 0.2s;
+    }
+    .btn-enviar:hover { transform: translateY(-1px); }
+    .btn-cancelar {
+      flex: 1;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-cancelar:hover { background: #e8e8ed; }
+
+    /* Close modal btn */
+    #Xfecharmodal {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.07);
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #86868b;
+      font-family: monospace;
+      line-height: 1;
+    }
+    #Xfecharmodal:hover { background: rgba(0,0,0,0.12); }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #86868b;
+    }
+    .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; font-weight: 500; }
+
+    /* Skeleton loader */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 14px;
+      height: 68px;
+      margin-bottom: 6px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Status dot pulse */
+    .status-pulse {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.2); } }
+  </style>
+</head>
+
+<body data-auth-required data-auth-login>
+
+  <!-- ── Nav bar ── -->
+  <div class="nav-bar">
+    <div class="max-w-2xl mx-auto px-4">
+      <div class="flex items-center justify-between h-14">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center text-xl" style="background:linear-gradient(135deg,#FF3B30,#FF2D55);">🧯</div>
+          <div>
+            <div class="text-base font-bold text-gray-900" style="line-height:1.2">Extintores</div>
+            <div class="text-xs text-gray-400 font-medium">SCI Aeroporto de Joinville</div>
+          </div>
+        </div>
+        <button onclick="history.back()"
+          class="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
+          style="background:none;border:none;cursor:pointer;padding:0;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
+          </svg>
+          Voltar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main content ── -->
+  <div class="max-w-2xl mx-auto px-4" style="padding-top: calc(56px + env(safe-area-inset-top) + 16px); padding-bottom: 32px;">
+
+    <!-- Global progress card -->
+    <div class="card p-5 mb-4 fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style="background:linear-gradient(135deg,#FF3B30,#FF2D55);">
+          <span style="font-size:20px;">🧯</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Progresso Geral</div>
+          <div class="flex items-baseline gap-2">
+            <span id="global-done" class="text-3xl font-black text-gray-900" style="letter-spacing:-0.5px;">0</span>
+            <span class="text-sm font-medium text-gray-400">de <span id="global-total">0</span> extintores</span>
+            <span id="global-pct" class="text-sm font-bold text-green-500 ml-auto">0%</span>
+          </div>
+        </div>
+      </div>
+      <div class="progress-track mb-2">
+        <div class="progress-fill" id="global-fill" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between text-xs font-medium text-gray-400 mt-1">
+        <span><span id="global-pending" class="text-orange-500 font-semibold">0</span> pendentes</span>
+        <div class="flex items-center gap-1.5">
+          <div class="status-pulse" style="background:#34C759;"></div>
+          <span>Atualização em tempo real</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inspector + filters card -->
+    <div class="card p-4 mb-4 fade-in">
+      <!-- Nome field -->
+      <div class="mb-3">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Inspecionando como</div>
+        <div class="flex items-center gap-2">
+          <div style="background:rgba(0,122,255,0.08); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#007AFF" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <input type="text" id="nomeUsuario" class="nome-input" placeholder="Nome do inspetor (obrigatório)">
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-wrap mb-3">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nº, tipo, descrição…"
+          oninput="onSearch(this.value)">
+      </div>
+
+      <!-- Building select -->
+      <div class="select-wrap">
+        <select id="edificacao" class="building-select" onchange="onBuildingChange(this.value)">
+          <option value="">🏛 Todas as edificações</option>
+        </select>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Building info card (shown when building selected) -->
+    <div id="building-info-card" class="card p-4 mb-4 fade-in" style="display:none;">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Edificação selecionada</div>
+          <div id="bldg-name" class="text-lg font-bold text-gray-900">—</div>
+          <div id="bldg-desc" class="text-xs text-gray-400 mt-0.5" style="line-height:1.4">—</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-2xl font-black text-gray-900" style="letter-spacing:-0.5px;">
+            <span id="bldg-done">0</span><span class="text-sm font-medium text-gray-300">/</span><span class="text-sm font-semibold text-gray-400" id="bldg-total">0</span>
+          </div>
+          <div id="bldg-pct" class="text-xs font-bold text-green-500">0%</div>
+        </div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="bldg-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Extintor list -->
+    <div id="ext-list">
+      <!-- Skeletons while loading -->
+      <div class="skeleton"></div>
+      <div class="skeleton" style="height:60px; opacity:0.7;"></div>
+      <div class="skeleton" style="height:60px; opacity:0.4;"></div>
+    </div>
+
+    <!-- Reset button -->
+    <div class="mt-6">
+      <button class="reset-btn" onclick="resetarTodos()">🔄 Resetar TODOS os extintores</button>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- ── Confirm reset ── -->
+  <div id="confirmReset">
+    <h3>⚠️ Resetar todos?</h3>
+    <p>Faça o reset ao término de toda vistoria semanal ou para iniciar uma nova vistoria geral. Todos os status serão apagados.</p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button onclick="confirmReset(true)"
+        style="background:#34C759;color:white;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;">
+        ✅ Confirmar
+      </button>
+      <button onclick="confirmReset(false)"
+        style="background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:10px 24px;font-weight:600;font-size:15px;cursor:pointer;font-family:inherit;">
+        Cancelar
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Inspection modal ── -->
+  <div id="modal">
+    <div id="modalContent">
+      <button id="Xfecharmodal" onclick="fecharModal()">×</button>
+      <h2 id="modalTitulo"></h2>
+      <div id="modalTipo"></div>
+      <div id="modalDescricao"></div>
+      <form id="formInspecao"></form>
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+        <button type="button" class="btn-enviar" onclick="enviarFormulario()">✓ Registrar inspeção</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- Auth Central -->
+  <script type="module">
+    import authCore from '/Central/js/auth/auth-core.js';
+    import authUI from '/Central/js/auth/auth-ui.js';
+    import authLock from '/Central/js/auth/auth-lock.js';
+    import authGuard from '/Central/js/auth/auth-guard.js';
+
+    window.authCore = authCore;
+    window.authUI = authUI;
+    window.authGuard = authGuard;
+    window.authLock = authLock;
+
+    function initAuth() {
+      if (window.authUI && window.authUI.openModal && window.authGuard) {
+        window.addEventListener('auth-state-changed', (e) => {
+          if (e.detail && e.detail.user) {
+            document.documentElement.style.display = '';
+            document.body.classList.add('auth-ready');
+            // ── Auto-fill nome from displayName ──
+            const displayName = e.detail.user.displayName;
+            if (displayName) {
+              document.getElementById('nomeUsuario').value = displayName;
+              localStorage.setItem('nomeUsuario', displayName);
+            }
+          }
+        });
+        if (authCore.initialized && authCore.isAuthenticated()) {
+          document.documentElement.style.display = '';
+          document.body.classList.add('auth-ready');
+          // ── Auto-fill on already-authenticated load ──
+          if (authCore.currentUser && authCore.currentUser.displayName) {
+            document.getElementById('nomeUsuario').value = authCore.currentUser.displayName;
+            localStorage.setItem('nomeUsuario', authCore.currentUser.displayName);
+          }
+        }
+      } else {
+        setTimeout(initAuth, 50);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAuth);
+    } else {
+      initAuth();
+    }
+  </script>
+
+  <script>
+    // ──────────────────────────────────────────
+    //  Firebase config
+    // ──────────────────────────────────────────
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306",
+      measurementId: "G-S8SERMVVCR",
+      databaseURL: "https://ronda-extintores-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ──────────────────────────────────────────
+    //  Data
+    // ──────────────────────────────────────────
+    const edificacoesDescr = {
+      "DESEMBARQUE": "Área de desembarque de passageiros.",
+      "TPS TÉRREO": "Terminal de passageiros – pavimento térreo.",
+      "TPS SUPERIOR": "Terminal de passageiros – pavimento superior.",
+      "RÁDIO": "Torre ATS | Chaves: TAG(SCI)",
+      "ADM": "Área administrativa.",
+      "CASA DE BOMBAS": "Casa de bombas.",
+      "CAMPO DE ANTENAS": "Área de antenas (frente ao TECA) | Chaves: 010",
+      "RAIO X": "Setor de Raio-X.",
+      "EMBARQUE": "Área de embarque de passageiros.",
+      "ELOS": "ELOS.",
+      "APOC": "Área APOC.",
+      "PORTÃO 1": "Portão 1.",
+      "KF CHILLER": "Setor KF/CHILLER.",
+      "PAA": "Área PAA.",
+      "MANUTENÇÃO": "Setor de manutenção.",
+      "GSE GOL AZUL RP": "Área GSE GOL/AZUL/RP.",
+      "SCI": "Seção Contra-incêndio."
+    };
+
+    const extintoresInfo = {
+      "DESEMBARQUE": {
+        "24": { descricao: "Ao lado da sala técnica", tipo: "PQS BC", kg: 6 },
+        "25": { descricao: "Lado esquerdo", tipo: "PQS ABC", kg: 6 },
+        "26": { descricao: "Ao lado do hidrante", tipo: "PQS ABC", kg: 6 },
+        "27": { descricao: "Porta lado ar", tipo: "PQS ABC", kg: 6 }
+      },
+      "TPS TÉRREO": {
+        "16": { descricao: "Porta principal lado embarque", tipo: "PQS ABC", kg: 6 },
+        "17": { descricao: "Saída Charlie", tipo: "PQS ABC", kg: 6 },
+        "18": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
+        "19": { descricao: "Do lado do DEA", tipo: "PQS ABC", kg: 6 },
+        "20": { descricao: "Ao lado do banheiro", tipo: "PQS ABC", kg: 6 },
+        "21": { descricao: "Elevador", tipo: "CO²", kg: 6 },
+        "22": { descricao: "Porta principal lado desembarque", tipo: "PQS ABC", kg: 6 },
+        "23": { descricao: "Saída do desembarque", tipo: "CO²", kg: 6 },
+        "32": { descricao: "Sala de máquina elevador", tipo: "CO²", kg: 4 },
+        "33": { descricao: "Sala telemática", tipo: "CO²", kg: 6 },
+        "83": { descricao: "Sala de apoio/fiscal", tipo: "CO²", kg: 6 },
+        "85": { descricao: "Frente ao guichê Localiza", tipo: "PQS ABC", kg: 4 }
+      },
+      "TPS SUPERIOR": {
+        "28": { descricao: "Ao lado do elevador", tipo: "PQS ABC", kg: 6 },
+        "29": { descricao: "Início do corredor", tipo: "PQS ABC", kg: 6 },
+        "30": { descricao: "Corredor, frente ao COE", tipo: "PQS BC", kg: 6 },
+        "31": { descricao: "Ao lado da saída de emergência", tipo: "PQS ABC", kg: 6 },
+        "34": { descricao: "Sala COE", tipo: "PQS ABC", kg: 6 },
+        "35": { descricao: "Sala COE", tipo: "CO²", kg: 4 },
+        "36": { descricao: "Sala COE (Quadro elétrico)", tipo: "PQS ABC", kg: 6 },
+        "37": { descricao: "Sala COE STVV", tipo: "CO²", kg: 4 },
+        "97": { descricao: "Caixa d'água", tipo: "PQS BC", kg: 6 }
+      },
+      "RÁDIO": {
+        "1": { descricao: "Rádio", tipo: "PQS ABC", kg: 6 },
+        "2": { descricao: "Copa", tipo: "PQS ABC", kg: 6 },
+        "3": { descricao: "Meteorologia", tipo: "CO²", kg: 6 },
+        "4": { descricao: "Elevador cobertura", tipo: "CO²", kg: 6 },
+        "5": { descricao: "Elevador térreo", tipo: "CO²", kg: 6 },
+        "6": { descricao: "Central de alarme", tipo: "PQS ABC", kg: 6 },
+        "7": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
+        "8": { descricao: "Central de alarme", tipo: "CO²", kg: 4 },
+        "9": { descricao: "Andar 5/Equipamentos", tipo: "CO²", kg: 6 },
+        "10": { descricao: "Máquina do Elevador", tipo: "CO²", kg: 6 },
+        "84": { descricao: "Sala TEC VHF", tipo: "CO²", kg: 6 }
+      },
+      "ADM": {
+        "11": { descricao: "Corredor auditório", tipo: "CO²", kg: 6 },
+        "12": { descricao: "Corredor auditório", tipo: "PQS ABC", kg: 6 },
+        "13": { descricao: "Corredor almoxarife", tipo: "CO²", kg: 6 },
+        "14": { descricao: "Corredor almoxarife", tipo: "PQS ABC", kg: 6 }
+      },
+      "CASA DE BOMBAS": {
+        "15": { descricao: "Casa de Bombas", tipo: "CO²", kg: 6 }
+      },
+      "CAMPO DE ANTENAS": {
+        "88": { descricao: "Sala 01 | Chave: 01", tipo: "CO²", kg: 6 },
+        "89": { descricao: "Sala 03 | Chave: 03", tipo: "CO²", kg: 6 }
+      },
+      "RAIO X": {
+        "38": { descricao: "Entrada", tipo: "CO²", kg: 6 },
+        "39": { descricao: "Quadro de energia", tipo: "CO²", kg: 6 },
+        "40": { descricao: "Próximo a escada rolante", tipo: "PQS BC", kg: 4 }
+      },
+      "EMBARQUE": {
+        "41": { descricao: "Próximo a porta 1", tipo: "PQS ABC", kg: 6 },
+        "42": { descricao: "Próximo a porta 2", tipo: "PQS ABC", kg: 6 },
+        "43": { descricao: "Ao lado do elevador", tipo: "PQS BC", kg: 6 },
+        "44": { descricao: "Ao lado do Aéro Coffee", tipo: "CO²", kg: 6 },
+        "45": { descricao: "Sala Ar-condicionado", tipo: "PQS BC", kg: 4 }
+      },
+      "ELOS": {
+        "46": { descricao: "Corredor direito", tipo: "PQS ABC", kg: 4 },
+        "47": { descricao: "Posição 6 elevador", tipo: "PQS BC", kg: 4 },
+        "48": { descricao: "Posição 6 corredor", tipo: "PQS ABC", kg: 6 },
+        "49": { descricao: "Posição 7 corredor", tipo: "PQS BC", kg: 6 },
+        "50": { descricao: "Posição 7 elevador", tipo: "PQS ABC", kg: 6 },
+        "51": { descricao: "Posição 7 externo", tipo: "PQS BC", kg: 6 },
+        "52": { descricao: "Posição 6 externo", tipo: "PQS BC", kg: 6 }
+      },
+      "APOC": {
+        "53": { descricao: "Sala do APOC", tipo: "PQS BC", kg: 4 },
+        "54": { descricao: "Sala do APOC", tipo: "CO²", kg: 6 },
+        "55": { descricao: "Banheiro/Copa", tipo: "PQS BC", kg: 6 },
+        "56": { descricao: "Ao lado do hidrante", tipo: "PQS BC", kg: 6 }
+      },
+      "PORTÃO 1": {
+        "57": { descricao: "Guarita", tipo: "PQS ABC", kg: 6 }
+      },
+      "KF CHILLER": {
+        "58": { descricao: "Ao lado do P1", tipo: "CO²", kg: 6 },
+        "59": { descricao: "Interna da KF", tipo: "CO²", kg: 6 },
+        "60": { descricao: "Interna da KF", tipo: "PQS ABC", kg: 6 },
+        "61": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 },
+        "62": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 }
+      },
+      "PAA": {
+        "63": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "64": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "65": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "66": { descricao: "Próximo do PAA", tipo: "PQS BC", kg: 6 }
+      },
+      "MANUTENÇÃO": {
+        "67": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
+        "68": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
+        "69": { descricao: "Entrada", tipo: "CO²", kg: 6 },
+        "70": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "71": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 }
+      },
+      "GSE GOL AZUL RP": {
+        "72": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "73": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "74": { descricao: "Manutenção GOL", tipo: "PQS ABC", kg: 6 },
+        "75": { descricao: "Manutenção AZUL", tipo: "PQS ABC", kg: 6 }
+      },
+      "SCI": {
+        "76": { descricao: "Garagem", tipo: "CO²", kg: 6 },
+        "77": { descricao: "Garagem", tipo: "PQS BC", kg: 6 },
+        "78": { descricao: "Academia", tipo: "CO²", kg: 6 },
+        "79": { descricao: "Garagem", tipo: "CO²", kg: 6 },
+        "80": { descricao: "Reserva", tipo: "PQS ABC", kg: 4 },
+        "81": { descricao: "Auditório", tipo: "PQS BC", kg: 6 },
+        "82": { descricao: "Auditório", tipo: "CO²", kg: 6 },
+        "86": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 },
+        "87": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 }
+      }
+    };
+
+    const edificacoesArray = [
+      "DESEMBARQUE","TPS TÉRREO","TPS SUPERIOR","RÁDIO","ADM","CASA DE BOMBAS",
+      "CAMPO DE ANTENAS","RAIO X","EMBARQUE","ELOS","APOC","PORTÃO 1",
+      "KF CHILLER","PAA","MANUTENÇÃO","GSE GOL AZUL RP","SCI"
+    ];
+
+    // ──────────────────────────────────────────
+    //  App state
+    // ──────────────────────────────────────────
+    let globalData = {};
+    let currentBuilding = '';
+    let searchQuery = '';
+    let numeroAtual = null;
+    let edificacaoAtual = null;
+
+    // ──────────────────────────────────────────
+    //  Populate building select
+    // ──────────────────────────────────────────
+    const selectEl = document.getElementById('edificacao');
+    edificacoesArray.forEach(ed => {
+      const opt = document.createElement('option');
+      opt.value = ed;
+      opt.textContent = ed;
+      selectEl.appendChild(opt);
+    });
+
+    // ──────────────────────────────────────────
+    //  Firebase global listener
+    // ──────────────────────────────────────────
+    db.ref('extintores').on('value', snapshot => {
+      globalData = snapshot.val() || {};
+      updateGlobalCounter();
+      updateSelectProgress();
+      renderList();
+    });
+
+    function updateGlobalCounter() {
+      let total = 0, done = 0;
+      Object.values(globalData).forEach(bldg => {
+        Object.values(bldg || {}).forEach(ext => {
+          total++;
+          if (ext.vistoriado) done++;
+        });
+      });
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      document.getElementById('global-done').textContent = done;
+      document.getElementById('global-total').textContent = total;
+      document.getElementById('global-pending').textContent = total - done;
+      document.getElementById('global-pct').textContent = pct + '%';
+
+      const fill = document.getElementById('global-fill');
+      fill.style.width = pct + '%';
+      fill.className = 'progress-fill' + (pct < 30 ? ' danger' : pct < 70 ? ' warn' : '');
+    }
+
+    function updateSelectProgress() {
+      const opts = selectEl.querySelectorAll('option[value]');
+      opts.forEach(opt => {
+        const ed = opt.value;
+        if (!ed) return;
+        const bldg = globalData[ed] || {};
+        const keys = Object.keys(extintoresInfo[ed] || {});
+        const total = keys.length;
+        const done = keys.filter(k => bldg[k] && bldg[k].vistoriado).length;
+        opt.textContent = total > 0 ? `${ed}  (${done}/${total})` : ed;
+      });
+    }
+
+    // ──────────────────────────────────────────
+    //  Event handlers
+    // ──────────────────────────────────────────
+    function onBuildingChange(val) {
+      currentBuilding = val;
+      renderList();
+    }
+
+    function onSearch(val) {
+      searchQuery = val.toLowerCase().trim();
+      renderList();
+    }
+
+    // ──────────────────────────────────────────
+    //  Render list
+    // ──────────────────────────────────────────
+    function renderList() {
+      const container = document.getElementById('ext-list');
+
+      // Build flat list
+      let items = [];
+      const buildingsToShow = currentBuilding ? [currentBuilding] : edificacoesArray;
+
+      buildingsToShow.forEach(ed => {
+        const fbBldg = globalData[ed] || {};
+        const staticBldg = extintoresInfo[ed] || {};
+        Object.keys(staticBldg).forEach(num => {
+          const fb = fbBldg[num] || {};
+          items.push({
+            numero: parseInt(num),
+            numeroStr: num,
+            edificacao: ed,
+            tipo: staticBldg[num].tipo,
+            kg: staticBldg[num].kg,
+            descricao: staticBldg[num].descricao,
+            vistoriado: !!fb.vistoriado,
+            por: fb.por || ''
+          });
+        });
+      });
+
+      // Apply search
+      if (searchQuery) {
+        items = items.filter(item =>
+          item.numeroStr.includes(searchQuery) ||
+          item.tipo.toLowerCase().includes(searchQuery) ||
+          item.descricao.toLowerCase().includes(searchQuery) ||
+          item.edificacao.toLowerCase().includes(searchQuery)
+        );
+      }
+
+      // Sort: pending first (numeric), then done (numeric)
+      items.sort((a, b) => {
+        if (a.vistoriado !== b.vistoriado) return a.vistoriado ? 1 : -1;
+        return a.numero - b.numero;
+      });
+
+      const pending = items.filter(i => !i.vistoriado);
+      const done    = items.filter(i =>  i.vistoriado);
+
+      // Update building info card
+      if (currentBuilding) {
+        const allForBldg = Object.keys(extintoresInfo[currentBuilding] || {});
+        const bldgTotal = allForBldg.length;
+        const bldgDone  = allForBldg.filter(k => globalData[currentBuilding]?.[k]?.vistoriado).length;
+        const bldgPct   = bldgTotal > 0 ? Math.round((bldgDone / bldgTotal) * 100) : 0;
+
+        document.getElementById('bldg-name').textContent = currentBuilding;
+        document.getElementById('bldg-desc').textContent = edificacoesDescr[currentBuilding] || '';
+        document.getElementById('bldg-done').textContent = bldgDone;
+        document.getElementById('bldg-total').textContent = bldgTotal;
+        document.getElementById('bldg-pct').textContent = bldgPct + '%';
+        const bldgFill = document.getElementById('bldg-fill');
+        bldgFill.style.width = bldgPct + '%';
+        bldgFill.className = 'progress-fill' + (bldgPct < 30 ? ' danger' : bldgPct < 70 ? ' warn' : '');
+        document.getElementById('building-info-card').style.display = 'block';
+      } else {
+        document.getElementById('building-info-card').style.display = 'none';
+      }
+
+      // Render rows
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <span class="emoji">🔍</span>
+            <p>Nenhum extintor encontrado</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = '';
+
+      if (pending.length > 0) {
+        const lbl = document.createElement('div');
+        lbl.className = 'section-label';
+        lbl.innerHTML = `
+          <div style="width:8px;height:8px;border-radius:50%;background:#FF9500;flex-shrink:0;"></div>
+          Pendentes · ${pending.length}`;
+        container.appendChild(lbl);
+        pending.forEach(item => container.appendChild(createExtRow(item)));
+      }
+
+      if (done.length > 0) {
+        const lbl = document.createElement('div');
+        lbl.className = 'section-label';
+        lbl.innerHTML = `
+          <div style="width:8px;height:8px;border-radius:50%;background:#34C759;flex-shrink:0;"></div>
+          Inspecionados · ${done.length}`;
+        container.appendChild(lbl);
+        done.forEach(item => container.appendChild(createExtRow(item)));
+      }
+    }
+
+    function createExtRow(item) {
+      const div = document.createElement('div');
+      div.className = 'ext-row ' + (item.vistoriado ? 'inspected' : 'pending');
+      div.onclick = () => abrirModal(item.edificacao, item.numeroStr);
+
+      // Type badge color
+      const typeColor = item.tipo.includes('CO') ? '#5856D6' :
+                        item.tipo.includes('ABC') ? '#007AFF' : '#FF9500';
+      const typeBg = item.tipo.includes('CO') ? 'rgba(88,86,214,0.1)' :
+                     item.tipo.includes('ABC') ? 'rgba(0,122,255,0.1)' : 'rgba(255,149,0,0.1)';
+
+      div.innerHTML = `
+        <div class="status-dot ${item.vistoriado ? 'done' : 'pending'}">
+          ${item.vistoriado ? '✅' : '🧯'}
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px;">
+            <span style="font-size:16px; font-weight:800; color:#1d1d1f; flex-shrink:0;">Nº ${item.numero}</span>
+            <span style="font-size:11px; font-weight:700; color:${typeColor}; background:${typeBg}; padding:2px 7px; border-radius:7px; flex-shrink:0;">${item.tipo} ${item.kg}kg</span>
+            ${!currentBuilding ? `<span style="font-size:10px; font-weight:600; color:#86868b; background:#f5f5f7; padding:2px 6px; border-radius:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${item.edificacao}</span>` : ''}
+          </div>
+          <div style="font-size:13px; color:#86868b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 4px);">${item.descricao}</div>
+          ${item.vistoriado && item.por ? `
+            <div style="margin-top:4px; display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#34C759; background:rgba(52,199,89,0.1); padding:2px 8px; border-radius:6px;">
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="#34C759"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              ${item.por}
+            </div>` : ''}
+        </div>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#c7c7cc" stroke-width="2.5" style="flex-shrink:0;">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>`;
+
+      return div;
+    }
+
+    // ──────────────────────────────────────────
+    //  Modal
+    // ──────────────────────────────────────────
+    function abrirModal(edificacao, numero) {
+      const nomeUsuario = document.getElementById('nomeUsuario').value.trim();
+      if (!nomeUsuario) {
+        alert('⚠️ Preencha seu nome antes de iniciar a inspeção.');
+        document.getElementById('nomeUsuario').focus();
+        return;
+      }
+
+      numeroAtual = numero;
+      edificacaoAtual = edificacao;
+
+      const info = extintoresInfo[edificacao]?.[numero] || { descricao: 'Descrição não cadastrada', tipo: 'N/D', kg: 'N/D' };
+
+      document.getElementById('modalTitulo').textContent = `Extintor ${numero}`;
+      document.getElementById('modalTipo').textContent = `Tipo: ${info.tipo} ${info.kg}Kg`;
+      document.getElementById('modalDescricao').textContent = info.descricao;
+
+      const form = document.getElementById('formInspecao');
+      form.innerHTML = `
+        <div class="pergunta">
+          <label>1 — Este extintor é um ${info.tipo} ${info.kg}Kg?</label>
+          <div>
+            <input type="radio" name="p1" value="Sim" onchange="mostrarTipoKg(this.value)" required> Sim
+            <input type="radio" name="p1" value="Não" onchange="mostrarTipoKg(this.value)" required> Não
+          </div>
+        </div>
+
+        <div class="pergunta" id="p1_1" style="display:none;">
+          <label>1.1 — Tipo do extintor encontrado:<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
+          <select name="p1_1">
+            <option value="">-- Selecione --</option>
+            <option>PQS ABC</option><option>PQS BC</option><option>CO²</option>
+            <option>Água</option><option>Espuma</option><option>Classe K</option>
+          </select>
+        </div>
+
+        <div class="pergunta" id="p1_2" style="display:none;">
+          <label>1.2 — Capacidade (Kg):<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
+          <select name="p1_2">
+            <option value="">-- Selecione --</option>
+            <option>4</option><option>6</option><option>10</option>
+          </select>
+        </div>
+
+        <div class="pergunta">
+          <label>2 — Inspeção de Nível 2:<br><p>Etiqueta ilegível → deixe em branco e declare como não conformidade.</p></label>
+          <input type="month" name="p2">
+        </div>
+
+        <div class="pergunta">
+          <label>3 — Inspeção de Nível 3:<br><p>Etiqueta ilegível → deixe em branco e declare como não conformidade.</p></label>
+          <input type="number" name="p3" min="2023" max="2100" placeholder="Ano">
+        </div>
+
+        <div class="pergunta">
+          <label>4 — Resultado da inspeção:<br><p>Verifique: Pressão, Lacre, Validade, Sinalização, Integridade e Capacidade Extintora.</p></label>
+          <div>
+            <input type="radio" name="p4" value="Conforme" onchange="mostrarNaoConforme(this.value)" required> Conforme
+            <input type="radio" name="p4" value="Não conforme" onchange="mostrarNaoConforme(this.value)" required> Não conforme
+          </div>
+        </div>
+
+        <div class="pergunta" id="p4_1" style="display:none;">
+          <label>4.1 — Não conformidade(s):</label>
+          ${[
+            'Despressurização','Lacre Rompido','Vencido','Sinalização',
+            'Integridade','Capacidade Extintora reduzida','Etiqueta ilegível ou ausente','Outros'
+          ].map(nc => `
+            <label class="custom-checkbox opcoes-nc" style="padding:6px 14px;">
+              <input type="checkbox" name="p4_1" value="${nc}">
+              <span></span>
+              ${nc}
+            </label>`).join('<br>')}
+        </div>
+
+        <div class="pergunta">
+          <label>5 — Observação:<br><p>Descreva não conformidades, acesso, melhorias ou outras informações relevantes.</p></label>
+          <textarea name="p5"></textarea>
+        </div>
+
+        <div class="pergunta">
+          <label>6 — Equipe:</label>
+          <select name="p6" required>
+            <option value="" disabled selected>-- Selecione a equipe --</option>
+            <option>Alfa</option><option>Bravo</option><option>Charlie</option><option>Delta</option>
+          </select>
+        </div>`;
+
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('modalContent').scrollTop = 0;
+    }
+
+    function fecharModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    function mostrarTipoKg(valor) {
+      const show = valor === 'Não';
+      document.getElementById('p1_1').style.display = show ? 'block' : 'none';
+      document.getElementById('p1_2').style.display = show ? 'block' : 'none';
+      const sel1 = document.querySelector("[name='p1_1']");
+      const sel2 = document.querySelector("[name='p1_2']");
+      if (sel1) sel1.required = show;
+      if (sel2) sel2.required = show;
+    }
+
+    function mostrarNaoConforme(valor) {
+      document.getElementById('p4_1').style.display = valor === 'Não conforme' ? 'block' : 'none';
+    }
+
+    function enviarFormulario() {
+      const form = document.getElementById('formInspecao');
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+
+      const dados = {
+        numero: numeroAtual,
+        usuario: document.getElementById('nomeUsuario').value,
+        edificacao: edificacaoAtual,
+        descricao: extintoresInfo[edificacaoAtual][numeroAtual].descricao,
+        tipo: extintoresInfo[edificacaoAtual][numeroAtual].tipo,
+        kg: extintoresInfo[edificacaoAtual][numeroAtual].kg,
+        pergunta1: form.p1.value,
+        pergunta1_1: form.p1_1 ? (form.p1_1.value || '-') : '-',
+        pergunta1_2: form.p1_2 ? (form.p1_2.value || '-') : '-',
+        pergunta2: form.p2.value || '-',
+        pergunta3: form.p3.value || '-',
+        pergunta4: form.p4.value,
+        pergunta4_1: (() => {
+          const checked = Array.from(document.querySelectorAll('input[name="p4_1"]:checked')).map(cb => cb.value);
+          return checked.length > 0 ? checked.join(', ') : '-';
+        })(),
+        pergunta5: form.p5.value || '-',
+        pergunta6: form.p6.value
+      };
+
+      // Save to Firebase
+      db.ref(`extintores/${edificacaoAtual}/${numeroAtual}`).update({
+        vistoriado: true,
+        por: dados.usuario,
+        dataHora: new Date().toISOString(),
+        respostas: dados
+      });
+
+      // Send to Google Sheets
+      fetch("https://script.google.com/macros/s/AKfycbzBoQ_sx5EMrIK-FECB5S2-Oq_Ysr1TBC-T0nXGEVlCe8EeY1aYXyVP06_sXM1GD3E_/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+      });
+
+      fecharModal();
+    }
+
+    // ──────────────────────────────────────────
+    //  Reset
+    // ──────────────────────────────────────────
+    function resetarTodos() {
+      document.getElementById('confirmReset').style.display = 'flex';
+    }
+
+    function confirmReset(decisao) {
+      document.getElementById('confirmReset').style.display = 'none';
+      if (!decisao) return;
+      db.ref('extintores').once('value').then(snapshot => {
+        const updates = {};
+        snapshot.forEach(ed => {
+          ed.forEach(ext => {
+            updates[`extintores/${ed.key}/${ext.key}`] = { vistoriado: false, por: '' };
+          });
+        });
+        db.ref().update(updates);
+      });
+    }
+
+    // ──────────────────────────────────────────
+    //  Nome — localStorage fallback & save
+    // ──────────────────────────────────────────
+    document.getElementById('nomeUsuario').addEventListener('input', e => {
+      localStorage.setItem('nomeUsuario', e.target.value);
+    });
+
+    window.addEventListener('auth-initialized', () => {
+      if (window.authCore?.currentUser?.displayName) {
+        const nome = window.authCore.currentUser.displayName;
+        document.getElementById('nomeUsuario').value = nome;
+        localStorage.setItem('nomeUsuario', nome);
+      }
+    });
+
+    window.addEventListener('load', () => {
+      const saved = localStorage.getItem('nomeUsuario');
+      const input = document.getElementById('nomeUsuario');
+      if (saved && !input.value) input.value = saved;
+    });
+
+    // ──────────────────────────────────────────
+    //  Seed (commented out)
+    // ──────────────────────────────────────────
+    // function seedExtintores() { ... }
+  </script>
+
+  <!-- PWA Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+  <script src="/Central/pwa/app.js"></script>
+
+</body>
+</html>
