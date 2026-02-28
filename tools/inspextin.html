@@ -18,11 +18,15 @@
   <meta charset="UTF-8">
   <title>Inspeção de Extintores</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -33,16 +37,20 @@
       padding-top: env(safe-area-inset-top);
     }
 
-    body.auth-ready { opacity: 1; }
+    body.auth-ready {
+      opacity: 1;
+    }
 
     /* ── Nav ── */
     .nav-bar {
-      background: rgba(255,255,255,0.85);
+      background: rgba(255, 255, 255, 0.85);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-bottom: 0.5px solid rgba(0,0,0,0.1);
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       z-index: 50;
       padding-top: env(safe-area-inset-top);
     }
@@ -51,8 +59,8 @@
     .card {
       background: #ffffff;
       border-radius: 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
-      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* ── Progress bar ── */
@@ -62,27 +70,39 @@
       height: 7px;
       overflow: hidden;
     }
+
     .progress-fill {
       height: 100%;
       border-radius: 100px;
       background: linear-gradient(90deg, #34C759, #30D158);
-      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .progress-fill.warn { background: linear-gradient(90deg, #FF9500, #FF6B00); }
-    .progress-fill.danger { background: linear-gradient(90deg, #FF3B30, #FF2D55); }
+
+    .progress-fill.warn {
+      background: linear-gradient(90deg, #FF9500, #FF6B00);
+    }
+
+    .progress-fill.danger {
+      background: linear-gradient(90deg, #FF3B30, #FF2D55);
+    }
 
     /* ── Search input ── */
-    .search-wrap { position: relative; }
+    .search-wrap {
+      position: relative;
+    }
+
     .search-wrap svg {
       position: absolute;
-      left: 12px; top: 50%;
+      left: 12px;
+      top: 50%;
       transform: translateY(-50%);
       color: #86868b;
       pointer-events: none;
     }
+
     .search-input {
       background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 12px;
       padding: 10px 14px 10px 38px;
       font-size: 15px;
@@ -93,24 +113,33 @@
       transition: all 0.2s;
       box-sizing: border-box;
     }
+
     .search-input:focus {
       border-color: #007AFF;
-      box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
     }
-    .search-input::placeholder { color: #86868b; }
+
+    .search-input::placeholder {
+      color: #86868b;
+    }
 
     /* ── Building select ── */
-    .select-wrap { position: relative; }
+    .select-wrap {
+      position: relative;
+    }
+
     .select-wrap svg {
       position: absolute;
-      right: 12px; top: 50%;
+      right: 12px;
+      top: 50%;
       transform: translateY(-50%);
       pointer-events: none;
       color: #86868b;
     }
+
     .building-select {
       background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 12px;
       padding: 10px 36px 10px 14px;
       font-size: 14px;
@@ -124,15 +153,16 @@
       transition: all 0.2s;
       box-sizing: border-box;
     }
+
     .building-select:focus {
       border-color: #007AFF;
-      box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
     }
 
     /* ── Inspector badge / name ── */
     .nome-input {
-      background: rgba(0,122,255,0.06);
-      border: 1px solid rgba(0,122,255,0.2);
+      background: rgba(0, 122, 255, 0.06);
+      border: 1px solid rgba(0, 122, 255, 0.2);
       border-radius: 10px;
       padding: 8px 14px;
       font-size: 14px;
@@ -144,12 +174,17 @@
       box-sizing: border-box;
       transition: all 0.2s;
     }
+
     .nome-input:focus {
       border-color: #007AFF;
-      box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
-      background: rgba(0,122,255,0.08);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+      background: rgba(0, 122, 255, 0.08);
     }
-    .nome-input::placeholder { color: rgba(0,122,255,0.5); font-weight: 500; }
+
+    .nome-input::placeholder {
+      color: rgba(0, 122, 255, 0.5);
+      font-weight: 500;
+    }
 
     /* ── Section labels ── */
     .section-label {
@@ -165,7 +200,10 @@
       align-items: center;
       gap: 6px;
     }
-    .section-label:first-child { margin-top: 0; }
+
+    .section-label:first-child {
+      margin-top: 0;
+    }
 
     /* ── Extintor row ── */
     .ext-row {
@@ -178,29 +216,44 @@
       cursor: pointer;
       transition: all 0.2s ease;
       margin-bottom: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
       border: 1.5px solid transparent;
       position: relative;
       overflow: hidden;
     }
+
     .ext-row::before {
       content: '';
       position: absolute;
-      left: 0; top: 0; bottom: 0;
+      left: 0;
+      top: 0;
+      bottom: 0;
       width: 4px;
       background: #e5e5ea;
       transition: background 0.2s;
     }
-    .ext-row.inspected::before { background: #34C759; }
-    .ext-row.pending::before { background: #007AFF; }
+
+    .ext-row.inspected::before {
+      background: #34C759;
+    }
+
+    .ext-row.pending::before {
+      background: #007AFF;
+    }
 
     .ext-row:hover {
       transform: translateX(3px);
-      border-color: rgba(0,122,255,0.15);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-color: rgba(0, 122, 255, 0.15);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
-    .ext-row.inspected:hover { border-color: rgba(52,199,89,0.2); }
-    .ext-row:active { transform: scale(0.99); }
+
+    .ext-row.inspected:hover {
+      border-color: rgba(52, 199, 89, 0.2);
+    }
+
+    .ext-row:active {
+      transform: scale(0.99);
+    }
 
     /* ── Status dot ── */
     .status-dot {
@@ -214,8 +267,14 @@
       font-size: 16px;
       transition: all 0.2s;
     }
-    .status-dot.done { background: rgba(52,199,89,0.12); }
-    .status-dot.pending { background: rgba(0,0,0,0.05); }
+
+    .status-dot.done {
+      background: rgba(52, 199, 89, 0.12);
+    }
+
+    .status-dot.pending {
+      background: rgba(0, 0, 0, 0.05);
+    }
 
     /* ── Badges ── */
     .badge {
@@ -227,13 +286,31 @@
       font-weight: 600;
       white-space: nowrap;
     }
-    .badge-blue { background: rgba(0,122,255,0.1); color: #007AFF; }
-    .badge-green { background: rgba(52,199,89,0.12); color: #34C759; }
-    .badge-orange { background: rgba(255,149,0,0.1); color: #FF9500; }
-    .badge-gray { background: rgba(0,0,0,0.06); color: #86868b; }
+
+    .badge-blue {
+      background: rgba(0, 122, 255, 0.1);
+      color: #007AFF;
+    }
+
+    .badge-green {
+      background: rgba(52, 199, 89, 0.12);
+      color: #34C759;
+    }
+
+    .badge-orange {
+      background: rgba(255, 149, 0, 0.1);
+      color: #FF9500;
+    }
+
+    .badge-gray {
+      background: rgba(0, 0, 0, 0.06);
+      color: #86868b;
+    }
 
     /* ── Building progress card ── */
-    #building-info-card { transition: all 0.3s ease; }
+    #building-info-card {
+      transition: all 0.3s ease;
+    }
 
     /* ── Reset button ── */
     .reset-btn {
@@ -247,11 +324,18 @@
       cursor: pointer;
       width: 100%;
       transition: all 0.2s;
-      box-shadow: 0 4px 15px rgba(255,59,48,0.25);
+      box-shadow: 0 4px 15px rgba(255, 59, 48, 0.25);
       font-family: inherit;
     }
-    .reset-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,59,48,0.35); }
-    .reset-btn:active { transform: scale(0.98); }
+
+    .reset-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 59, 48, 0.35);
+    }
+
+    .reset-btn:active {
+      transform: scale(0.98);
+    }
 
     /* ── Confirm reset overlay ── */
     #confirmReset {
@@ -260,24 +344,38 @@
       color: #ffffff;
       width: calc(100% - 48px);
       max-width: 360px;
-      top: 50%; left: 50%;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
       padding: 28px 24px;
       text-align: center;
       border-radius: 20px;
-      box-shadow: 0 0 0 100vw rgba(0,0,0,0.65);
+      box-shadow: 0 0 0 100vw rgba(0, 0, 0, 0.65);
       z-index: 99999;
       display: none;
     }
-    #confirmReset h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    #confirmReset p { font-size: 13px; color: #98989d; line-height: 1.5; margin-bottom: 20px; }
+
+    #confirmReset h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    #confirmReset p {
+      font-size: 13px;
+      color: #98989d;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
 
     /* ── Modal ── */
     #modal {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       display: none;
@@ -285,6 +383,7 @@
       align-items: flex-end;
       z-index: 9999;
     }
+
     #modalContent {
       background: #ffffff;
       padding: 24px 20px;
@@ -292,26 +391,77 @@
       max-height: 92dvh;
       overflow-y: auto;
       border-radius: 24px 24px 0 0;
-      animation: slideUp 0.35s cubic-bezier(0.4,0,0.2,1);
+      animation: slideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
     }
+
     @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0.8; }
-      to   { transform: translateY(0);   opacity: 1;   }
+      from {
+        transform: translateY(100%);
+        opacity: 0.8;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
+
     @media (min-width: 768px) {
-      #modal { align-items: center; padding: 20px; }
-      #modalContent { border-radius: 20px; max-width: 500px; animation: zoomIn 0.3s cubic-bezier(0.4,0,0.2,1); }
-      @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      #modal {
+        align-items: center;
+        padding: 20px;
+      }
+
+      #modalContent {
+        border-radius: 20px;
+        max-width: 500px;
+        animation: zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @keyframes zoomIn {
+        from {
+          transform: scale(0.95);
+          opacity: 0;
+        }
+
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
     }
 
     /* Modal form elements */
-    #modal h2 { margin: 0 0 4px; font-size: 1.4rem; font-weight: 800; color: #1d1d1f; }
-    #modal h2::before { content: "🧯 "; }
-    #modalTipo { font-size: 14px; font-weight: 600; color: #007AFF; margin-bottom: 2px; }
-    #modalDescricao { font-size: 13px; color: #86868b; margin-bottom: 0; }
+    #modal h2 {
+      margin: 0 0 4px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #1d1d1f;
+    }
 
-    #formInspecao { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    #modal h2::before {
+      content: "🧯 ";
+    }
+
+    #modalTipo {
+      font-size: 14px;
+      font-weight: 600;
+      color: #007AFF;
+      margin-bottom: 2px;
+    }
+
+    #modalDescricao {
+      font-size: 13px;
+      color: #86868b;
+      margin-bottom: 0;
+    }
+
+    #formInspecao {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
 
     .pergunta {
       font-size: 15px;
@@ -320,15 +470,17 @@
       border-radius: 12px;
       overflow: hidden;
     }
+
     .pergunta label {
       display: block;
       padding: 10px 14px 8px;
-      background: rgba(0,0,0,0.03);
+      background: rgba(0, 0, 0, 0.03);
       font-size: 14px;
       font-weight: 600;
       color: #1d1d1f;
       border-radius: 12px 12px 0 0;
     }
+
     .pergunta label p {
       font-size: 12px;
       font-weight: 400;
@@ -336,11 +488,13 @@
       margin: 4px 0 0;
       line-height: 1.4;
     }
+
     .pergunta div {
       display: flex;
       align-items: center;
       padding: 8px 14px;
     }
+
     label.opcoes-nc {
       display: flex !important;
       padding: 6px 14px !important;
@@ -351,17 +505,24 @@
       align-items: center;
       font-weight: 500 !important;
     }
+
     input[type="radio"] {
-      width: 20px; height: 20px;
-      margin-left: 0; margin-right: 10px;
+      width: 20px;
+      height: 20px;
+      margin-left: 10px;
+      margin-right: 5px;
       accent-color: #007AFF;
     }
-    .pergunta select, .pergunta input[type="month"], .pergunta input[type="number"], .pergunta textarea {
+
+    .pergunta select,
+    .pergunta input[type="month"],
+    .pergunta input[type="number"],
+    .pergunta textarea {
       width: calc(100% - 28px);
       margin: 0 14px 12px;
       font-size: 14px;
       padding: 8px 12px;
-      border: 1px solid rgba(0,0,0,0.12);
+      border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 10px;
       color: #1d1d1f;
       font-weight: 600;
@@ -370,23 +531,40 @@
       box-sizing: border-box;
       display: block;
     }
-    .pergunta textarea { min-height: 70px; resize: vertical; }
+
+    .pergunta textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
 
     /* Checkbox custom */
-    .custom-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; padding: 5px 0; }
-    .custom-checkbox input { display: none; }
+    .custom-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      margin: 0;
+      padding: 5px 0;
+    }
+
+    .custom-checkbox input {
+      display: none;
+    }
+
     .custom-checkbox span {
-      width: 18px; height: 18px;
+      width: 18px;
+      height: 18px;
       border: 2px solid #c7c7cc;
       border-radius: 50%;
       display: inline-block;
       transition: all .15s ease;
       flex-shrink: 0;
     }
-    .custom-checkbox input:checked + span {
+
+    .custom-checkbox input:checked+span {
       background: #007AFF;
       border-color: #007AFF;
-      box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
     }
 
     /* Modal buttons */
@@ -397,6 +575,7 @@
       padding-top: 16px;
       border-top: 1px solid #f0f0f0;
     }
+
     .btn-enviar {
       flex: 2;
       background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
@@ -408,15 +587,19 @@
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
-      box-shadow: 0 4px 12px rgba(52,199,89,0.3);
+      box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
       transition: all 0.2s;
     }
-    .btn-enviar:hover { transform: translateY(-1px); }
+
+    .btn-enviar:hover {
+      transform: translateY(-1px);
+    }
+
     .btn-cancelar {
       flex: 1;
       background: #f5f5f7;
       color: #1d1d1f;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 12px;
       padding: 13px;
       font-size: 15px;
@@ -425,15 +608,20 @@
       font-family: inherit;
       transition: all 0.2s;
     }
-    .btn-cancelar:hover { background: #e8e8ed; }
+
+    .btn-cancelar:hover {
+      background: #e8e8ed;
+    }
 
     /* Close modal btn */
     #Xfecharmodal {
       position: absolute;
-      top: 16px; right: 16px;
-      width: 30px; height: 30px;
+      top: 16px;
+      right: 16px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: rgba(0,0,0,0.07);
+      background: rgba(0, 0, 0, 0.07);
       border: none;
       font-size: 16px;
       cursor: pointer;
@@ -444,7 +632,10 @@
       font-family: monospace;
       line-height: 1;
     }
-    #Xfecharmodal:hover { background: rgba(0,0,0,0.12); }
+
+    #Xfecharmodal:hover {
+      background: rgba(0, 0, 0, 0.12);
+    }
 
     /* Empty state */
     .empty-state {
@@ -452,8 +643,17 @@
       padding: 48px 24px;
       color: #86868b;
     }
-    .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
-    .empty-state p { font-size: 14px; font-weight: 500; }
+
+    .empty-state .emoji {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+      font-weight: 500;
+    }
 
     /* Skeleton loader */
     .skeleton {
@@ -464,21 +664,54 @@
       height: 68px;
       margin-bottom: 6px;
     }
+
     @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
     }
 
-    .fade-in { animation: fadeIn 0.4s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     /* Status dot pulse */
     .status-pulse {
-      width: 8px; height: 8px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       animation: pulse-dot 2s ease-in-out infinite;
     }
-    @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.2); } }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+      }
+    }
   </style>
 </head>
 
@@ -489,7 +722,8 @@
     <div class="max-w-2xl mx-auto px-4">
       <div class="flex items-center justify-between h-14">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full flex items-center justify-center text-xl" style="background:linear-gradient(135deg,#FF3B30,#FF2D55);">🧯</div>
+          <div class="w-9 h-9 rounded-full flex items-center justify-center text-xl"
+            style="background:linear-gradient(135deg,#FF3B30,#FF2D55);">🧯</div>
           <div>
             <div class="text-base font-bold text-gray-900" style="line-height:1.2">Extintores</div>
             <div class="text-xs text-gray-400 font-medium">SCI Aeroporto de Joinville</div>
@@ -499,7 +733,7 @@
           class="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
           style="background:none;border:none;cursor:pointer;padding:0;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
+            <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
           </svg>
           Voltar
         </button>
@@ -508,7 +742,8 @@
   </div>
 
   <!-- ── Main content ── -->
-  <div class="max-w-2xl mx-auto px-4" style="padding-top: calc(56px + env(safe-area-inset-top) + 16px); padding-bottom: 32px;">
+  <div class="max-w-2xl mx-auto px-4"
+    style="padding-top: calc(56px + env(safe-area-inset-top) + 16px); padding-bottom: 32px;">
 
     <!-- Global progress card -->
     <div class="card p-5 mb-4 fade-in">
@@ -544,9 +779,11 @@
       <div class="mb-3">
         <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Inspecionando como</div>
         <div class="flex items-center gap-2">
-          <div style="background:rgba(0,122,255,0.08); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <div
+            style="background:rgba(0,122,255,0.08); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#007AFF" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
           <input type="text" id="nomeUsuario" class="nome-input" placeholder="Nome do inspetor (obrigatório)">
@@ -556,7 +793,8 @@
       <!-- Search -->
       <div class="search-wrap mb-3">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
         </svg>
         <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nº, tipo, descrição…"
           oninput="onSearch(this.value)">
@@ -568,7 +806,7 @@
           <option value="">🏛 Todas as edificações</option>
         </select>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m6 9 6 6 6-6"/>
+          <path d="m6 9 6 6 6-6" />
         </svg>
       </div>
     </div>
@@ -583,7 +821,8 @@
         </div>
         <div class="text-right flex-shrink-0">
           <div class="text-2xl font-black text-gray-900" style="letter-spacing:-0.5px;">
-            <span id="bldg-done">0</span><span class="text-sm font-medium text-gray-300">/</span><span class="text-sm font-semibold text-gray-400" id="bldg-total">0</span>
+            <span id="bldg-done">0</span><span class="text-sm font-medium text-gray-300">/</span><span
+              class="text-sm font-semibold text-gray-400" id="bldg-total">0</span>
           </div>
           <div id="bldg-pct" class="text-xs font-bold text-green-500">0%</div>
         </div>
@@ -611,7 +850,8 @@
   <!-- ── Confirm reset ── -->
   <div id="confirmReset">
     <h3>⚠️ Resetar todos?</h3>
-    <p>Faça o reset ao término de toda vistoria semanal ou para iniciar uma nova vistoria geral. Todos os status serão apagados.</p>
+    <p>Faça o reset ao término de toda vistoria semanal ou para iniciar uma nova vistoria geral. Todos os status serão
+      apagados.</p>
     <div style="display:flex; gap:10px; justify-content:center;">
       <button onclick="confirmReset(true)"
         style="background:#34C759;color:white;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;">
@@ -858,9 +1098,9 @@
     };
 
     const edificacoesArray = [
-      "DESEMBARQUE","TPS TÉRREO","TPS SUPERIOR","RÁDIO","ADM","CASA DE BOMBAS",
-      "CAMPO DE ANTENAS","RAIO X","EMBARQUE","ELOS","APOC","PORTÃO 1",
-      "KF CHILLER","PAA","MANUTENÇÃO","GSE GOL AZUL RP","SCI"
+      "DESEMBARQUE", "TPS TÉRREO", "TPS SUPERIOR", "RÁDIO", "ADM", "CASA DE BOMBAS",
+      "CAMPO DE ANTENAS", "RAIO X", "EMBARQUE", "ELOS", "APOC", "PORTÃO 1",
+      "KF CHILLER", "PAA", "MANUTENÇÃO", "GSE GOL AZUL RP", "SCI"
     ];
 
     // ──────────────────────────────────────────
@@ -983,14 +1223,14 @@
       });
 
       const pending = items.filter(i => !i.vistoriado);
-      const done    = items.filter(i =>  i.vistoriado);
+      const done = items.filter(i => i.vistoriado);
 
       // Update building info card
       if (currentBuilding) {
         const allForBldg = Object.keys(extintoresInfo[currentBuilding] || {});
         const bldgTotal = allForBldg.length;
-        const bldgDone  = allForBldg.filter(k => globalData[currentBuilding]?.[k]?.vistoriado).length;
-        const bldgPct   = bldgTotal > 0 ? Math.round((bldgDone / bldgTotal) * 100) : 0;
+        const bldgDone = allForBldg.filter(k => globalData[currentBuilding]?.[k]?.vistoriado).length;
+        const bldgPct = bldgTotal > 0 ? Math.round((bldgDone / bldgTotal) * 100) : 0;
 
         document.getElementById('bldg-name').textContent = currentBuilding;
         document.getElementById('bldg-desc').textContent = edificacoesDescr[currentBuilding] || '';
@@ -1045,9 +1285,9 @@
 
       // Type badge color
       const typeColor = item.tipo.includes('CO') ? '#5856D6' :
-                        item.tipo.includes('ABC') ? '#007AFF' : '#FF9500';
+        item.tipo.includes('ABC') ? '#007AFF' : '#FF9500';
       const typeBg = item.tipo.includes('CO') ? 'rgba(88,86,214,0.1)' :
-                     item.tipo.includes('ABC') ? 'rgba(0,122,255,0.1)' : 'rgba(255,149,0,0.1)';
+        item.tipo.includes('ABC') ? 'rgba(0,122,255,0.1)' : 'rgba(255,149,0,0.1)';
 
       div.innerHTML = `
         <div class="status-dot ${item.vistoriado ? 'done' : 'pending'}">
@@ -1141,9 +1381,9 @@
         <div class="pergunta" id="p4_1" style="display:none;">
           <label>4.1 — Não conformidade(s):</label>
           ${[
-            'Despressurização','Lacre Rompido','Vencido','Sinalização',
-            'Integridade','Capacidade Extintora reduzida','Etiqueta ilegível ou ausente','Outros'
-          ].map(nc => `
+          'Despressurização', 'Lacre Rompido', 'Vencido', 'Sinalização',
+          'Integridade', 'Capacidade Extintora reduzida', 'Etiqueta ilegível ou ausente', 'Outros'
+        ].map(nc => `
             <label class="custom-checkbox opcoes-nc" style="padding:6px 14px;">
               <input type="checkbox" name="p4_1" value="${nc}">
               <span></span>
@@ -1281,10 +1521,11 @@
   <!-- PWA Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js').catch(() => { });
     }
   </script>
   <script src="/Central/pwa/app.js"></script>
 
 </body>
+
 </html>
