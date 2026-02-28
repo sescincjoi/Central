@@ -312,7 +312,21 @@
       transition: all 0.3s ease;
     }
 
-    /* ── Reset button ── */
+    /* ── Reset button — fixed bottom bar ── */
+    .reset-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 16px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      background: rgba(245, 245, 247, 0.92);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+      z-index: 40;
+    }
+
     .reset-btn {
       background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
       color: white;
@@ -323,6 +337,9 @@
       font-weight: 600;
       cursor: pointer;
       width: 100%;
+      max-width: 640px;
+      display: block;
+      margin: 0 auto;
       transition: all 0.2s;
       box-shadow: 0 4px 15px rgba(255, 59, 48, 0.25);
       font-family: inherit;
@@ -338,34 +355,84 @@
     }
 
     /* ── Confirm reset overlay ── */
-    #confirmReset {
+    #confirmResetOverlay {
       position: fixed;
-      background: #1d1d1f;
-      color: #ffffff;
-      width: calc(100% - 48px);
-      max-width: 360px;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 28px 24px;
-      text-align: center;
-      border-radius: 20px;
-      box-shadow: 0 0 0 100vw rgba(0, 0, 0, 0.65);
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       z-index: 99999;
       display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    #confirmReset {
+      background: #1c1c1e;
+      color: #ffffff;
+      width: 100%;
+      max-width: 340px;
+      padding: 28px 24px 24px;
+      text-align: center;
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    #confirmReset .confirm-icon {
+      font-size: 42px;
+      display: block;
+      margin-bottom: 12px;
     }
 
     #confirmReset h3 {
       font-size: 18px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin: 0 0 8px;
     }
 
     #confirmReset p {
       font-size: 13px;
       color: #98989d;
-      line-height: 1.5;
-      margin-bottom: 20px;
+      line-height: 1.6;
+      margin: 0 0 24px;
+    }
+
+    #confirmReset .reset-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    #confirmReset .reset-actions button {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 13px 10px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    #confirmReset .btn-confirm {
+      background: #34C759;
+      color: white;
+    }
+
+    #confirmReset .btn-confirm:hover {
+      background: #30D158;
+      transform: translateY(-1px);
+    }
+
+    #confirmReset .btn-dismiss {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ebebf5;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    #confirmReset .btn-dismiss:hover {
+      background: rgba(255, 255, 255, 0.18);
     }
 
     /* ── Modal ── */
@@ -722,8 +789,19 @@
     <div class="max-w-2xl mx-auto px-4">
       <div class="flex items-center justify-between h-14">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full flex items-center justify-center text-xl"
-            style="background:linear-gradient(135deg,#FF3B30,#FF2D55);">🧯</div>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style="background:linear-gradient(135deg,#FF3B30,#FF2D55);">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="13" y1="6" x2="18" y2="6" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+              <line x1="18" y1="4.5" x2="18" y2="7.5" stroke="white" stroke-width="1.8" stroke-linecap="round" />
+              <path d="M13 7.5 C16 7.5 18 9 18 11" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                fill="none" />
+              <rect x="10" y="4" width="4" height="2.5" rx="1" fill="white" />
+              <rect x="9" y="7" width="6" height="12" rx="3" fill="white" />
+              <line x1="12" y1="4" x2="12" y2="2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+              <circle cx="12" cy="2" r="0.8" fill="white" />
+            </svg>
+          </div>
           <div>
             <div class="text-base font-bold text-gray-900" style="line-height:1.2">Extintores</div>
             <div class="text-xs text-gray-400 font-medium">SCI Aeroporto de Joinville</div>
@@ -743,14 +821,22 @@
 
   <!-- ── Main content ── -->
   <div class="max-w-2xl mx-auto px-4"
-    style="padding-top: calc(56px + env(safe-area-inset-top) + 16px); padding-bottom: 32px;">
+    style="padding-top: calc(56px + env(safe-area-inset-top) + 16px); padding-bottom: calc(80px + env(safe-area-inset-bottom) + 16px);">
 
     <!-- Global progress card -->
     <div class="card p-5 mb-4 fade-in">
       <div class="flex items-center gap-3 mb-4">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style="background:linear-gradient(135deg,#FF3B30,#FF2D55);">
-          <span style="font-size:20px;">🧯</span>
+          style="background:linear-gradient(135deg,#34C759,#30D158);">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Bar chart with upward trend -->
+            <rect x="3" y="14" width="4" height="7" rx="1.5" fill="white" opacity="0.7" />
+            <rect x="10" y="10" width="4" height="11" rx="1.5" fill="white" opacity="0.85" />
+            <rect x="17" y="5" width="4" height="16" rx="1.5" fill="white" />
+            <!-- Trend line -->
+            <path d="M5 13 L12 9 L19 4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+              opacity="0.6" />
+          </svg>
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Progresso Geral</div>
@@ -840,27 +926,24 @@
       <div class="skeleton" style="height:60px; opacity:0.4;"></div>
     </div>
 
-    <!-- Reset button -->
-    <div class="mt-6">
-      <button class="reset-btn" onclick="resetarTodos()">🔄 Resetar TODOS os extintores</button>
-    </div>
-
   </div><!-- /main -->
 
-  <!-- ── Confirm reset ── -->
-  <div id="confirmReset">
-    <h3>⚠️ Resetar todos?</h3>
-    <p>Faça o reset ao término de toda vistoria semanal ou para iniciar uma nova vistoria geral. Todos os status serão
-      apagados.</p>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button onclick="confirmReset(true)"
-        style="background:#34C759;color:white;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;">
-        ✅ Confirmar
-      </button>
-      <button onclick="confirmReset(false)"
-        style="background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:10px 24px;font-weight:600;font-size:15px;cursor:pointer;font-family:inherit;">
-        Cancelar
-      </button>
+  <!-- ── Fixed reset bar ── -->
+  <div class="reset-bar">
+    <button class="reset-btn" onclick="resetarTodos()">🔄 Resetar TODOS os extintores</button>
+  </div>
+
+  <!-- ── Confirm reset overlay ── -->
+  <div id="confirmResetOverlay" onclick="handleOverlayClick(event)">
+    <div id="confirmReset">
+      <span class="confirm-icon">⚠️</span>
+      <h3>Resetar todos?</h3>
+      <p>Faça o reset ao término de toda vistoria semanal ou para iniciar uma nova vistoria geral. Todos os status serão
+        apagados.</p>
+      <div class="reset-actions">
+        <button class="btn-dismiss" onclick="confirmReset(false)">Cancelar</button>
+        <button class="btn-confirm" onclick="confirmReset(true)">✅ Confirmar</button>
+      </div>
     </div>
   </div>
 
@@ -1474,11 +1557,16 @@
     //  Reset
     // ──────────────────────────────────────────
     function resetarTodos() {
-      document.getElementById('confirmReset').style.display = 'flex';
+      const overlay = document.getElementById('confirmResetOverlay');
+      overlay.style.display = 'flex';
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('confirmResetOverlay')) confirmReset(false);
     }
 
     function confirmReset(decisao) {
-      document.getElementById('confirmReset').style.display = 'none';
+      document.getElementById('confirmResetOverlay').style.display = 'none';
       if (!decisao) return;
       db.ref('extintores').once('value').then(snapshot => {
         const updates = {};
