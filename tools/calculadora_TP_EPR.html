@@ -928,278 +928,187 @@
 
     <div id="toast"></div>
 
-    <script>
-        const LIMITE = 90000;
-        const METALOW = 60000;
-        let state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null };
+<script>
+    const LIMITE = 90000;
+    const METALOW = 60000;
+    let state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null };
 
-        // Carregar ou Inicializar Histórico
-        let db = JSON.parse(localStorage.getItem('tp_epr_logs') || '[]');
+    let db = JSON.parse(localStorage.getItem('tp_epr_logs') || '[]');
 
-        function toggleTheme() {
-            const root = document.documentElement;
-            const newTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            root.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme_preference_tp', newTheme);
-            updateThemeIcon();
+    function formatTime(ms) {
+        const abs = Math.abs(ms);
+        const m = Math.floor(abs / 60000),
+            s = Math.floor((abs % 60000) / 1000),
+            c = Math.floor((abs % 1000) / 10);
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(c).padStart(2, '0')}`;
+    }
+
+    function rafLoop() {
+        const now = performance.now();
+
+        const globalElapsed = now - state.globalStart;
+        const totalEl = document.getElementById('totalTime');
+        totalEl.innerText = formatTime(globalElapsed);
+        totalEl.classList.add('active-total');
+
+        const elapsedSinceSwitch = now - state.lastSwitchTime;
+        const currentTotal = state.timers[state.activeId] + elapsedSinceSwitch;
+        document.getElementById(state.activeId + 'Time').innerText = formatTime(currentTotal);
+
+        updateTimeline(globalElapsed);
+        state.rafId = requestAnimationFrame(rafLoop);
+    }
+
+    function updateTimeline(elapsed) {
+        const remaining = Math.max(0, LIMITE - elapsed);
+        document.getElementById('timerVal').innerText = formatTime(remaining);
+
+        const bar = document.getElementById('stripBar');
+        const label = document.getElementById('statusLabel');
+
+        if (elapsed < METALOW) {
+            bar.className = 'strip-bar ok';
+            bar.style.width = ((remaining / LIMITE) * 100) + '%';
+            label.innerText = 'APROVADO';
+            label.style.color = 'var(--green-ok)';
+        } else if (elapsed < LIMITE) {
+            bar.className = 'strip-bar warn';
+            bar.style.width = ((remaining / LIMITE) * 100) + '%';
+            label.innerText = 'ATENÇÃO';
+            label.style.color = 'var(--yellow-warn)';
+        } else {
+            bar.className = 'strip-bar fail';
+            label.innerText = 'REPROVADO';
+            label.className = 'strip-status fail blink';
+            label.style.color = 'var(--red-hot)';
         }
+    }
 
-        function updateThemeIcon() {
-            const theme = document.documentElement.getAttribute('data-theme');
-            document.getElementById('theme-icon-light').style.display = theme === 'dark' ? 'block' : 'none';
-            document.getElementById('theme-icon-dark').style.display = theme === 'light' ? 'block' : 'none';
-        }
+    function ativar(id) {
+        if (state.activeId === id) return;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            updateThemeIcon();
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('introModal').style.display = 'block';
-        });
+        const now = performance.now();
 
-        function formatTime(ms) {
-            const abs = Math.abs(ms);
-            const m = Math.floor(abs / 60000), s = Math.floor((abs % 60000) / 1000), c = Math.floor((abs % 1000) / 10);
-            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(c).padStart(2, '0')}`;
-        }
+        if (!state.globalStart) state.globalStart = now;
 
-        function rafLoop() {
-            const now = Date.now();
-            const globalElapsed = now - state.globalStart;
-            const totalEl = document.getElementById('totalTime');
-            totalEl.innerText = formatTime(globalElapsed);
-            totalEl.classList.add('active-total');
+        if (state.activeId)
+            state.timers[state.activeId] += (now - state.lastSwitchTime);
 
-            const elapsedSinceSwitch = now - state.lastSwitchTime;
-            const currentTotal = state.timers[state.activeId] + elapsedSinceSwitch;
-            document.getElementById(state.activeId + 'Time').innerText = formatTime(currentTotal);
+        state.activeId = id;
+        state.lastSwitchTime = now;
 
-            updateTimeline(globalElapsed);
+        updateUI();
+
+        if (!state.rafId)
             state.rafId = requestAnimationFrame(rafLoop);
+    }
+
+    function confirmarEncerramento() {
+        if (!state.globalStart) return;
+
+        const agora = performance.now();
+
+        if (state.activeId) {
+            state.timers[state.activeId] += (agora - state.lastSwitchTime);
         }
 
-        function updateTimeline(elapsed) {
-            const remaining = Math.max(0, LIMITE - elapsed);
-            document.getElementById('timerVal').innerText = formatTime(remaining);
-            const bar = document.getElementById('stripBar');
-            const label = document.getElementById('statusLabel');
+        cancelAnimationFrame(state.rafId);
+        state.rafId = null;
 
-            if (elapsed < METALOW) {
-                bar.className = 'strip-bar ok'; bar.style.width = ((remaining / LIMITE) * 100) + '%';
-                label.innerText = 'APROVADO'; label.style.color = 'var(--green-ok)';
-            } else if (elapsed < LIMITE) {
-                bar.className = 'strip-bar warn'; bar.style.width = ((remaining / LIMITE) * 100) + '%';
-                label.innerText = 'ATENÇÃO'; label.style.color = 'var(--yellow-warn)';
-            } else {
-                bar.className = 'strip-bar fail'; label.innerText = 'REPROVADO'; label.className = 'strip-status fail blink'; label.style.color = 'var(--red-hot)';
-            }
+        document.getElementById('overlay').style.display = 'flex';
+        document.getElementById('confirmModal').style.display = 'block';
+    }
+
+    function cancelarEncerramento() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('confirmModal').style.display = 'none';
+
+        state.lastSwitchTime = performance.now();
+        state.rafId = requestAnimationFrame(rafLoop);
+    }
+
+    function salvarHistorico() {
+        const nome = document.getElementById('nomeBA').value.trim().toUpperCase();
+        if (!nome) {
+            alert('Informe o nome do Bombeiro!');
+            return;
         }
 
-        function ativar(id) {
-            if (state.activeId === id) return;
-            const now = Date.now();
-            if (!state.globalStart) state.globalStart = now;
-            if (state.activeId) state.timers[state.activeId] += (now - state.lastSwitchTime);
-            state.activeId = id;
-            state.lastSwitchTime = now;
-            updateUI();
-            if (!state.rafId) state.rafId = requestAnimationFrame(rafLoop);
-        }
+        const agora = performance.now();
 
-        function updateUI() {
-            ['tp', 'epr'].forEach(id => {
-                const active = state.activeId === id;
-                document.getElementById('card-' + id).classList.toggle('active', active);
-                const btn = document.getElementById('btn-' + id);
-                btn.classList.toggle('armed', active);
-                btn.innerHTML = active
-                    ? `<svg viewBox="0 0 24 24" width="24" height="24" style="color:var(--primary)"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="currentColor"/></svg><span class="trig-label">ATIVO</span>`
-                    : `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161"/></svg><span class="trig-label">INICIAR</span>`;
-            });
-        }
+        if (state.activeId)
+            state.timers[state.activeId] += (agora - state.lastSwitchTime);
 
-        function fecharIntro() { document.getElementById('overlay').style.display = 'none'; document.getElementById('introModal').style.display = 'none'; }
+        const total = agora - state.globalStart;
 
-        function confirmarEncerramento() {
-            if (!state.globalStart) return;
-            cancelAnimationFrame(state.rafId); state.rafId = null;
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('confirmModal').style.display = 'block';
-        }
+        const registro = {
+            id: Date.now(), // Mantido Date.now aqui para ID real
+            ba: nome,
+            tp: state.timers.tp,
+            epr: state.timers.epr,
+            total: total,
+            data: new Date().toLocaleString('pt-BR')
+        };
 
-        function cancelarEncerramento() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('confirmModal').style.display = 'none';
-            state.lastSwitchTime = Date.now();
-            state.rafId = requestAnimationFrame(rafLoop);
-        }
+        db.push(registro);
+        localStorage.setItem('tp_epr_logs', JSON.stringify(db));
 
-        function abrirNomeBA() {
-            document.getElementById('confirmModal').style.display = 'none';
-            document.getElementById('nomeModal').style.display = 'block';
-            document.getElementById('nomeBA').focus();
-        }
+        showToast('BATERIA SALVA NO HISTÓRICO!');
+        resetar();
+    }
 
-        function fecharNomeBA() {
-            document.getElementById('nomeModal').style.display = 'none';
-            document.getElementById('confirmModal').style.display = 'block';
-        }
+    function finalizar(registroSelecionado = null) {
+        let dados;
 
-        function salvarHistorico() {
-            const nome = document.getElementById('nomeBA').value.trim().toUpperCase();
-            if (!nome) { alert('Informe o nome do Bombeiro!'); return; }
+        if (registroSelecionado) {
+            dados = registroSelecionado;
+        } else {
+            const agora = performance.now();
 
-            const agora = Date.now();
-            if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
-            const total = agora - state.globalStart;
+            if (state.activeId)
+                state.timers[state.activeId] += (agora - state.lastSwitchTime);
 
-            const registro = {
-                id: agora,
-                ba: nome,
+            dados = {
                 tp: state.timers.tp,
                 epr: state.timers.epr,
-                total: total,
-                data: new Date().toLocaleString('pt-BR')
+                total: agora - state.globalStart
             };
-
-            db.push(registro);
-            localStorage.setItem('tp_epr_logs', JSON.stringify(db));
-
-            showToast('BATERIA SALVA NO HISTÓRICO!');
-            resetar();
         }
 
-        function finalizar(registroSelecionado = null) {
-            let dados;
-            if (registroSelecionado) {
-                dados = registroSelecionado;
-            } else {
-                const agora = Date.now();
-                if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
-                dados = { tp: state.timers.tp, epr: state.timers.epr, total: agora - state.globalStart };
-            }
+        document.querySelectorAll('.modal-panel').forEach(m => m.style.display = 'none');
+        document.getElementById('overlay').style.display = 'flex';
+        document.getElementById('loader').style.display = 'flex';
 
-            document.querySelectorAll('.modal-panel').forEach(m => m.style.display = 'none');
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('loader').style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('finalModal').style.display = 'block';
 
-            setTimeout(() => {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('finalModal').style.display = 'block';
+            const total = dados.total;
+            const status = total < METALOW ? 'APROVADO'
+                : (total <= LIMITE ? 'ATENÇÃO' : 'REPROVADO');
 
-                const total = dados.total;
-                const status = total < METALOW ? 'APROVADO' : (total <= LIMITE ? 'ATENÇÃO' : 'REPROVADO');
-                const color = status === 'APROVADO' ? 'var(--green-ok)' : (status === 'ATENÇÃO' ? 'var(--yellow-warn)' : 'var(--red-hot)');
-                const bg = status === 'APROVADO' ? '#e8f5e9' : (status === 'ATENÇÃO' ? '#fff3e0' : '#ffebee');
-
-                document.getElementById('results-content').innerHTML = `
-                <div style="background:${bg}; border:1.5px solid ${color}; color:${color}; text-align:center; padding:12px; border-radius:12px; margin-bottom:18px;">
-                    <span style="font-size:20px; font-weight:800; letter-spacing: -0.5px;">${status}</span>
+            document.getElementById('results-content').innerHTML = `
+                <div style="text-align:center; margin-bottom:18px;">
+                    <span style="font-size:20px; font-weight:800;">${status}</span>
                 </div>
                 <div class="result-rows">
-                    <div class="result-row"><span class="rr-label">VESTIMENTA TP:</span><span class="rr-val">${formatTime(dados.tp)}</span></div>
-                    <div class="result-row"><span class="rr-label">VESTIMENTA EPR:</span><span class="rr-val">${formatTime(dados.epr)}</span></div>
-                    <div class="result-row result-total"><span class="rr-label">TEMPO TOTAL:</span><span class="rr-val">${formatTime(dados.total)}</span></div>
-                </div>
-                <div style="font-size:14px; color:var(--text); text-align:center; margin-top:15px; font-weight:600; line-height:1.4;">
-                    META: TEMPO ABAIXO DE 01:00,00.<br>
-                    <span style="color:var(--text-dim); font-size: 12px;">CASO MAIOR, ANOTAR PONTOS DE MELHORIA.</span>
+                    <div class="result-row">
+                        <span class="rr-label">VESTIMENTA TP:</span>
+                        <span class="rr-val">${formatTime(dados.tp)}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="rr-label">VESTIMENTA EPR:</span>
+                        <span class="rr-val">${formatTime(dados.epr)}</span>
+                    </div>
+                    <div class="result-row result-total">
+                        <span class="rr-label">TEMPO TOTAL:</span>
+                        <span class="rr-val">${formatTime(dados.total)}</span>
+                    </div>
                 </div>
             `;
-            }, 800);
-        }
-
-        function abrirHistorico() {
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('historicoModal').style.display = 'block';
-            renderHistorico();
-        }
-
-        function fecharHistorico() {
-            document.getElementById('historicoModal').style.display = 'none';
-            if (!state.globalStart) document.getElementById('overlay').style.display = 'none';
-            else document.getElementById('confirmModal').style.display = 'block'; // Volta pro fluxo de encerramento se estava nele
-        }
-
-        function fecharRelatorio() {
-            document.getElementById('finalModal').style.display = 'none';
-            abrirHistorico();
-        }
-
-        function renderHistorico() {
-            const wrap = document.getElementById('history-content');
-            if (db.length === 0) { wrap.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--text-dim);">Nenhum registro encontrado.</p>'; return; }
-
-            // Agrupar por BA
-            const grupos = db.reduce((acc, obj) => {
-                acc[obj.ba] = acc[obj.ba] || [];
-                acc[obj.ba].push(obj);
-                return acc;
-            }, {});
-
-            let html = '';
-            for (const ba in grupos) {
-                const baterias = grupos[ba];
-                const melhorTempo = Math.min(...baterias.map(b => b.total));
-
-                html += `<div class="ba-group">
-                <div class="ba-name-header"><span>◈ ${ba}</span> <span style="font-size: 10px; color: var(--text-dim);">${baterias.length} Baterias</span></div>
-                ${baterias.sort((a, b) => a.id - b.id).map((b, idx) => {
-                    b.seq = idx + 1;
-                    return b;
-                }).sort((a, b) => b.id - a.id).map(b => {
-                    const isBest = b.total === melhorTempo;
-                    return `
-                    <div class="ba-entry ${isBest ? 'best' : ''}" onclick='finalizar(${JSON.stringify(b)})'>
-                        <div class="entry-info">
-                            <div style="font-weight: bold;">BATERIA ${b.seq}</div>
-                            <div style="font-size: 10px; color: var(--text-dim);">${b.data.split(' ')[0]}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div class="entry-time" style="color: ${b.total < METALOW ? 'var(--green-ok)' : (b.total <= LIMITE ? 'var(--yellow-warn)' : 'var(--red-hot)')}">${formatTime(b.total)}</div>
-                            ${isBest ? '<span class="best-badge">MELHOR TEMPO</span>' : ''}
-                        </div>
-                    </div>`;
-                }).join('')}
-            </div>`;
-            }
-            wrap.innerHTML = html;
-        }
-
-        function limparHistorico() {
-            if (confirm('Deseja realmente apagar todo o histórico de baterias?')) {
-                db = [];
-                localStorage.setItem('tp_epr_logs', '[]');
-                renderHistorico();
-                showToast('HISTÓRICO LIMPO');
-            }
-        }
-
-        function resetar() {
-            if (state.rafId) cancelAnimationFrame(state.rafId);
-            state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null };
-
-            document.getElementById('totalTime').innerText = '00:00,00';
-            document.getElementById('totalTime').classList.remove('active-total');
-            document.getElementById('tpTime').innerText = '00:00,00';
-            document.getElementById('eprTime').innerText = '00:00,00';
-            document.getElementById('timerVal').innerText = '01:30,00';
-            document.getElementById('statusLabel').innerText = 'AGUARDANDO';
-            document.getElementById('statusLabel').classList.remove('blink');
-            document.getElementById('statusLabel').style.color = 'var(--text-dim)';
-            document.getElementById('stripBar').style.width = '0%';
-            document.getElementById('nomeBA').value = '';
-
-            document.querySelectorAll('.modal-panel').forEach(m => m.style.display = 'none');
-            document.getElementById('overlay').style.display = 'none';
-            updateUI();
-        }
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
-    </script>
+        }, 800);
+    }
+</script>
 </body>
 
 </html>
