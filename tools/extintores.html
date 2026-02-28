@@ -55,6 +55,18 @@
       padding-top: env(safe-area-inset-top);
     }
 
+    .nav-bar::before {
+      content: '';
+      position: absolute;
+      top: calc(-1 * env(safe-area-inset-top));
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+
     /* ── Cards ── */
     .card {
       background: #ffffff;
