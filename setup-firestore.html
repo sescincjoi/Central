@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="pwa/icons/icon-192.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup Firestore - Central SCI</title>
     <style>
@@ -10,7 +12,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -20,29 +22,29 @@
             justify-content: center;
             padding: 20px;
         }
-        
+
         .container {
             background: white;
             border-radius: 20px;
             padding: 40px;
             max-width: 600px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
-        
+
         h1 {
             font-size: 28px;
             font-weight: 700;
             color: #1d1d1f;
             margin-bottom: 10px;
         }
-        
+
         .subtitle {
             color: #86868b;
             margin-bottom: 30px;
             font-size: 14px;
         }
-        
+
         .warning {
             background: #fff3cd;
             border: 2px solid #ffc107;
@@ -53,17 +55,17 @@
             gap: 12px;
             align-items: flex-start;
         }
-        
+
         .warning-icon {
             font-size: 24px;
         }
-        
+
         .warning-text {
             font-size: 14px;
             color: #856404;
             line-height: 1.5;
         }
-        
+
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -76,17 +78,17 @@
             width: 100%;
             transition: transform 0.2s;
         }
-        
+
         .btn:hover {
             transform: translateY(-2px);
         }
-        
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
         }
-        
+
         #log {
             background: #f5f5f7;
             border-radius: 12px;
@@ -99,37 +101,38 @@
             line-height: 1.6;
             display: none;
         }
-        
+
         #log.show {
             display: block;
         }
-        
+
         .log-line {
             margin-bottom: 8px;
         }
-        
+
         .log-success {
             color: #34c759;
         }
-        
+
         .log-error {
             color: #ff3b30;
         }
-        
+
         .log-info {
             color: #007aff;
         }
-        
+
         .log-warning {
             color: #ff9500;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🔧 Setup do Firestore</h1>
         <p class="subtitle">Configuração inicial do sistema multi-base</p>
-        
+
         <div class="warning">
             <span class="warning-icon">⚠️</span>
             <div class="warning-text">
@@ -138,9 +141,9 @@
                 <br>Se já existirem dados, eles serão <strong>sobrescritos</strong>.
             </div>
         </div>
-        
+
         <button id="btnSetup" class="btn">Executar Setup</button>
-        
+
         <div id="log"></div>
     </div>
 
@@ -154,14 +157,14 @@
         function log(message, type = 'info') {
             const line = document.createElement('div');
             line.className = `log-line log-${type}`;
-            
+
             const icon = {
                 'success': '✅',
                 'error': '❌',
                 'info': '📍',
                 'warning': '⚠️'
             }[type] || '•';
-            
+
             line.textContent = `${icon} ${message}`;
             logDiv.appendChild(line);
             logDiv.scrollTop = logDiv.scrollHeight;
@@ -172,13 +175,13 @@
             btn.textContent = 'Executando...';
             logDiv.classList.add('show');
             logDiv.innerHTML = '';
-            
+
             try {
                 log('Iniciando setup do Firestore...', 'info');
-                
+
                 // ========== CRIAR BASES ==========
                 log('Criando configuração de bases...', 'info');
-                
+
                 const basesData = {
                     JOI: {
                         id: "JOI",
@@ -229,28 +232,28 @@
                         criadoEm: serverTimestamp()
                     }
                 };
-                
+
                 const basesRef = doc(db, 'system-config', 'bases');
                 await setDoc(basesRef, basesData);
-                
+
                 log('Base JOI criada com sucesso!', 'success');
                 log('Base TESTE criada com sucesso!', 'success');
-                
+
                 // ========== CRIAR CONFIGURAÇÕES GERAIS ==========
                 log('Criando configurações gerais...', 'info');
-                
+
                 const configGeral = {
                     baseDefault: "JOI",
                     versao: "2.0.0",
                     multiBaseAtivo: true,
                     atualizadoEm: serverTimestamp()
                 };
-                
+
                 const configRef = doc(db, 'system-config', 'geral');
                 await setDoc(configRef, configGeral);
-                
+
                 log('Configurações gerais criadas!', 'success');
-                
+
                 // ========== FINALIZADO ==========
                 log('', 'info');
                 log('🎉 Setup concluído com sucesso!', 'success');
@@ -259,14 +262,14 @@
                 log('1. Verifique o Firestore Console', 'info');
                 log('2. Acesse: /test-config.html para testar', 'info');
                 log('3. Delete este arquivo (setup-firestore.html)', 'info');
-                
+
                 btn.textContent = '✓ Concluído!';
-                
+
             } catch (error) {
                 log('', 'info');
                 log('Erro durante o setup:', 'error');
                 log(error.message, 'error');
-                
+
                 btn.disabled = false;
                 btn.textContent = 'Tentar Novamente';
             }
@@ -275,4 +278,5 @@
         btn.addEventListener('click', executarSetup);
     </script>
 </body>
+
 </html>
