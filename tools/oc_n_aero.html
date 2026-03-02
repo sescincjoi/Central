@@ -3,7 +3,11 @@
 
 <head>2
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fbfbfb">
     <title>Relatórios - Central SCI JOI</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,6 +29,7 @@
             min-height: 100vh;
             padding: 0;
             margin: 0;
+            padding-top: env(safe-area-inset-top);
         }
 
         .nav-bar {
@@ -32,6 +37,9 @@
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
 
         .card {
