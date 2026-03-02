@@ -972,10 +972,10 @@
 
   <!-- Auth Central -->
   <script type="module">
-    import authCore from '/Central/js/auth/auth-core.js';
-    import authUI from '/Central/js/auth/auth-ui.js';
-    import authLock from '/Central/js/auth/auth-lock.js';
-    import authGuard from '/Central/js/auth/auth-guard.js';
+    import authCore from '../js/auth/auth-core.js';
+    import authUI from '../js/auth/auth-ui.js';
+    import authLock from '../js/auth/auth-lock.js';
+    import authGuard from '../js/auth/auth-guard.js';
 
     window.authCore = authCore;
     window.authUI = authUI;
@@ -991,8 +991,11 @@
             // ── Auto-fill nome from displayName ──
             const displayName = e.detail.user.displayName;
             if (displayName) {
-              document.getElementById('nomeUsuario').value = displayName;
-              localStorage.setItem('nomeUsuario', displayName);
+              const input = document.getElementById('nomeUsuario');
+              if (input) {
+                input.value = displayName;
+                localStorage.setItem('nomeUsuario', displayName);
+              }
             }
           }
         });
@@ -1001,8 +1004,11 @@
           document.body.classList.add('auth-ready');
           // ── Auto-fill on already-authenticated load ──
           if (authCore.currentUser && authCore.currentUser.displayName) {
-            document.getElementById('nomeUsuario').value = authCore.currentUser.displayName;
-            localStorage.setItem('nomeUsuario', authCore.currentUser.displayName);
+            const input = document.getElementById('nomeUsuario');
+            if (input) {
+              input.value = authCore.currentUser.displayName;
+              localStorage.setItem('nomeUsuario', authCore.currentUser.displayName);
+            }
           }
         }
       } else {
@@ -1203,12 +1209,14 @@
     //  Populate building select
     // ──────────────────────────────────────────
     const selectEl = document.getElementById('edificacao');
-    edificacoesArray.forEach(ed => {
-      const opt = document.createElement('option');
-      opt.value = ed;
-      opt.textContent = ed;
-      selectEl.appendChild(opt);
-    });
+    if (selectEl) {
+      edificacoesArray.forEach(ed => {
+        const opt = document.createElement('option');
+        opt.value = ed;
+        opt.textContent = ed;
+        selectEl.appendChild(opt);
+      });
+    }
 
     // ──────────────────────────────────────────
     //  Firebase global listener
@@ -1229,17 +1237,26 @@
         });
       });
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-      document.getElementById('global-done').textContent = done;
-      document.getElementById('global-total').textContent = total;
-      document.getElementById('global-pending').textContent = total - done;
-      document.getElementById('global-pct').textContent = pct + '%';
 
+      const elDone = document.getElementById('global-done');
+      const elTotal = document.getElementById('global-total');
+      const elPending = document.getElementById('global-pending');
+      const elPct = document.getElementById('global-pct');
       const fill = document.getElementById('global-fill');
-      fill.style.width = pct + '%';
-      fill.className = 'progress-fill' + (pct < 30 ? ' danger' : pct < 70 ? ' warn' : '');
+
+      if (elDone) elDone.textContent = done;
+      if (elTotal) elTotal.textContent = total;
+      if (elPending) elPending.textContent = total - done;
+      if (elPct) elPct.textContent = pct + '%';
+
+      if (fill) {
+        fill.style.width = pct + '%';
+        fill.className = 'progress-fill' + (pct < 30 ? ' danger' : pct < 70 ? ' warn' : '');
+      }
     }
 
     function updateSelectProgress() {
+      if (!selectEl) return;
       const opts = selectEl.querySelectorAll('option[value]');
       opts.forEach(opt => {
         const ed = opt.value;
@@ -1593,15 +1610,18 @@
     window.addEventListener('auth-initialized', () => {
       if (window.authCore?.currentUser?.displayName) {
         const nome = window.authCore.currentUser.displayName;
-        document.getElementById('nomeUsuario').value = nome;
-        localStorage.setItem('nomeUsuario', nome);
+        const input = document.getElementById('nomeUsuario');
+        if (input) {
+          input.value = nome;
+          localStorage.setItem('nomeUsuario', nome);
+        }
       }
     });
 
     window.addEventListener('load', () => {
       const saved = localStorage.getItem('nomeUsuario');
       const input = document.getElementById('nomeUsuario');
-      if (saved && !input.value) input.value = saved;
+      if (saved && input && !input.value) input.value = saved;
     });
 
     // ──────────────────────────────────────────
@@ -1616,7 +1636,7 @@
       navigator.serviceWorker.register('/sw.js').catch(() => { });
     }
   </script>
-  <script src="/Central/pwa/app.js"></script>
+  <script src="../pwa/app.js"></script>
 
 </body>
 

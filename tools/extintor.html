@@ -818,10 +818,10 @@
 
   <!-- Autenticação Central -->
   <script type="module">
-    import authCore from '/Central/js/auth/auth-core.js';
-    import authUI from '/Central/js/auth/auth-ui.js';
-    import authLock from '/Central/js/auth/auth-lock.js';
-    import authGuard from '/Central/js/auth/auth-guard.js';
+    import authCore from '../js/auth/auth-core.js';
+    import authUI from '../js/auth/auth-ui.js';
+    import authLock from '../js/auth/auth-lock.js';
+    import authGuard from '../js/auth/auth-guard.js';
 
     window.authCore = authCore;
     window.authUI = authUI;
@@ -1167,15 +1167,14 @@
 
     // 🔹 Abrir modal
     function abrirModal(edificacao, numero) {
-      const nomeUsuario = document.getElementById("nomeUsuario").value.trim();
+      const input = document.getElementById("nomeUsuario");
+      const nomeUsuario = input ? input.value.trim() : "";
       if (!nomeUsuario) {
         alert("⚠️ Digite seu nome antes de iniciar a inspeção.");
-        return; // impede abrir o modal
-        //scroll no começo
-        const conteudo = document.getElementById("modal-content");
-        if (conteudo) conteudo.scrollTop = 0;
-
+        if (input) input.focus();
+        return;
       }
+
 
       numeroAtual = numero;
       edificacaoAtual = edificacao;
@@ -1364,7 +1363,7 @@
 
       const dados = {
         numero: numeroAtual,
-        usuario: document.getElementById("nomeUsuario").value,
+        usuario: document.getElementById("nomeUsuario")?.value || "Anônimo",
         edificacao: edificacaoAtual,
         descricao: extintoresInfo[edificacaoAtual][numeroAtual].descricao,
         tipo: extintoresInfo[edificacaoAtual][numeroAtual].tipo,

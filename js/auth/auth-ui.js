@@ -497,14 +497,19 @@ class AuthUI {
    * FECHAR MODAL
    */
   closeModal() {
-    this.modal.style.display = 'none';
+    if (this.modal) this.modal.style.display = 'none';
     this.isOpen = false;
     document.body.style.overflow = ''; // Restaurar scroll
 
-    // Limpar formulários
-    document.getElementById('auth-form-login').reset();
-    document.getElementById('auth-form-cadastro').reset();
-    document.getElementById('auth-form-recuperar').reset();
+    // Limpar formulários com verificação de segurança
+    const formLogin = document.getElementById('auth-form-login');
+    const formCadastro = document.getElementById('auth-form-cadastro');
+    const formRecuperar = document.getElementById('auth-form-recuperar');
+
+    if (formLogin) formLogin.reset();
+    if (formCadastro) formCadastro.reset();
+    if (formRecuperar) formRecuperar.reset();
+
     this.hideMessage();
   }
 
