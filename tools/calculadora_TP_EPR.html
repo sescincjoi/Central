@@ -7,66 +7,90 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>TAF BA | Bombeiros de Aeródromo</title>
+    <title>Calculadora TP EPR</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <style>
         :root {
+            --red: #FF3B30;
+            --red-hot: #FF2D55;
             --green-ok: #34C759;
             --yellow-warn: #FF9500;
-            --red-hot: #FF3B30;
         }
 
         :root[data-theme="light"] {
-            --bg: #f5f5f7;
-            --panel: #ffffff;
             --primary: #007AFF;
-            --primary-sh: rgba(0, 122, 255, 0.4);
+            --primary-glow: rgba(0, 122, 255, 0.2);
+            --btn-primary-text: #ffffff;
+            --btn-primary-sh: rgba(0, 122, 255, 0.3);
+            --panel: #f5f5f7;
+            --panel-mid: #ffffff;
+            --panel-hi: #e0e0e0;
+            --steel: #e5e5ea;
+            --grid: #00000005;
             --text: #1d1d1f;
             --text-dim: #86868b;
-            --steel: #e5e5ea;
-            --btn-trig-bg: #f5f5f7;
             --modal-bg-rgb: 0, 0, 0;
-            --input-bg: #f5f5f7;
-            --result-bg: #f5f5f7;
-            --panel-sh: rgba(0, 0, 0, 0.08);
+            --btn-ghost-bg: transparent;
+            --loader-bg: #e5e5ea;
+            --best-bg: #f2fbf4;
             --nav-bg: rgba(255, 255, 255, 0.8);
         }
 
         :root[data-theme="dark"] {
-            --bg: #000000;
-            --panel: #1c1c1e;
             --primary: #0A84FF;
-            --primary-sh: rgba(10, 132, 255, 0.4);
+            --primary-glow: rgba(10, 132, 255, 0.2);
+            --btn-primary-text: #ffffff;
+            --btn-primary-sh: rgba(10, 132, 255, 0.3);
+            --panel: #000000;
+            --panel-mid: #1c1c1e;
+            --panel-hi: #2c2c2e;
+            --steel: #38383a;
+            --grid: rgba(255, 255, 255, 0.03);
             --text: #f5f5f7;
             --text-dim: #98989d;
-            --steel: #38383a;
-            --btn-trig-bg: #2c2c2e;
             --modal-bg-rgb: 255, 255, 255;
-            --input-bg: #2c2c2e;
-            --result-bg: rgba(255, 255, 255, 0.1);
-            --panel-sh: rgba(0, 0, 0, 0.5);
+            --btn-ghost-bg: transparent;
+            --loader-bg: #38383a;
+            --best-bg: #112a15;
             --nav-bg: rgba(28, 28, 30, 0.8);
         }
 
         * {
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            position: fixed;
+            background: var(--panel);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg);
+            background: var(--panel);
             color: var(--text);
             display: flex;
             flex-direction: column;
             height: 100vh;
             height: 100dvh;
-            overflow: hidden;
-            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 32px 32px;
         }
 
         .cmd-bar {
@@ -83,18 +107,7 @@
             z-index: 10;
         }
 
-        .sys-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sys-title svg {
-            fill: var(--text);
-            transition: fill 0.3s;
-        }
-
-        .sys-name {
+        .id-callsign {
             font-size: 16px;
             font-weight: 700;
             letter-spacing: -0.5px;
@@ -102,7 +115,7 @@
             transition: color 0.3s;
         }
 
-        .sys-sub {
+        .id-sub {
             font-size: 11px;
             font-weight: 500;
             color: var(--text-dim);
@@ -110,53 +123,27 @@
             transition: color 0.3s;
         }
 
-        .btn-hist {
-            background: transparent;
-            border: 1px solid var(--steel);
-            color: var(--text-dim);
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
+        .header-actions {
             display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: all 0.2s;
+            gap: 10px;
         }
 
-        .btn-hist:active {
-            background: var(--steel);
+        .btn-header {
+            background: var(--panel);
+            border: 1.5px solid var(--steel);
             color: var(--text);
-        }
-
-        .btn-theme {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid var(--steel);
-            background: transparent;
+            padding: 10px;
+            border-radius: 6px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-dim);
             transition: all 0.2s;
         }
 
-        .btn-theme:hover,
-        .btn-hist:hover {
+        .btn-header:hover {
             background: var(--steel);
-        }
-
-        .btn-theme svg {
-            fill: currentColor;
-        }
-
-        .bar-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
+            border-color: var(--steel);
         }
 
         .mission-strip {
@@ -171,60 +158,74 @@
             transition: background-color 0.3s, border-color 0.3s;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
             z-index: 5;
-        }
-
-        .strip-bg {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 0%;
-            background: rgba(128, 128, 128, 0.4);
-            z-index: 1;
-            transition: width 0.3s ease, background-color 0.3s ease;
+            height: 56px;
         }
 
         .strip-bar {
             position: absolute;
             left: 0;
             top: 0;
-            height: 100%;
+            bottom: 0;
             width: 0%;
-            z-index: 1;
-            transition: width 0.3s linear, background-color 0.3s ease;
+            opacity: 0.15;
+            transition: background-color 0.5s ease;
         }
 
         .strip-bar.ok {
-            background: rgba(76, 175, 80, 0.2);
-            border-right: 2px solid var(--green-ok);
+            background: var(--green-ok);
         }
 
         .strip-bar.warn {
-            background: rgba(255, 152, 0, 0.2);
-            border-right: 2px solid var(--yellow-warn);
+            background: var(--yellow-warn);
         }
 
         .strip-bar.fail {
-            background: rgba(244, 67, 54, 0.2);
-            border-right: 2px solid var(--red-hot);
+            background: rgba(255, 0, 0, 0.2);
+            opacity: 1;
         }
 
-        .strip-info {
+        .strip-score {
             position: relative;
             z-index: 2;
-            width: 100%;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            min-width: 140px;
+            padding: 0 16px;
+            border-right: 1px solid var(--steel);
+            flex-shrink: 0;
+        }
+
+        .strip-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            letter-spacing: 1px;
         }
 
         .strip-status {
             font-size: 13px;
             font-weight: 700;
-            color: var(--text-dim);
-            letter-spacing: 0.5px;
+            color: var(--green-ok);
             text-transform: uppercase;
-            transition: color 0.3s;
+        }
+
+        .strip-status.warn {
+            color: var(--yellow-warn);
+        }
+
+        .strip-status.fail {
+            color: var(--red-hot);
+        }
+
+        .strip-timer {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 0 16px;
         }
 
         .strip-time {
@@ -235,263 +236,198 @@
             transition: color 0.3s;
         }
 
-        .blink {
-            animation: flash 1s infinite alternate;
-        }
-
-        @keyframes flash {
-            from {
-                opacity: 1;
-            }
-
-            to {
-                opacity: 0.3;
-            }
-        }
-
-        .critical-blink {
-            animation: blinker 0.4s infinite alternate;
-        }
-
-        @keyframes blinker {
-            from {
-                opacity: 1;
-            }
-
-            to {
-                opacity: 0.3;
-            }
-        }
-
-        .main-stage {
+        .main {
+            position: relative;
+            z-index: 5;
             flex: 1;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            padding: 12px 15px;
-            gap: 10px;
-            overflow-y: auto;
+            padding: 12px 16px;
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
         }
 
-        .input-group {
-            background: var(--panel);
-            padding: 10px 15px;
+        .summary-card {
+            background: var(--panel-mid);
+            border: 1.5px solid var(--steel);
             border-radius: 6px;
-            border-left: 3px solid var(--steel);
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            transition: background-color 0.3s, border-color 0.3s;
+            padding: 14px 18px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
-        .input-group label {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 10px;
+        .summary-label {
+            font-size: 11px;
+            font-weight: 600;
             color: var(--text-dim);
-            text-transform: uppercase;
-            transition: color 0.3s;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 6px;
         }
 
-        select {
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--steel);
-            padding: 8px;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            border-radius: 4px;
-            outline: none;
-            appearance: none;
-            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        .summary-val {
+            font-variant-numeric: tabular-nums;
+            font-size: 32px;
+            color: var(--primary);
+            font-weight: 800;
+            transition: all 0.3s;
         }
 
         .ex-card {
-            background: var(--panel);
+            position: relative;
+            background: var(--panel-mid);
             border-radius: 18px;
             padding: 16px 20px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 6px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
             border: 1px solid transparent;
         }
 
-        .ex-card::before {
-            content: '';
+        .ex-card.active {
+            border-color: var(--steel);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
+        }
+
+        .ex-stripe {
             position: absolute;
             left: 0;
             top: 0;
             bottom: 0;
             width: 5px;
             background: var(--steel);
-            transition: background 0.3s;
         }
 
-        .ex-card.active {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px var(--panel-sh), 0 2px 6px rgba(0, 0, 0, 0.04);
-            border-color: var(--steel);
-        }
-
-        .ex-card.active::before {
+        .ex-card.active .ex-stripe {
             background: var(--primary);
         }
 
         .ex-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            justify-content: space-between;
         }
 
-        .ex-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -0.3px;
-            transition: color 0.3s;
-        }
-
-        .ex-target {
+        .ex-id {
             font-size: 11px;
             font-weight: 600;
-            background: var(--bg);
-            padding: 4px 8px;
-            border-radius: 12px;
             color: var(--text-dim);
-            border: 1px solid var(--steel);
+            letter-spacing: 1px;
+        }
+
+        .ex-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+
+        .ex-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+        }
+
+        .ex-time {
+            font-variant-numeric: tabular-nums;
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text-dim);
             transition: all 0.3s;
         }
 
-        .ex-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .timer-val {
-            font-variant-numeric: tabular-nums;
-            font-size: 42px;
-            color: var(--text-dim);
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -1px;
-            transition: color 0.3s;
-        }
-
-        .ex-card.active .timer-val {
+        .ex-card.active .ex-time {
             color: var(--primary);
-        }
-
-        @keyframes pulseTimer {
-            0% {
-                text-shadow: 0 0 10px rgba(128, 128, 128, 0.1);
-            }
-
-            50% {
-                text-shadow: 0 0 20px rgba(128, 128, 128, 0.3);
-            }
-
-            100% {
-                text-shadow: 0 0 10px rgba(128, 128, 128, 0.1);
-            }
         }
 
         .btn-trigger {
             width: 50px;
             height: 50px;
-            border-radius: 6px;
+            border-radius: 12px;
+            background: var(--panel-hi);
             border: 1px solid var(--steel);
-            background: var(--btn-trig-bg);
+            cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
+            gap: 2px;
+            transition: all 0.15s;
         }
 
-        .btn-trigger svg {
-            fill: var(--text-dim);
-            margin-bottom: 2px;
-            transition: fill 0.3s;
+        .btn-trigger.armed {
+            background: var(--panel);
+            border-color: var(--primary);
         }
 
         .trig-label {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 10px;
-            font-weight: 700;
+            font-size: 9px;
             color: var(--text-dim);
-            transition: color 0.3s;
+            font-weight: 700;
         }
 
-        .btn-trigger.running {
-            background: var(--primary);
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px var(--primary-sh);
+        .btn-trigger.armed .trig-label {
+            color: var(--primary);
         }
 
-        .btn-trigger.running svg {
-            fill: #ffffff;
-        }
-
-        .btn-trigger.running .trig-label {
-            color: #ffffff;
-        }
-
-        .btn-end {
+        .btn-terminate {
             background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
-            color: white;
             border: none;
-            padding: 14px;
+            border-radius: 14px;
+            color: #fff;
             font-size: 15px;
-            font-weight: 600;
-            border-radius: 12px;
-            margin-top: 5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            margin-bottom: calc(12px + env(safe-area-inset-bottom));
             box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
-            margin-bottom: env(safe-area-inset-bottom);
             transition: all 0.2s;
             text-transform: math-auto;
         }
 
-        .btn-end:active {
+        .btn-terminate:active {
             transform: translateY(2px);
-            opacity: 0.9;
+            box-shadow: 0 2px 0 #8b0000;
         }
 
-        #overlay {
+        .overlay {
             position: fixed;
             inset: 0;
+            z-index: 100;
             background: rgba(var(--modal-bg-rgb), 0.5);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 100;
             padding: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .modal-panel {
             width: 100%;
             max-width: 400px;
-            background: var(--panel);
+            background: var(--panel-mid);
             border-radius: 20px;
             padding: 28px;
             position: relative;
             display: none;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
             text-align: center;
-            transition: background-color 0.3s;
         }
 
         .modal-title {
@@ -503,45 +439,6 @@
             border-bottom: 1px solid var(--steel);
             transition: color 0.3s, border-color 0.3s;
             letter-spacing: -0.5px;
-        }
-
-        .instruction-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        .step-num {
-            background: var(--steel);
-            color: var(--text);
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            flex-shrink: 0;
-            margin-top: 2px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .step-text {
-            font-size: 14px;
-            color: var(--text-dim);
-            line-height: 1.4;
-            transition: color 0.3s;
-        }
-
-        .step-text strong {
-            color: var(--text);
-            display: block;
-            font-size: 15px;
-            margin-bottom: 2px;
-            transition: color 0.3s;
         }
 
         .btn-primary {
@@ -577,13 +474,17 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
             transition: all 0.2s;
-            margin-top: 10px;
             text-transform: math-auto;
         }
 
         .btn-danger:active {
             transform: translateY(2px);
             opacity: 0.9;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
         }
 
         .btn-ghost {
@@ -612,40 +513,38 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
-            color: var(--text);
+            text-align: center;
         }
 
         .loader-ring {
-            width: 44px;
-            height: 44px;
-            border: 4px solid var(--steel);
+            width: 56px;
+            height: 56px;
+            border: 4px solid var(--loader-bg);
             border-top-color: var(--primary);
             border-radius: 50%;
-            animation: rot 0.8s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
 
-        @keyframes rot {
+        @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
 
         .result-rows {
-            margin-top: 20px;
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 18px;
             text-align: left;
-            background: var(--result-bg);
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid var(--steel);
-            margin-bottom: 15px;
-            transition: all 0.3s;
         }
 
         .result-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed var(--steel);
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1.5px solid var(--steel);
         }
 
         .result-row:last-child {
@@ -653,69 +552,157 @@
         }
 
         .rr-label {
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 14px;
             color: var(--text-dim);
-            transition: color 0.3s;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .rr-val {
-            font-weight: 700;
-            font-size: 15px;
+            font-size: 18px;
             color: var(--text);
-            transition: color 0.3s;
-        }
-
-        .result-total {
-            margin-top: 10px;
-            padding-top: 15px;
-            border-top: 1px solid var(--steel);
-        }
-
-        .result-total .rr-val {
-            font-size: 20px;
-            color: var(--primary);
             font-weight: 800;
         }
 
-        .nota-detail {
-            font-size: 13px;
-            font-weight: 600;
+        .result-total {
+            border-top: 3px solid var(--steel);
+            padding-top: 15px;
             margin-top: 10px;
+        }
+
+        .result-total .rr-label {
+            color: var(--primary);
+        }
+
+        .result-total .rr-val {
+            color: var(--primary);
+            font-size: 26px;
+            font-weight: 900;
+        }
+
+        .instruction-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
             margin-bottom: 15px;
+            text-align: left;
         }
 
-        .nota-detail.positivo {
-            color: var(--green-ok);
-        }
-
-        .nota-detail.negativo {
-            color: var(--red-hot);
-        }
-
-        .btn-export {
-            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-            color: white;
-            border: none;
-            padding: 14px;
-            width: 100%;
-            margin-top: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            border-radius: 12px;
+        .step-num {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--steel);
+            color: var(--panel-mid);
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            font-size: 15px;
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
-            text-transform: math-auto;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 2px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        .btn-export:active {
-            transform: translateY(2px);
-            opacity: 0.9;
+        .step-text {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.4;
+            transition: color 0.3s;
+        }
+
+        .step-text strong {
+            color: var(--text);
+            display: block;
+            font-size: 15px;
+            margin-bottom: 2px;
+            transition: color 0.3s;
+            font-weight: 700;
+        }
+
+        /* Estilos Histórico */
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .ba-group {
+            margin-bottom: 20px;
+        }
+
+        .ba-name-header {
+            background: var(--panel-hi);
+            padding: 8px 12px;
+            font-weight: 800;
+            font-size: 14px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text);
+        }
+
+        .ba-entry {
+            background: var(--panel-mid);
+            border: 1px solid var(--steel);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .ba-entry:hover {
+            border-color: var(--primary);
+        }
+
+        .ba-entry.best {
+            border: 2px solid var(--green-ok);
+            background: var(--best-bg);
+        }
+
+        .best-badge {
+            font-size: 10px;
+            font-weight: 600;
+            background: var(--green-ok);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .entry-info {
+            font-size: 13px;
+        }
+
+        .entry-time {
+            font-variant-numeric: tabular-nums;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .input-ba {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--steel);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 15px 0;
+            outline: none;
+            background: var(--bg);
+            color: var(--text);
+            text-transform: uppercase;
+            transition: border-color 0.3s;
+        }
+
+        .input-ba:focus {
+            border-color: var(--primary);
         }
 
         #toast {
@@ -738,9 +725,38 @@
             white-space: nowrap;
             transition: all 0.3s;
         }
+
+        @keyframes timerFlow {
+            from {
+                filter: drop-shadow(0 0 2px rgba(20, 20, 20, 0.1));
+            }
+
+            to {
+                filter: drop-shadow(0 0 12px rgba(20, 20, 20, 0.5));
+            }
+        }
+
+        .active .ex-time,
+        .active-total {
+            animation: timerFlow 0.8s infinite alternate;
+        }
+
+        .blink {
+            animation: blinker 0.45s infinite alternate;
+        }
+
+        @keyframes blinker {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0.2;
+            }
+        }
     </style>
     <script>
-        const savedTheme = localStorage.getItem('theme_preference_bataf') || 'light';
+        const savedTheme = localStorage.getItem('theme_preference_tp') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
     </script>
 </head>
@@ -748,168 +764,183 @@
 <body>
 
     <div class="cmd-bar">
-        <div class="sys-title">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-                <path
-                    d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,3L19,6.11V11C19,15.33 16.25,19.43 12,20.93C7.75,19.43 5,15.33 5,11V6.11L12,3Z" />
-            </svg>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn-header" onclick="window.location.href='../'">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6" />
+                </svg>
+            </button>
             <div>
-                <div class="sys-name">TAF BA</div>
-                <div class="sys-sub">MOD. FISIOLÓGICO</div>
+                <div class="id-callsign">TP/EPR - BA</div>
+                <div class="id-sub">AFEIRIÇÃO DE VESTIMENTA</div>
             </div>
         </div>
-        <div class="bar-actions">
-            <button class="btn-theme" onclick="toggleTheme()" title="Alternar Tema">
-                <svg id="theme-icon-light" style="display:none;" viewBox="0 0 24 24" width="16" height="16">
+        <div class="header-actions">
+            <button class="btn-header" onclick="toggleTheme()" title="Alternar Tema">
+                <svg id="theme-icon-light" style="display:none;" viewBox="0 0 24 24" width="20" height="20">
                     <path
                         d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.76 17.09,7.14 16.5,6.63L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.86,19 13.67,18.83 14.41,18.56L12,22Z" />
                 </svg>
-                <svg id="theme-icon-dark" style="display:none;" viewBox="0 0 24 24" width="16" height="16">
+                <svg id="theme-icon-dark" style="display:none;" viewBox="0 0 24 24" width="20" height="20">
                     <path
                         d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.11,19.05C17.14,21 14.23,21.84 11.45,21.14C8.67,20.44 6.31,18.3 5.37,15.58C4.43,12.85 4.96,9.82 6.78,7.56C7.26,6.96 7.78,6.46 8.35,6C9.07,5.43 10.37,6.4 9.9,7.25C9.42,8.08 9.17,9.03 9.17,10C9.17,13.22 11.78,15.83 15,15.83C16.32,15.83 17.55,15.39 18.55,14.65C18.69,14.55 18.82,14.44 18.97,14.33C18.97,14.88 18.97,15.42 18.97,15.95Z" />
                 </svg>
             </button>
-            <button class="btn-hist" onclick="history.back()">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+            <button class="btn-header" onclick="abrirHistorico()" title="Histórico de Baterias">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
                 </svg>
-                VOLTAR
             </button>
         </div>
     </div>
 
-    <!-- Barra de Missão -->
     <div class="mission-strip">
-        <div class="strip-bar" id="progressBar"></div>
-        <div class="strip-info">
-            <span class="strip-status" id="notaAtual">NOTA: -</span>
-            <span class="strip-time" id="regressivo">00:00,00</span>
+        <div class="strip-bar ok" id="stripBar"></div>
+        <div class="strip-score">
+            <span class="strip-label" style="margin-right: 12px;">STATUS</span>
+            <span class="strip-status" id="statusLabel">AGUARDANDO</span>
+        </div>
+        <div class="strip-timer">
+            <span class="strip-label">META</span>
+            <span class="strip-time" id="timerVal">01:30,00</span>
         </div>
     </div>
 
-    <div class="main-stage">
-        <div class="input-group">
-            <label for="idade">Idade do Bombeiro</label>
-            <select id="idade"></select>
+    <div class="main">
+        <div class="summary-card">
+            <span class="summary-label">TEMPO TOTAL (TP+EPR)</span>
+            <div class="summary-val" id="totalTime">00:00,00</div>
         </div>
 
-        <div class="ex-card" id="card-flexao">
+        <div class="ex-card" id="card-tp">
+            <div class="ex-stripe"></div>
             <div class="ex-header">
-                <span class="ex-title">Flexões</span>
-                <span class="ex-target">30 REP</span>
+                <span class="ex-id">TAREFA 01</span>
             </div>
-            <div class="ex-row">
-                <div class="timer-val" id="flexaoTime">00:00,00</div>
-                <button class="btn-trigger" id="btn-flexao" onclick="ativar('flexao')">
+            <div class="ex-name">Traje de Proteção (TP)</div>
+            <div class="ex-bottom">
+                <span class="ex-time" id="tpTime">00:00,00</span>
+                <button class="btn-trigger" id="btn-tp" onclick="ativar('tp')">
                     <svg viewBox="0 0 24 24" width="24" height="24">
-                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161" />
                     </svg>
                     <span class="trig-label">INICIAR</span>
                 </button>
             </div>
         </div>
 
-        <div class="ex-card" id="card-abdominal">
+        <div class="ex-card" id="card-epr">
+            <div class="ex-stripe"></div>
             <div class="ex-header">
-                <span class="ex-title">Abdominais</span>
-                <span class="ex-target">45 REP</span>
+                <span class="ex-id">TAREFA 02</span>
             </div>
-            <div class="ex-row">
-                <div class="timer-val" id="abdominalTime">00:00,00</div>
-                <button class="btn-trigger" id="btn-abdominal" onclick="ativar('abdominal')">
+            <div class="ex-name">Equip. Prot. Resp. (EPR)</div>
+            <div class="ex-bottom">
+                <span class="ex-time" id="eprTime">00:00,00</span>
+                <button class="btn-trigger" id="btn-epr" onclick="ativar('epr')">
                     <svg viewBox="0 0 24 24" width="24" height="24">
-                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161" />
                     </svg>
                     <span class="trig-label">INICIAR</span>
                 </button>
             </div>
         </div>
 
-        <div class="ex-card" id="card-polichinelo">
-            <div class="ex-header">
-                <span class="ex-title">Polichinelos</span>
-                <span class="ex-target">45 REP</span>
-            </div>
-            <div class="ex-row">
-                <div class="timer-val" id="polichineloTime">00:00,00</div>
-                <button class="btn-trigger" id="btn-polichinelo" onclick="ativar('polichinelo')">
-                    <svg viewBox="0 0 24 24" width="24" height="24">
-                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
-                    </svg>
-                    <span class="trig-label">INICIAR</span>
-                </button>
-            </div>
-        </div>
-
-        <button class="btn-end" onclick="confirmarEncerramento()">ENCERRAR MISSÃO</button>
+        <button class="btn-terminate" onclick="confirmarEncerramento()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+            </svg>
+            ENCERRAR AFERIÇÃO
+        </button>
     </div>
 
-    <!-- Overlay unificado -->
-    <div id="overlay">
-        <div class="modal-panel" id="introModal">
+    <div class="overlay" id="overlay">
+        <!-- Modal Intro -->
+        <div class="modal-panel" id="introModal" style="display: none;">
             <div class="modal-title">Guia de Operação</div>
             <div class="instruction-item">
                 <div class="step-num">1</div>
-                <div class="step-text"><strong>Configuração</strong>Selecione a idade do Bombeiro para carregar os
-                    critérios da avaliação.</div>
+                <div class="step-text"><strong>Início da Aferição</strong>Toque no botão "Iniciar" de qualquer etapa
+                    para começar.</div>
             </div>
             <div class="instruction-item">
                 <div class="step-num">2</div>
-                <div class="step-text"><strong>Início</strong>Toque no Play em qualquer teste para começar. O tempo é
-                    contínuo e compartilhado.</div>
+                <div class="step-text"><strong>Alternância</strong>As etapas podem ser alternadas livremente conforme a
+                    sequência de cada BA.</div>
             </div>
             <div class="instruction-item">
                 <div class="step-num">3</div>
-                <div class="step-text"><strong>Migração</strong>Toque no Play de outro teste para transferir a
-                    cronometragem. Você pode alternar livremente.</div>
+                <div class="step-text"><strong>Metas</strong>Meta: Abaixo de 01:00,00 para Aprovado. Até 01:30,00 para
+                    Atenção.</div>
             </div>
             <div class="instruction-item">
                 <div class="step-num">4</div>
-                <div class="step-text"><strong>Conclusão</strong>O cronômetro só para definitivamente ao clicar em
-                    "Encerrar Missão".</div>
+                <div class="step-text"><strong>Histórico</strong>Salve a sessão para manter o histórico de diferentes
+                    BAs e baterias.</div>
             </div>
-            <button class="btn-primary" onclick="fecharIntro()">Iniciar Operação</button>
+            <button class="btn-primary" onclick="fecharIntro()">Entendido, Iniciar</button>
         </div>
 
-        <!-- Modal de confirmação de encerramento -->
+        <!-- Modal Confirmação -->
         <div class="modal-panel" id="confirmModal">
-            <div class="modal-title" style="color:var(--red-hot);border-color:var(--steel);">ENCERRAR MISSÃO?</div>
-            <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px;line-height:1.5;">
-                O cronômetro será parado<br>e o resultado calculado.</p>
-            <button class="btn-danger" onclick="confirmarSim()" style="box-shadow:none;">Confirmar Encerramento</button>
-            <button class="btn-ghost" onclick="confirmarNao()">Voltar ao TAF</button>
+            <div class="modal-title" style="color:var(--red-hot);">ENCERRAR AFERIÇÃO?</div>
+            <button class="btn-primary" onclick="finalizar()">Confirmar e Enviar</button>
+            <button class="btn-primary btn-save" onclick="abrirNomeBA()">Salvar no Histórico</button>
+            <button class="btn-ghost" style="color: var(--red); border-color: var(--red); font-weight: bold;"
+                onclick="resetar()">Nova Aferição</button>
+            <button class="btn-ghost" onclick="cancelarEncerramento()">Voltar</button>
+        </div>
+
+        <!-- Modal Nome BA -->
+        <div class="modal-panel" id="nomeModal">
+            <div class="modal-title">IDENTIFICAÇÃO</div>
+            <p style="font-size: 13px; color: var(--text-dim);">Informe o nome do Bombeiro:</p>
+            <input type="text" id="nomeBA" class="input-ba" placeholder="NOME DO BA" autofocus>
+            <button class="btn-primary" onclick="salvarHistorico()">Salvar Bateria</button>
+            <button class="btn-ghost" onclick="fecharNomeBA()">Cancelar</button>
+        </div>
+
+        <!-- Modal Histórico -->
+        <div class="modal-panel" id="historicoModal">
+            <div class="modal-title">HISTÓRICO DE BATERIAS</div>
+            <div id="history-content" class="history-list"></div>
+            <button class="btn-danger" style="margin-top: 20px; padding: 12px; font-size: 13px;"
+                onclick="limparHistorico()">Limpar Todo Histórico</button>
+            <button class="btn-ghost" onclick="fecharHistorico()">Fechar</button>
         </div>
 
         <div class="loader-wrap" id="loader">
             <div class="loader-ring"></div>
-            <div style="font-weight:700; font-size: 14px; letter-spacing: 0.5px;">PROCESSANDO DADOS...</div>
+            <div style="font-weight:700; font-size: 14px; letter-spacing: 0.5px;">PROCESSANDO...</div>
         </div>
 
+        <!-- Modal Relatório Final -->
         <div class="modal-panel" id="finalModal">
-            <div class="modal-title">RELATÓRIO TAF</div>
+            <div class="modal-title">RELATÓRIO FINAL</div>
             <div id="results-content"></div>
-            <button class="btn-export" onclick="exportarImagem()">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                    <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
-                </svg>
-                SALVAR COMO IMAGEM
-            </button>
-            <button class="btn-ghost" onclick="fecharModalCompleto()">NOVO TAF</button>
+            <button class="btn-primary" onclick="resetar()">Nova Aferição</button>
+            <button class="btn-ghost" onclick="fecharRelatorio()">Voltar ao Histórico</button>
         </div>
     </div>
 
     <div id="toast"></div>
 
-    <!-- Canvas oculto para exportação -->
-    <canvas id="exportCanvas" style="display:none;"></canvas>
-
     <script>
-        // ─── Tema ─────────────────────────────────────────────────────────────────
+        const LIMITE = 90000;
+        const METALOW = 60000;
+        let state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null };
+
+        // Carregar ou Inicializar Histórico
+        let db = JSON.parse(localStorage.getItem('tp_epr_logs') || '[]');
+
         function toggleTheme() {
             const root = document.documentElement;
             const newTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             root.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme_preference_bataf', newTheme);
+            localStorage.setItem('theme_preference_tp', newTheme);
             updateThemeIcon();
         }
 
@@ -919,430 +950,255 @@
             document.getElementById('theme-icon-dark').style.display = theme === 'light' ? 'block' : 'none';
         }
 
-        // ─── Estado da aplicação ───────────────────────────────────────────────────
-        const EXERCISES = ['flexao', 'abdominal', 'polichinelo'];
-
-        const state = {
-            activeExercise: null,
-            rafId: null,
-            startTimestamp: 0,
-            timers: { flexao: 0, abdominal: 0, polichinelo: 0 },
-            finalData: null,
-        };
-
-        function getLimites(idade) {
-            if (!idade) return null;
-            return Number(idade) < 40
-                ? { 10: 120000, 9: 140000, 8: 160000, 7: 180000 }
-                : { 10: 180000, 9: 200000, 8: 220000, 7: 240000 };
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('introModal').style.display = 'block';
+        });
 
         function formatTime(ms) {
-            const absMs = Math.abs(ms);
-            const mins = Math.floor(absMs / 60000);
-            const secs = Math.floor((absMs % 60000) / 1000);
-            const cents = Math.floor((absMs % 1000) / 10);
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(cents).padStart(2, '0')}`;
+            const abs = Math.abs(ms);
+            const m = Math.floor(abs / 60000), s = Math.floor((abs % 60000) / 1000), c = Math.floor((abs % 1000) / 10);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(c).padStart(2, '0')}`;
         }
 
-        function calcularNota(total, limites) {
-            if (!limites) return { nota: '-', colorClass: '' };
-            if (total <= limites[10]) return { nota: '10', colorClass: 'ok' };
-            if (total <= limites[9]) return { nota: '9', colorClass: 'warn' };
-            if (total <= limites[8]) return { nota: '8', colorClass: 'warn' };
-            if (total <= limites[7]) return { nota: '7', colorClass: 'fail' };
-            return { nota: 'REPROVADO', colorClass: 'fail' };
+        function rafLoop() {
+            const now = Date.now();
+            const globalElapsed = now - state.globalStart;
+            const totalEl = document.getElementById('totalTime');
+            totalEl.innerText = formatTime(globalElapsed);
+            totalEl.classList.add('active-total');
+
+            const elapsedSinceSwitch = now - state.lastSwitchTime;
+            const currentTotal = state.timers[state.activeId] + elapsedSinceSwitch;
+            document.getElementById(state.activeId + 'Time').innerText = formatTime(currentTotal);
+
+            updateTimeline(globalElapsed);
+            state.rafId = requestAnimationFrame(rafLoop);
         }
 
-        function popularSelectIdade() {
-            const sel = document.getElementById('idade');
-            const placeholder = document.createElement('option');
-            placeholder.value = '';
-            placeholder.textContent = 'ESCOLHA A IDADE';
-            placeholder.disabled = true;
-            placeholder.selected = true;
-            sel.appendChild(placeholder);
+        function updateTimeline(elapsed) {
+            const remaining = Math.max(0, LIMITE - elapsed);
+            document.getElementById('timerVal').innerText = formatTime(remaining);
+            const bar = document.getElementById('stripBar');
+            const label = document.getElementById('statusLabel');
 
-            for (let i = 18; i <= 65; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = `${i} ANOS`;
-                sel.appendChild(opt);
-            }
-
-            sel.addEventListener('change', resetarContagem);
-        }
-
-        function showToast(msg, duration = 3000) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.display = 'block';
-            clearTimeout(t._timeout);
-            t._timeout = setTimeout(() => { t.style.display = 'none'; }, duration);
-        }
-
-        function resetarContagem() {
-            const idadeVal = document.getElementById('idade').value;
-            if (!idadeVal) return;
-            const limites = getLimites(Number(idadeVal));
-            document.getElementById('regressivo').innerText = formatTime(limites[7]);
-            document.getElementById('notaAtual').innerText = 'NOTA: 10';
-            document.getElementById('notaAtual').style.color = 'var(--text-dim)';
-            const bar = document.getElementById('progressBar');
-            bar.className = 'strip-bar ok';
-            bar.style.width = '0%';
-        }
-
-        function updateTimeline() {
-            const idadeVal = document.getElementById('idade').value;
-            if (!idadeVal) return;
-
-            const limites = getLimites(Number(idadeVal));
-            const total = state.timers.flexao + state.timers.abdominal + state.timers.polichinelo;
-            const { nota, colorClass } = calcularNota(total, limites);
-
-            const bar = document.getElementById('progressBar');
-            const notaTxt = document.getElementById('notaAtual');
-            const reg = document.getElementById('regressivo');
-
-            bar.className = 'strip-bar ' + colorClass;
-            bar.style.width = Math.min((total / limites[7]) * 100, 100) + '%';
-            notaTxt.innerText = 'NOTA: ' + nota;
-
-            if (colorClass === 'ok') notaTxt.style.color = 'var(--green-ok)';
-            else if (colorClass === 'warn') notaTxt.style.color = 'var(--yellow-warn)';
-            else notaTxt.style.color = 'var(--red-hot)';
-
-            reg.innerText = formatTime(Math.max(0, limites[7] - total));
-
-            if (nota === 'REPROVADO') {
-                reg.classList.add('critical-blink');
-                bar.classList.add('critical-blink');
+            if (elapsed < METALOW) {
+                bar.className = 'strip-bar ok'; bar.style.width = ((remaining / LIMITE) * 100) + '%';
+                label.innerText = 'APROVADO'; label.style.color = 'var(--green-ok)';
+            } else if (elapsed < LIMITE) {
+                bar.className = 'strip-bar warn'; bar.style.width = ((remaining / LIMITE) * 100) + '%';
+                label.innerText = 'ATENÇÃO'; label.style.color = 'var(--yellow-warn)';
             } else {
-                reg.classList.remove('critical-blink');
-                bar.classList.remove('critical-blink');
+                bar.className = 'strip-bar fail'; label.innerText = 'REPROVADO'; label.className = 'strip-status fail blink'; label.style.color = 'var(--red-hot)';
             }
         }
 
-        function rafLoop(timestamp) {
-            const ex = state.activeExercise;
-            if (!ex) return;
-
-            state.timers[ex] = Date.now() - state.startTimestamp;
-            document.getElementById(ex + 'Time').innerText = formatTime(state.timers[ex]);
-            updateTimeline();
-
-            state.rafId = requestAnimationFrame(rafLoop);
-        }
-
-        function ativar(exercise) {
-            const idade = document.getElementById('idade').value;
-            if (!idade) { showToast('⚠️ SELECIONE A IDADE!'); return; }
-            if (state.activeExercise === exercise) return;
-
-            if (state.rafId) cancelAnimationFrame(state.rafId);
-
-            state.activeExercise = exercise;
-            state.startTimestamp = Date.now() - state.timers[exercise];
-
-            state.rafId = requestAnimationFrame(rafLoop);
+        function ativar(id) {
+            if (state.activeId === id) return;
+            const now = Date.now();
+            if (!state.globalStart) state.globalStart = now;
+            if (state.activeId) state.timers[state.activeId] += (now - state.lastSwitchTime);
+            state.activeId = id;
+            state.lastSwitchTime = now;
             updateUI();
+            if (!state.rafId) state.rafId = requestAnimationFrame(rafLoop);
         }
 
         function updateUI() {
-            EXERCISES.forEach(ex => {
-                const card = document.getElementById('card-' + ex);
-                const btn = document.getElementById('btn-' + ex);
-                const isActive = state.activeExercise === ex;
-
-                card.classList.toggle('active', isActive);
-                btn.classList.toggle('running', isActive);
-                btn.innerHTML = isActive
-                    ? `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg><span class="trig-label">ATIVO</span>`
-                    : `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg><span class="trig-label">INICIAR</span>`;
+            ['tp', 'epr'].forEach(id => {
+                const active = state.activeId === id;
+                document.getElementById('card-' + id).classList.toggle('active', active);
+                const btn = document.getElementById('btn-' + id);
+                btn.classList.toggle('armed', active);
+                btn.innerHTML = active
+                    ? `<svg viewBox="0 0 24 24" width="24" height="24" style="color:var(--primary)"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="currentColor"/></svg><span class="trig-label">ATIVO</span>`
+                    : `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z" fill="#616161"/></svg><span class="trig-label">INICIAR</span>`;
             });
         }
 
+        function fecharIntro() { document.getElementById('overlay').style.display = 'none'; document.getElementById('introModal').style.display = 'none'; }
+
         function confirmarEncerramento() {
-            const idade = document.getElementById('idade').value;
-            if (!idade) { showToast('⚠️ SELECIONE A IDADE!'); return; }
-
-            if (state.rafId) cancelAnimationFrame(state.rafId);
-
-            const overlay = document.getElementById('overlay');
-            overlay.style.display = 'flex';
+            if (!state.globalStart) return;
+            cancelAnimationFrame(state.rafId); state.rafId = null;
+            document.getElementById('overlay').style.display = 'flex';
             document.getElementById('confirmModal').style.display = 'block';
-            document.getElementById('introModal').style.display = 'none';
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('finalModal').style.display = 'none';
         }
 
-        function confirmarSim() {
-            document.getElementById('confirmModal').style.display = 'none';
-            finalizar();
-        }
-
-        function confirmarNao() {
+        function cancelarEncerramento() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('confirmModal').style.display = 'none';
-
-            if (state.activeExercise) {
-                state.startTimestamp = Date.now() - state.timers[state.activeExercise];
-                state.rafId = requestAnimationFrame(rafLoop);
-            }
+            state.lastSwitchTime = Date.now();
+            state.rafId = requestAnimationFrame(rafLoop);
         }
 
-        function finalizar() {
-            if (state.rafId) cancelAnimationFrame(state.rafId);
-            state.activeExercise = null;
-            updateUI();
+        function abrirNomeBA() {
+            document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('nomeModal').style.display = 'block';
+            document.getElementById('nomeBA').focus();
+        }
 
-            const idadeVal = document.getElementById('idade').value;
-            if (!idadeVal) { showToast('⚠️ SELECIONE A IDADE!'); return; }
+        function fecharNomeBA() {
+            document.getElementById('nomeModal').style.display = 'none';
+            document.getElementById('confirmModal').style.display = 'block';
+        }
 
-            const limites = getLimites(Number(idadeVal));
-            const total = state.timers.flexao + state.timers.abdominal + state.timers.polichinelo;
-            const { nota } = calcularNota(total, limites);
+        function salvarHistorico() {
+            const nome = document.getElementById('nomeBA').value.trim().toUpperCase();
+            if (!nome) { alert('Informe o nome do Bombeiro!'); return; }
 
-            const notaNum = parseInt(nota);
-            let detalhe = '';
-            if (!isNaN(notaNum)) {
-                if (notaNum < 10) {
-                    const faltou = total - limites[notaNum + 1];
-                    detalhe = `<div class="nota-detail negativo">▲ ${formatTime(faltou)} além do limite da nota ${notaNum + 1}</div>`;
-                } else {
-                    detalhe = `<div class="nota-detail positivo">✔ Nota máxima atingida</div>`;
-                }
-            } else {
-                const faltou = total - limites[7];
-                detalhe = `<div class="nota-detail negativo">▲ ${formatTime(faltou)} além do limite de aprovação</div>`;
-            }
+            const agora = Date.now();
+            if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
+            const total = agora - state.globalStart;
 
-            state.finalData = {
-                idade: idadeVal,
-                timers: { ...state.timers },
-                total,
-                nota,
-                detalhe,
-                limites,
+            const registro = {
+                id: agora,
+                ba: nome,
+                tp: state.timers.tp,
+                epr: state.timers.epr,
+                total: total,
+                data: new Date().toLocaleString('pt-BR')
             };
 
-            const bg = nota === 'REPROVADO' ? 'rgba(244, 67, 54, 0.1)' : (nota === '10' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)');
-            const color = nota === 'REPROVADO' ? 'var(--red-hot)' : (nota === '10' ? 'var(--green-ok)' : 'var(--yellow-warn)');
+            db.push(registro);
+            localStorage.setItem('tp_epr_logs', JSON.stringify(db));
 
-            document.getElementById('results-content').innerHTML = `
-            <div style="background:${bg}; border:1px solid ${color}; color:${color}; text-align:center; padding:12px; border-radius:12px; margin-bottom:15px;">
-                <span style="font-size:24px; font-weight:900; letter-spacing: -0.5px;">NOTA: ${nota}</span>
-            </div>
-            <div class="result-rows">
-                <div class="result-row"><span class="rr-label">FLEXÕES:</span><span class="rr-val">${formatTime(state.timers.flexao)}</span></div>
-                <div class="result-row"><span class="rr-label">ABDOMINAIS:</span><span class="rr-val">${formatTime(state.timers.abdominal)}</span></div>
-                <div class="result-row"><span class="rr-label">POLICHINELOS:</span><span class="rr-val">${formatTime(state.timers.polichinelo)}</span></div>
-                <div class="result-row result-total"><span class="rr-label">TEMPO TOTAL:</span><span class="rr-val">${formatTime(total)}</span></div>
-            </div>
-            ${detalhe}
-        `;
+            showToast('BATERIA SALVA NO HISTÓRICO!');
+            resetar();
+        }
 
-            const overlay = document.getElementById('overlay');
-            overlay.style.display = 'flex';
+        function finalizar(registroSelecionado = null) {
+            let dados;
+            if (registroSelecionado) {
+                dados = registroSelecionado;
+            } else {
+                const agora = Date.now();
+                if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
+                dados = { tp: state.timers.tp, epr: state.timers.epr, total: agora - state.globalStart };
+            }
+
+            document.querySelectorAll('.modal-panel').forEach(m => m.style.display = 'none');
+            document.getElementById('overlay').style.display = 'flex';
             document.getElementById('loader').style.display = 'flex';
-            document.getElementById('finalModal').style.display = 'none';
-            document.getElementById('introModal').style.display = 'none';
 
             setTimeout(() => {
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('finalModal').style.display = 'block';
-            }, 1200);
+
+                const total = dados.total;
+                const status = total < METALOW ? 'APROVADO' : (total <= LIMITE ? 'ATENÇÃO' : 'REPROVADO');
+                const color = status === 'APROVADO' ? 'var(--green-ok)' : (status === 'ATENÇÃO' ? 'var(--yellow-warn)' : 'var(--red-hot)');
+                const bg = status === 'APROVADO' ? '#e8f5e9' : (status === 'ATENÇÃO' ? '#fff3e0' : '#ffebee');
+
+                document.getElementById('results-content').innerHTML = `
+                <div style="background:${bg}; border:1.5px solid ${color}; color:${color}; text-align:center; padding:12px; border-radius:12px; margin-bottom:18px;">
+                    <span style="font-size:20px; font-weight:800; letter-spacing: -0.5px;">${status}</span>
+                </div>
+                <div class="result-rows">
+                    <div class="result-row"><span class="rr-label">VESTIMENTA TP:</span><span class="rr-val">${formatTime(dados.tp)}</span></div>
+                    <div class="result-row"><span class="rr-label">VESTIMENTA EPR:</span><span class="rr-val">${formatTime(dados.epr)}</span></div>
+                    <div class="result-row result-total"><span class="rr-label">TEMPO TOTAL:</span><span class="rr-val">${formatTime(dados.total)}</span></div>
+                </div>
+                <div style="font-size:14px; color:var(--text); text-align:center; margin-top:15px; font-weight:600; line-height:1.4;">
+                    META: TEMPO ABAIXO DE 01:00,00.<br>
+                    <span style="color:var(--text-dim); font-size: 12px;">CASO MAIOR, ANOTAR PONTOS DE MELHORIA.</span>
+                </div>
+            `;
+            }, 800);
         }
 
-        function exportarImagem() {
-            const d = state.finalData;
-            if (!d) return;
-
-            const W = 640, H = 560;
-            const canvas = document.getElementById('exportCanvas');
-            canvas.width = W;
-            canvas.height = H;
-            const ctx = canvas.getContext('2d');
-
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-
-            const bgColor = isDark ? '#000000' : '#f0f2f5';
-            const panelColor = isDark ? '#141414' : '#ffffff';
-            const textColor = isDark ? '#ffffff' : '#1a1a1a';
-            const textDim = isDark ? '#888888' : '#666666';
-            const strokeColor = isDark ? '#333333' : '#e0e0e0';
-
-            const bg = ctx.createLinearGradient(0, 0, 0, H);
-            bg.addColorStop(0, panelColor);
-            bg.addColorStop(1, bgColor);
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, W, H);
-
-            ctx.fillStyle = isDark ? '#1a1a1a' : '#ffffff';
-            ctx.fillRect(0, 0, W, 70);
-
-            ctx.fillStyle = strokeColor;
-            ctx.fillRect(0, 70, W, 2);
-
-            ctx.fillStyle = textColor;
-            ctx.font = '800 24px Inter, -apple-system, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('TAF - BA  |  MOD. FISIOLÓGICO', W / 2, 46);
-
-            ctx.font = '600 15px Inter, -apple-system, sans-serif';
-            ctx.fillStyle = textDim;
-            ctx.fillText(`Bombeiro · ${d.idade} Anos`, W / 2, 66);
-
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = 1;
-
-            const exercicios = [
-                { label: 'FLEXÕES', time: d.timers.flexao },
-                { label: 'ABDOMINAIS', time: d.timers.abdominal },
-                { label: 'POLICHINELOS', time: d.timers.polichinelo },
-            ];
-
-            let y = 115;
-            ctx.textAlign = 'left';
-
-            exercicios.forEach((ex) => {
-                ctx.fillStyle = isDark ? '#1e1e1e' : '#f8f9fa';
-                roundRect(ctx, 40, y, W - 80, 62, 8);
-                ctx.fill();
-
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = 1;
-                roundRect(ctx, 40, y, W - 80, 62, 8);
-                ctx.stroke();
-
-                ctx.fillStyle = textDim;
-                ctx.font = '13px Inter, -apple-system, monospace';
-                ctx.fillText(ex.label, 60, y + 22);
-
-                ctx.fillStyle = textColor;
-                ctx.font = '800 28px Inter, -apple-system, monospace';
-                ctx.fillText(formatTime(ex.time), 60, y + 50);
-
-                y += 78;
-            });
-
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(40, y);
-            ctx.lineTo(W - 40, y);
-            ctx.stroke();
-            y += 18;
-
-            ctx.textAlign = 'left';
-            ctx.fillStyle = textDim;
-            ctx.font = '600 14px Inter, -apple-system, monospace';
-            ctx.fillText('TEMPO TOTAL', 40, y + 16);
-
-            ctx.fillStyle = textColor;
-            ctx.font = '800 22px Inter, -apple-system, monospace';
-            ctx.textAlign = 'right';
-            ctx.fillText(formatTime(d.total), W - 40, y + 16);
-            y += 50;
-
-            const notaNum = parseInt(d.nota);
-            let notaColor = '#f44336';
-            if (d.nota === '10') notaColor = '#4caf50';
-            else if (d.nota === '9') notaColor = '#ffb300';
-            else if (d.nota === '8') notaColor = '#ff9800';
-            else if (d.nota === '7') notaColor = '#ff5722';
-
-            ctx.fillStyle = notaColor;
-            roundRect(ctx, 40, y, W - 80, 80, 10);
-            ctx.fill();
-
-            ctx.fillStyle = isDark ? '#111111' : '#ffffff';
-            ctx.font = '900 38px Inter, -apple-system, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(`NOTA: ${d.nota}`, W / 2, y + 56);
-
-            y += 96;
-
-            const detalheTexto = gerarDetalheTexto(d);
-            ctx.font = '600 14px Inter, -apple-system, monospace';
-            ctx.fillStyle = notaColor === '#4caf50' ? '#4caf50' : '#f44336';
-            ctx.textAlign = 'center';
-            ctx.fillText(detalheTexto, W / 2, y);
-
-            ctx.fillStyle = textDim;
-            ctx.font = '500 12px Inter, -apple-system, monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, W / 2, H - 18);
-
-            const link = document.createElement('a');
-            link.download = `TAF-BA_Nota${d.nota}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+        function abrirHistorico() {
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('historicoModal').style.display = 'block';
+            renderHistorico();
         }
 
-        function gerarDetalheTexto(d) {
-            const notaNum = parseInt(d.nota);
-            if (!isNaN(notaNum)) {
-                if (notaNum < 10) {
-                    const faltou = d.total - d.limites[notaNum + 1];
-                    return `${formatTime(faltou)} além do limite da nota ${notaNum + 1}`;
-                }
-                return '✔ Nota máxima atingida';
-            }
-            const faltou = d.total - d.limites[7];
-            return `${formatTime(faltou)} além do limite de aprovação`;
+        function fecharHistorico() {
+            document.getElementById('historicoModal').style.display = 'none';
+            if (!state.globalStart) document.getElementById('overlay').style.display = 'none';
+            else document.getElementById('confirmModal').style.display = 'block'; // Volta pro fluxo de encerramento se estava nele
         }
 
-        function roundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            ctx.lineTo(x + r, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-            ctx.lineTo(x, y + r);
-            ctx.quadraticCurveTo(x, y, x + r, y);
-            ctx.closePath();
-        }
-
-        function fecharModalCompleto() {
-            if (state.rafId) cancelAnimationFrame(state.rafId);
-
-            state.activeExercise = null;
-            state.rafId = null;
-            state.timers = { flexao: 0, abdominal: 0, polichinelo: 0 };
-            state.finalData = null;
-
-            document.getElementById('idade').selectedIndex = 0;
-            document.querySelectorAll('.timer-val').forEach(d => { d.innerText = '00:00,00'; });
-            document.getElementById('regressivo').innerText = '00:00,00';
-            document.getElementById('notaAtual').innerText = 'NOTA: -';
-            document.getElementById('notaAtual').style.color = 'var(--text-dim)';
-
-            const bar = document.getElementById('progressBar');
-            bar.style.width = '0%';
-            bar.className = 'strip-bar';
-
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('confirmModal').style.display = 'none';
+        function fecharRelatorio() {
             document.getElementById('finalModal').style.display = 'none';
+            abrirHistorico();
+        }
+
+        function renderHistorico() {
+            const wrap = document.getElementById('history-content');
+            if (db.length === 0) { wrap.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--text-dim);">Nenhum registro encontrado.</p>'; return; }
+
+            // Agrupar por BA
+            const grupos = db.reduce((acc, obj) => {
+                acc[obj.ba] = acc[obj.ba] || [];
+                acc[obj.ba].push(obj);
+                return acc;
+            }, {});
+
+            let html = '';
+            for (const ba in grupos) {
+                const baterias = grupos[ba];
+                const melhorTempo = Math.min(...baterias.map(b => b.total));
+
+                html += `<div class="ba-group">
+                <div class="ba-name-header"><span>◈ ${ba}</span> <span style="font-size: 10px; color: var(--text-dim);">${baterias.length} Baterias</span></div>
+                ${baterias.sort((a, b) => a.id - b.id).map((b, idx) => {
+                    b.seq = idx + 1;
+                    return b;
+                }).sort((a, b) => b.id - a.id).map(b => {
+                    const isBest = b.total === melhorTempo;
+                    return `
+                    <div class="ba-entry ${isBest ? 'best' : ''}" onclick='finalizar(${JSON.stringify(b)})'>
+                        <div class="entry-info">
+                            <div style="font-weight: bold;">BATERIA ${b.seq}</div>
+                            <div style="font-size: 10px; color: var(--text-dim);">${b.data.split(' ')[0]}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="entry-time" style="color: ${b.total < METALOW ? 'var(--green-ok)' : (b.total <= LIMITE ? 'var(--yellow-warn)' : 'var(--red-hot)')}">${formatTime(b.total)}</div>
+                            ${isBest ? '<span class="best-badge">MELHOR TEMPO</span>' : ''}
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>`;
+            }
+            wrap.innerHTML = html;
+        }
+
+        function limparHistorico() {
+            if (confirm('Deseja realmente apagar todo o histórico de baterias?')) {
+                db = [];
+                localStorage.setItem('tp_epr_logs', '[]');
+                renderHistorico();
+                showToast('HISTÓRICO LIMPO');
+            }
+        }
+
+        function resetar() {
+            if (state.rafId) cancelAnimationFrame(state.rafId);
+            state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null };
+
+            document.getElementById('totalTime').innerText = '00:00,00';
+            document.getElementById('totalTime').classList.remove('active-total');
+            document.getElementById('tpTime').innerText = '00:00,00';
+            document.getElementById('eprTime').innerText = '00:00,00';
+            document.getElementById('timerVal').innerText = '01:30,00';
+            document.getElementById('statusLabel').innerText = 'AGUARDANDO';
+            document.getElementById('statusLabel').classList.remove('blink');
+            document.getElementById('statusLabel').style.color = 'var(--text-dim)';
+            document.getElementById('stripBar').style.width = '0%';
+            document.getElementById('nomeBA').value = '';
+
+            document.querySelectorAll('.modal-panel').forEach(m => m.style.display = 'none');
+            document.getElementById('overlay').style.display = 'none';
             updateUI();
         }
 
-        function fecharIntro() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('introModal').style.display = 'none';
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updateThemeIcon();
-            popularSelectIdade();
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('introModal').style.display = 'block';
-        });
     </script>
 </body>
 
