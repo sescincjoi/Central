@@ -941,7 +941,7 @@
     <script>
         const LIMITE = 90000;
         const METALOW = 60000;
-        let state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null, finalData: null };
+        let state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null, finalData: null, pausedTotal: null, pausedAt: null };
 
         // Carregar ou Inicializar Histórico
         let db = JSON.parse(localStorage.getItem('tp_epr_logs') || '[]');
@@ -1033,15 +1033,24 @@
 
         function confirmarEncerramento() {
             if (!state.globalStart) return;
+            const agora = Date.now();
+            if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
+            state.pausedTotal = agora - state.globalStart;
+            state.pausedAt = agora;
+
             cancelAnimationFrame(state.rafId); state.rafId = null;
             document.getElementById('overlay').style.display = 'flex';
             document.getElementById('confirmModal').style.display = 'block';
         }
 
         function cancelarEncerramento() {
+            const agora = Date.now();
+            const diff = agora - state.pausedAt;
+            state.globalStart += diff;
+            state.lastSwitchTime = agora;
+
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('confirmModal').style.display = 'none';
-            state.lastSwitchTime = Date.now();
             state.rafId = requestAnimationFrame(rafLoop);
         }
 
@@ -1060,16 +1069,12 @@
             const nome = document.getElementById('nomeBA').value.trim().toUpperCase();
             if (!nome) { alert('Informe o nome do Bombeiro!'); return; }
 
-            const agora = Date.now();
-            if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
-            const total = agora - state.globalStart;
-
             const registro = {
-                id: agora,
+                id: Date.now(),
                 ba: nome,
                 tp: state.timers.tp,
                 epr: state.timers.epr,
-                total: total,
+                total: state.pausedTotal,
                 data: new Date().toLocaleString('pt-BR')
             };
 
@@ -1085,9 +1090,7 @@
             if (registroSelecionado) {
                 dados = registroSelecionado;
             } else {
-                const agora = Date.now();
-                if (state.activeId) state.timers[state.activeId] += (agora - state.lastSwitchTime);
-                dados = { tp: state.timers.tp, epr: state.timers.epr, total: agora - state.globalStart };
+                dados = { tp: state.timers.tp, epr: state.timers.epr, total: state.pausedTotal };
             }
 
             state.finalData = dados;
@@ -1256,7 +1259,7 @@
 
         function resetar() {
             if (state.rafId) cancelAnimationFrame(state.rafId);
-            state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null, finalData: null };
+            state = { activeId: null, rafId: null, globalStart: null, timers: { tp: 0, epr: 0 }, lastSwitchTime: null, finalData: null, pausedTotal: null, pausedAt: null };
 
             document.getElementById('totalTime').innerText = '00:00,00';
             document.getElementById('totalTime').classList.remove('active-total');
