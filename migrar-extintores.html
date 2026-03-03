@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migração - Extintores para Firestore</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+    }
+    h1 {
+      color: #1d1d1f;
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #86868b;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .warning h3 {
+      color: #856404;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .warning p {
+      color: #856404;
+      line-height: 1.6;
+    }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #log {
+      background: #1d1d1f;
+      color: #00ff00;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      display: none;
+    }
+    #log.show {
+      display: block;
+    }
+    .success {
+      color: #00ff00;
+    }
+    .error {
+      color: #ff3b30;
+    }
+    .info {
+      color: #00bfff;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .stat-card {
+      background: #f5f5f7;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      color: #667eea;
+      display: block;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #86868b;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Migração de Extintores</h1>
+    <p class="subtitle">Transferir dados do código para o Firestore</p>
+
+    <div class="warning">
+      <h3>⚠️ Atenção - Leia antes de continuar</h3>
+      <p>
+        • Este script deve ser executado <strong>apenas uma vez</strong><br>
+        • Todos os dados de extintores serão migrados para o Firestore<br>
+        • O processo não altera os dados de vistorias existentes<br>
+        • Certifique-se de que tem acesso ao Firebase Console<br>
+        • Após a migração, você poderá atualizar a página de inspeção
+      </p>
+    </div>
+
+    <button id="btnMigrar" class="btn" onclick="iniciarMigracao()">
+      🚀 INICIAR MIGRAÇÃO
+    </button>
+
+    <div id="log"></div>
+
+    <div id="stats" class="stats" style="display:none;">
+      <div class="stat-card">
+        <span class="stat-number" id="statEdificacoes">0</span>
+        <span class="stat-label">Edificações</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="statExtintores">0</span>
+        <span class="stat-label">Extintores</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="statTempo">0s</span>
+        <span class="stat-label">Tempo</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //  FIREBASE CONFIG
+    // ══════════════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ══════════════════════════════════════════════════════════
+    //  DADOS ATUAIS (do código HTML original)
+    // ══════════════════════════════════════════════════════════
+    const edificacoesDescr = {
+      "DESEMBARQUE": "Área de desembarque de passageiros.",
+      "TPS TÉRREO": "Terminal de passageiros – pavimento térreo.",
+      "TPS SUPERIOR": "Terminal de passageiros – pavimento superior.",
+      "RÁDIO": "Torre ATS | Chaves: TAG(SCI)",
+      "ADM": "Área administrativa.",
+      "CASA DE BOMBAS": "Casa de bombas.",
+      "CAMPO DE ANTENAS": "Área de antenas (frente ao TECA) | Chaves: 010",
+      "RAIO X": "Setor de Raio-X.",
+      "EMBARQUE": "Área de embarque de passageiros.",
+      "ELOS": "ELOS.",
+      "APOC": "Área APOC.",
+      "PORTÃO 1": "Portão 1.",
+      "KF CHILLER": "Setor KF/CHILLER.",
+      "PAA": "Área PAA.",
+      "MANUTENÇÃO": "Setor de manutenção.",
+      "GSE GOL AZUL RP": "Área GSE GOL/AZUL/RP.",
+      "SCI": "Seção Contra-incêndio."
+    };
+
+    const extintoresInfo = {
+      "DESEMBARQUE": {
+        "24": { descricao: "Ao lado da sala técnica", tipo: "PQS BC", kg: 6 },
+        "25": { descricao: "Lado esquerdo", tipo: "PQS ABC", kg: 6 },
+        "26": { descricao: "Ao lado do hidrante", tipo: "PQS ABC", kg: 6 },
+        "27": { descricao: "Porta lado ar", tipo: "PQS ABC", kg: 6 }
+      },
+      "TPS TÉRREO": {
+        "16": { descricao: "Porta principal lado embarque", tipo: "PQS ABC", kg: 6 },
+        "17": { descricao: "Saída Charlie", tipo: "PQS ABC", kg: 6 },
+        "18": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
+        "19": { descricao: "Do lado do DEA", tipo: "PQS ABC", kg: 6 },
+        "20": { descricao: "Ao lado do banheiro", tipo: "PQS ABC", kg: 6 },
+        "21": { descricao: "Elevador", tipo: "CO²", kg: 6 },
+        "22": { descricao: "Porta principal lado desembarque", tipo: "PQS ABC", kg: 6 },
+        "23": { descricao: "Saída do desembarque", tipo: "CO²", kg: 6 },
+        "32": { descricao: "Sala de máquina elevador", tipo: "CO²", kg: 4 },
+        "33": { descricao: "Sala telemática", tipo: "CO²", kg: 6 },
+        "83": { descricao: "Sala de apoio/fiscal", tipo: "CO²", kg: 6 },
+        "85": { descricao: "Frente ao guichê Localiza", tipo: "PQS ABC", kg: 4 }
+      },
+      "TPS SUPERIOR": {
+        "28": { descricao: "Ao lado do elevador", tipo: "PQS ABC", kg: 6 },
+        "29": { descricao: "Início do corredor", tipo: "PQS ABC", kg: 6 },
+        "30": { descricao: "Corredor, frente ao COE", tipo: "PQS BC", kg: 6 },
+        "31": { descricao: "Ao lado da saída de emergência", tipo: "PQS ABC", kg: 6 },
+        "34": { descricao: "Sala COE", tipo: "PQS ABC", kg: 6 },
+        "35": { descricao: "Sala COE", tipo: "CO²", kg: 4 },
+        "36": { descricao: "Sala COE (Quadro elétrico)", tipo: "PQS ABC", kg: 6 },
+        "37": { descricao: "Sala COE STVV", tipo: "CO²", kg: 4 },
+        "97": { descricao: "Caixa d'água", tipo: "PQS BC", kg: 6 }
+      },
+      "RÁDIO": {
+        "1": { descricao: "Rádio", tipo: "PQS ABC", kg: 6 },
+        "2": { descricao: "Copa", tipo: "PQS ABC", kg: 6 },
+        "3": { descricao: "Meteorologia", tipo: "CO²", kg: 6 },
+        "4": { descricao: "Elevador cobertura", tipo: "CO²", kg: 6 },
+        "5": { descricao: "Elevador térreo", tipo: "CO²", kg: 6 },
+        "6": { descricao: "Central de alarme", tipo: "PQS ABC", kg: 6 },
+        "7": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
+        "8": { descricao: "Central de alarme", tipo: "CO²", kg: 4 },
+        "9": { descricao: "Andar 5/Equipamentos", tipo: "CO²", kg: 6 },
+        "10": { descricao: "Máquina do Elevador", tipo: "CO²", kg: 6 },
+        "84": { descricao: "Sala TEC VHF", tipo: "CO²", kg: 6 }
+      },
+      "ADM": {
+        "11": { descricao: "Corredor auditório", tipo: "CO²", kg: 6 },
+        "12": { descricao: "Corredor auditório", tipo: "PQS ABC", kg: 6 },
+        "13": { descricao: "Corredor almoxarife", tipo: "CO²", kg: 6 },
+        "14": { descricao: "Corredor almoxarife", tipo: "PQS ABC", kg: 6 }
+      },
+      "CASA DE BOMBAS": {
+        "15": { descricao: "Casa de Bombas", tipo: "CO²", kg: 6 }
+      },
+      "CAMPO DE ANTENAS": {
+        "88": { descricao: "Sala 01 | Chave: 01", tipo: "CO²", kg: 6 },
+        "89": { descricao: "Sala 03 | Chave: 03", tipo: "CO²", kg: 6 }
+      },
+      "RAIO X": {
+        "38": { descricao: "Entrada", tipo: "CO²", kg: 6 },
+        "39": { descricao: "Quadro de energia", tipo: "CO²", kg: 6 },
+        "40": { descricao: "Próximo a escada rolante", tipo: "PQS BC", kg: 4 }
+      },
+      "EMBARQUE": {
+        "41": { descricao: "Próximo a porta 1", tipo: "PQS ABC", kg: 6 },
+        "42": { descricao: "Próximo a porta 2", tipo: "PQS ABC", kg: 6 },
+        "43": { descricao: "Ao lado do elevador", tipo: "PQS BC", kg: 6 },
+        "44": { descricao: "Ao lado do Aéro Coffee", tipo: "CO²", kg: 6 },
+        "45": { descricao: "Sala Ar-condicionado", tipo: "PQS BC", kg: 4 }
+      },
+      "ELOS": {
+        "46": { descricao: "Corredor direito", tipo: "PQS ABC", kg: 4 },
+        "47": { descricao: "Posição 6 elevador", tipo: "PQS BC", kg: 4 },
+        "48": { descricao: "Posição 6 corredor", tipo: "PQS ABC", kg: 6 },
+        "49": { descricao: "Posição 7 corredor", tipo: "PQS BC", kg: 6 },
+        "50": { descricao: "Posição 7 elevador", tipo: "PQS ABC", kg: 6 },
+        "51": { descricao: "Posição 7 externo", tipo: "PQS BC", kg: 6 },
+        "52": { descricao: "Posição 6 externo", tipo: "PQS BC", kg: 6 }
+      },
+      "APOC": {
+        "53": { descricao: "Sala do APOC", tipo: "PQS BC", kg: 4 },
+        "54": { descricao: "Sala do APOC", tipo: "CO²", kg: 6 },
+        "55": { descricao: "Banheiro/Copa", tipo: "PQS BC", kg: 6 },
+        "56": { descricao: "Ao lado do hidrante", tipo: "PQS BC", kg: 6 }
+      },
+      "PORTÃO 1": {
+        "57": { descricao: "Guarita", tipo: "PQS ABC", kg: 6 }
+      },
+      "KF CHILLER": {
+        "58": { descricao: "Ao lado do P1", tipo: "CO²", kg: 6 },
+        "59": { descricao: "Interna da KF", tipo: "CO²", kg: 6 },
+        "60": { descricao: "Interna da KF", tipo: "PQS ABC", kg: 6 },
+        "61": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 },
+        "62": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 }
+      },
+      "PAA": {
+        "63": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "64": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "65": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "66": { descricao: "Próximo do PAA", tipo: "PQS BC", kg: 6 }
+      },
+      "MANUTENÇÃO": {
+        "67": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
+        "68": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
+        "69": { descricao: "Entrada", tipo: "CO²", kg: 6 },
+        "70": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "71": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 }
+      },
+      "GSE GOL AZUL RP": {
+        "72": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "73": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "74": { descricao: "Manutenção GOL", tipo: "PQS ABC", kg: 6 },
+        "75": { descricao: "Manutenção AZUL", tipo: "PQS ABC", kg: 6 }
+      },
+      "SCI": {
+        "76": { descricao: "Garagem", tipo: "CO²", kg: 6 },
+        "77": { descricao: "Garagem", tipo: "PQS BC", kg: 6 },
+        "78": { descricao: "Academia", tipo: "CO²", kg: 6 },
+        "79": { descricao: "Garagem", tipo: "CO²", kg: 6 },
+        "80": { descricao: "Reserva", tipo: "PQS ABC", kg: 4 },
+        "81": { descricao: "Auditório", tipo: "PQS BC", kg: 6 },
+        "82": { descricao: "Auditório", tipo: "CO²", kg: 6 },
+        "86": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 },
+        "87": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 }
+      }
+    };
+
+    // ══════════════════════════════════════════════════════════
+    //  LOG FUNCTIONS
+    // ══════════════════════════════════════════════════════════
+    const logEl = document.getElementById('log');
+    
+    function log(msg, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'info' ? 'ℹ️' : '📝';
+      const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+      
+      logEl.innerHTML += `<span class="${className}">[${timestamp}] ${prefix} ${msg}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(`[${timestamp}] ${msg}`);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MIGRATION FUNCTION
+    // ══════════════════════════════════════════════════════════
+    async function iniciarMigracao() {
+      const btn = document.getElementById('btnMigrar');
+      btn.disabled = true;
+      btn.textContent = '⏳ Migrando...';
+      
+      logEl.classList.add('show');
+      logEl.innerHTML = '';
+      
+      const startTime = Date.now();
+      
+      try {
+        log('🚀 Iniciando migração de extintores para o Firestore...', 'info');
+        log('');
+
+        // ─── PASSO 1: Criar configuração global ───
+        log('📝 Criando configuração global...', 'info');
+        await db.collection('configuracao').doc('base_atual').set({
+          nome: "SCI Aeroporto de Joinville",
+          codigo: "SBJV",
+          modo_classificacao: "tipo_kg",
+          sheets_historico_id: "",
+          sheets_visualizacao_id: "",
+          criado_em: new Date().toISOString(),
+          atualizado_em: new Date().toISOString()
+        });
+        log('✅ Configuração global criada com sucesso!', 'success');
+        log('');
+
+        // ─── PASSO 2: Migrar extintores instalados ───
+        log('📦 Migrando extintores instalados...', 'info');
+        
+        const batch = db.batch();
+        let totalExtintores = 0;
+        
+        for (const [edificacao, extintores] of Object.entries(extintoresInfo)) {
+          for (const [numero, info] of Object.entries(extintores)) {
+            const id = `${edificacao}_${numero}`;
+            const docRef = db.collection('extintores_instalados').doc(id);
+            
+            batch.set(docRef, {
+              id: id,
+              numero: numero,
+              edificacao: edificacao,
+              descricao: info.descricao,
+              tipo: info.tipo,
+              kg: info.kg,
+              capacidade_extintora: "",
+              localizacao_gps: null,
+              qrcode: `EXT-SBJV-${edificacao.substring(0, 6).toUpperCase()}-${numero}`,
+              ativo: true,
+              status: "operacional",
+              vencimento_nivel2: "",
+              vencimento_nivel3: null,
+              criado_em: new Date().toISOString(),
+              criado_por: "migração_automatica",
+              atualizado_em: new Date().toISOString(),
+              atualizado_por: "migração_automatica"
+            });
+            
+            totalExtintores++;
+            
+            if (totalExtintores % 10 === 0) {
+              log(`   → ${totalExtintores} extintores processados...`, 'info');
+            }
+          }
+        }
+        
+        await batch.commit();
+        log(`✅ ${totalExtintores} extintores migrados com sucesso!`, 'success');
+        log('');
+
+        // ─── PASSO 3: Criar documento de edificações ───
+        log('🏢 Criando registro de edificações...', 'info');
+        const edificacoesData = {};
+        
+        Object.entries(edificacoesDescr).forEach(([nome, descricao]) => {
+          edificacoesData[nome] = {
+            nome: nome,
+            descricao: descricao,
+            total_extintores: Object.keys(extintoresInfo[nome] || {}).length
+          };
+        });
+        
+        await db.collection('edificacoes').doc('lista').set(edificacoesData);
+        log(`✅ ${Object.keys(edificacoesDescr).length} edificações registradas!`, 'success');
+        log('');
+
+        // ─── PASSO 4: Inicializar dashboard cache ───
+        log('📊 Inicializando cache do dashboard...', 'info');
+        await db.collection('dashboard_cache').doc('atual').set({
+          ultima_atualizacao: new Date().toISOString(),
+          total_extintores_instalados: totalExtintores,
+          vistoriados_mes_atual: 0,
+          pendentes: totalExtintores,
+          nao_conformes_mes: 0,
+          estoque_total: 0,
+          estoque_operacionais: 0,
+          estoque_nao_operacionais: 0,
+          em_manutencao: 0,
+          por_edificacao: {},
+          alertas: {
+            nivel2_vence_30dias: 0,
+            nivel2_vencido: 0,
+            nivel3_vence_90dias: 0,
+            nivel3_vencido: 0
+          }
+        });
+        log('✅ Cache do dashboard inicializado!', 'success');
+        log('');
+
+        // ─── FINALIZAÇÃO ───
+        const endTime = Date.now();
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
+        
+        log('═══════════════════════════════════════════════', 'success');
+        log('🎉 MIGRAÇÃO CONCLUÍDA COM SUCESSO!', 'success');
+        log('═══════════════════════════════════════════════', 'success');
+        log('');
+        log(`📊 Estatísticas:`, 'info');
+        log(`   • Edificações: ${Object.keys(edificacoesDescr).length}`, 'info');
+        log(`   • Extintores: ${totalExtintores}`, 'info');
+        log(`   • Tempo total: ${duration}s`, 'info');
+        log('');
+        log('✅ Próximos passos:', 'info');
+        log('   1. Verifique os dados no Firebase Console', 'info');
+        log('   2. Atualize o código da página de inspeção', 'info');
+        log('   3. Teste o carregamento dos extintores', 'info');
+
+        // Atualizar estatísticas na tela
+        document.getElementById('stats').style.display = 'grid';
+        document.getElementById('statEdificacoes').textContent = Object.keys(edificacoesDescr).length;
+        document.getElementById('statExtintores').textContent = totalExtintores;
+        document.getElementById('statTempo').textContent = duration + 's';
+
+        btn.textContent = '✅ Migração Concluída!';
+        btn.style.background = '#34C759';
+
+      } catch (error) {
+        log('', 'error');
+        log('❌ ERRO DURANTE A MIGRAÇÃO:', 'error');
+        log(`   ${error.message}`, 'error');
+        console.error('Erro completo:', error);
+        
+        btn.disabled = false;
+        btn.textContent = '🔄 Tentar Novamente';
+        btn.style.background = '#FF3B30';
+      }
+    }
+  </script>
+</body>
+</html>
