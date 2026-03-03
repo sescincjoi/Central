@@ -154,6 +154,10 @@
       🚀 INICIAR MIGRAÇÃO
     </button>
 
+    <button id="btnTestar" class="btn" onclick="testarConexao()" style="background: linear-gradient(135deg, #34C759 0%, #30D158 100%); margin-top: 10px;">
+      🔍 TESTAR CONEXÃO FIRESTORE
+    </button>
+
     <div id="log"></div>
 
     <div id="stats" class="stats" style="display:none;">
@@ -184,8 +188,19 @@
       messagingSenderId: "712050420595",
       appId: "1:712050420595:web:96ce82f25307c7aba4f306"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    
+    console.log('🔧 Inicializando Firebase...');
+    console.log('📋 Projeto:', firebaseConfig.projectId);
+    
+    try {
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      console.log('✅ Firebase inicializado com sucesso');
+      console.log('✅ Firestore conectado');
+    } catch (error) {
+      console.error('❌ Erro ao inicializar Firebase:', error);
+      alert('❌ Erro ao conectar com Firebase. Verifique o console (F12).');
+    }
 
     // ══════════════════════════════════════════════════════════
     //  DADOS ATUAIS (do código HTML original)
@@ -353,6 +368,79 @@
     }
 
     // ══════════════════════════════════════════════════════════
+    //  TEST CONNECTION
+    // ══════════════════════════════════════════════════════════
+    async function testarConexao() {
+      const btn = document.getElementById('btnTestar');
+      btn.disabled = true;
+      btn.textContent = '⏳ Testando...';
+      
+      logEl.classList.add('show');
+      logEl.innerHTML = '';
+      
+      try {
+        log('🔍 Testando conexão com Firestore...', 'info');
+        log('');
+        
+        // Teste 1: Escrever
+        log('1️⃣ Teste de escrita...', 'info');
+        await db.collection('_test').doc('teste').set({
+          timestamp: new Date().toISOString(),
+          teste: true
+        });
+        log('   ✅ Escrita OK', 'success');
+        
+        // Teste 2: Ler
+        log('2️⃣ Teste de leitura...', 'info');
+        const doc = await db.collection('_test').doc('teste').get();
+        if (doc.exists) {
+          log('   ✅ Leitura OK', 'success');
+          log(`   📄 Dados: ${JSON.stringify(doc.data())}`, 'info');
+        } else {
+          throw new Error('Documento não encontrado após escrita');
+        }
+        
+        // Teste 3: Deletar
+        log('3️⃣ Teste de deleção...', 'info');
+        await db.collection('_test').doc('teste').delete();
+        log('   ✅ Deleção OK', 'success');
+        
+        log('');
+        log('═══════════════════════════════════════', 'success');
+        log('✅ CONEXÃO COM FIRESTORE FUNCIONANDO!', 'success');
+        log('═══════════════════════════════════════', 'success');
+        log('');
+        log('Você pode prosseguir com a migração.', 'info');
+        
+        btn.textContent = '✅ Conexão OK';
+        btn.style.background = '#34C759';
+        
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = '🔍 TESTAR CONEXÃO FIRESTORE';
+          btn.style.background = 'linear-gradient(135deg, #34C759 0%, #30D158 100%)';
+        }, 3000);
+        
+      } catch (error) {
+        log('', 'error');
+        log('❌ ERRO NA CONEXÃO:', 'error');
+        log(`   ${error.message}`, 'error');
+        log('', 'error');
+        log('Possíveis causas:', 'info');
+        log('• Configuração do Firebase incorreta', 'info');
+        log('• Firestore não habilitado no projeto', 'info');
+        log('• Regras de segurança bloqueando acesso', 'info');
+        log('• Problemas de rede/firewall', 'info');
+        
+        console.error('Erro completo:', error);
+        
+        btn.disabled = false;
+        btn.textContent = '❌ Erro - Tentar Novamente';
+        btn.style.background = '#FF3B30';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  MIGRATION FUNCTION
     // ══════════════════════════════════════════════════════════
     async function iniciarMigracao() {
@@ -367,102 +455,172 @@
       
       try {
         log('🚀 Iniciando migração de extintores para o Firestore...', 'info');
+        log('📡 Testando conexão com Firestore...', 'info');
+        
+        // Teste de conexão
+        try {
+          await db.collection('_test_connection').doc('test').set({ test: true });
+          await db.collection('_test_connection').doc('test').delete();
+          log('✅ Conexão com Firestore OK!', 'success');
+        } catch (connError) {
+          throw new Error(`Falha na conexão: ${connError.message}`);
+        }
+        
         log('');
 
         // ─── PASSO 1: Criar configuração global ───
-        log('📝 Criando configuração global...', 'info');
-        await db.collection('configuracao').doc('base_atual').set({
-          nome: "SCI Aeroporto de Joinville",
-          codigo: "SBJV",
-          modo_classificacao: "tipo_kg",
-          sheets_historico_id: "",
-          sheets_visualizacao_id: "",
-          criado_em: new Date().toISOString(),
-          atualizado_em: new Date().toISOString()
-        });
-        log('✅ Configuração global criada com sucesso!', 'success');
+        log('📝 [1/4] Criando configuração global...', 'info');
+        
+        try {
+          const configRef = db.collection('configuracao').doc('base_atual');
+          
+          // Verificar se já existe
+          const existe = await configRef.get();
+          if (existe.exists) {
+            log('⚠️  Configuração já existe. Atualizando...', 'info');
+          }
+          
+          await configRef.set({
+            nome: "SCI Aeroporto de Joinville",
+            codigo: "SBJV",
+            modo_classificacao: "tipo_kg",
+            sheets_historico_id: "",
+            sheets_visualizacao_id: "",
+            criado_em: existe.exists ? existe.data().criado_em : new Date().toISOString(),
+            atualizado_em: new Date().toISOString()
+          });
+          
+          log('✅ Configuração global criada com sucesso!', 'success');
+        } catch (configError) {
+          throw new Error(`Erro na configuração: ${configError.message}`);
+        }
+        
         log('');
 
         // ─── PASSO 2: Migrar extintores instalados ───
-        log('📦 Migrando extintores instalados...', 'info');
+        log('📦 [2/4] Migrando extintores instalados...', 'info');
         
-        const batch = db.batch();
-        let totalExtintores = 0;
-        
-        for (const [edificacao, extintores] of Object.entries(extintoresInfo)) {
-          for (const [numero, info] of Object.entries(extintores)) {
-            const id = `${edificacao}_${numero}`;
-            const docRef = db.collection('extintores_instalados').doc(id);
-            
-            batch.set(docRef, {
-              id: id,
-              numero: numero,
-              edificacao: edificacao,
-              descricao: info.descricao,
-              tipo: info.tipo,
-              kg: info.kg,
-              capacidade_extintora: "",
-              localizacao_gps: null,
-              qrcode: `EXT-SBJV-${edificacao.substring(0, 6).toUpperCase()}-${numero}`,
-              ativo: true,
-              status: "operacional",
-              vencimento_nivel2: "",
-              vencimento_nivel3: null,
-              criado_em: new Date().toISOString(),
-              criado_por: "migração_automatica",
-              atualizado_em: new Date().toISOString(),
-              atualizado_por: "migração_automatica"
-            });
-            
-            totalExtintores++;
-            
-            if (totalExtintores % 10 === 0) {
-              log(`   → ${totalExtintores} extintores processados...`, 'info');
+        try {
+          let totalExtintores = 0;
+          const extintoresParaMigrar = [];
+          
+          // Preparar lista de extintores
+          for (const [edificacao, extintores] of Object.entries(extintoresInfo)) {
+            for (const [numero, info] of Object.entries(extintores)) {
+              const id = `${edificacao}_${numero}`;
+              extintoresParaMigrar.push({
+                id,
+                numero,
+                edificacao,
+                info
+              });
+              totalExtintores++;
             }
           }
+          
+          log(`   📊 Total a migrar: ${totalExtintores} extintores`, 'info');
+          log('');
+          
+          // Migrar em lotes de 50 (mais seguro que 500)
+          const BATCH_SIZE = 50;
+          let migrados = 0;
+          
+          for (let i = 0; i < extintoresParaMigrar.length; i += BATCH_SIZE) {
+            const lote = extintoresParaMigrar.slice(i, i + BATCH_SIZE);
+            const batch = db.batch();
+            
+            lote.forEach(ext => {
+              const docRef = db.collection('extintores_instalados').doc(ext.id);
+              
+              batch.set(docRef, {
+                id: ext.id,
+                numero: ext.numero,
+                edificacao: ext.edificacao,
+                descricao: ext.info.descricao,
+                tipo: ext.info.tipo,
+                kg: ext.info.kg,
+                capacidade_extintora: "",
+                localizacao_gps: null,
+                qrcode: `EXT-SBJV-${ext.edificacao.substring(0, 6).toUpperCase()}-${ext.numero}`,
+                ativo: true,
+                status: "operacional",
+                vencimento_nivel2: "",
+                vencimento_nivel3: null,
+                criado_em: new Date().toISOString(),
+                criado_por: "migração_automatica",
+                atualizado_em: new Date().toISOString(),
+                atualizado_por: "migração_automatica"
+              });
+            });
+            
+            await batch.commit();
+            migrados += lote.length;
+            
+            const percentual = Math.round((migrados / totalExtintores) * 100);
+            log(`   → ${migrados}/${totalExtintores} extintores migrados (${percentual}%)`, 'info');
+          }
+          
+          log('✅ Todos os extintores migrados com sucesso!', 'success');
+        } catch (extError) {
+          throw new Error(`Erro ao migrar extintores: ${extError.message}`);
         }
         
-        await batch.commit();
-        log(`✅ ${totalExtintores} extintores migrados com sucesso!`, 'success');
         log('');
 
         // ─── PASSO 3: Criar documento de edificações ───
-        log('🏢 Criando registro de edificações...', 'info');
-        const edificacoesData = {};
+        log('🏢 [3/4] Criando registro de edificações...', 'info');
         
-        Object.entries(edificacoesDescr).forEach(([nome, descricao]) => {
-          edificacoesData[nome] = {
-            nome: nome,
-            descricao: descricao,
-            total_extintores: Object.keys(extintoresInfo[nome] || {}).length
-          };
-        });
+        try {
+          const edificacoesData = {};
+          
+          Object.entries(edificacoesDescr).forEach(([nome, descricao]) => {
+            edificacoesData[nome] = {
+              nome: nome,
+              descricao: descricao,
+              total_extintores: Object.keys(extintoresInfo[nome] || {}).length
+            };
+          });
+          
+          await db.collection('edificacoes').doc('lista').set(edificacoesData);
+          log(`✅ ${Object.keys(edificacoesDescr).length} edificações registradas!`, 'success');
+        } catch (edifError) {
+          throw new Error(`Erro ao criar edificações: ${edifError.message}`);
+        }
         
-        await db.collection('edificacoes').doc('lista').set(edificacoesData);
-        log(`✅ ${Object.keys(edificacoesDescr).length} edificações registradas!`, 'success');
         log('');
 
         // ─── PASSO 4: Inicializar dashboard cache ───
-        log('📊 Inicializando cache do dashboard...', 'info');
-        await db.collection('dashboard_cache').doc('atual').set({
-          ultima_atualizacao: new Date().toISOString(),
-          total_extintores_instalados: totalExtintores,
-          vistoriados_mes_atual: 0,
-          pendentes: totalExtintores,
-          nao_conformes_mes: 0,
-          estoque_total: 0,
-          estoque_operacionais: 0,
-          estoque_nao_operacionais: 0,
-          em_manutencao: 0,
-          por_edificacao: {},
-          alertas: {
-            nivel2_vence_30dias: 0,
-            nivel2_vencido: 0,
-            nivel3_vence_90dias: 0,
-            nivel3_vencido: 0
-          }
-        });
-        log('✅ Cache do dashboard inicializado!', 'success');
+        log('📊 [4/4] Inicializando cache do dashboard...', 'info');
+        
+        try {
+          const totalExtintores = Object.values(extintoresInfo).reduce(
+            (sum, edif) => sum + Object.keys(edif).length, 0
+          );
+          
+          await db.collection('dashboard_cache').doc('atual').set({
+            ultima_atualizacao: new Date().toISOString(),
+            total_extintores_instalados: totalExtintores,
+            vistoriados_mes_atual: 0,
+            pendentes: totalExtintores,
+            nao_conformes_mes: 0,
+            estoque_total: 0,
+            estoque_operacionais: 0,
+            estoque_nao_operacionais: 0,
+            em_manutencao: 0,
+            por_edificacao: {},
+            alertas: {
+              nivel2_vence_30dias: 0,
+              nivel2_vencido: 0,
+              nivel3_vence_90dias: 0,
+              nivel3_vencido: 0
+            }
+          });
+          
+          log('✅ Cache do dashboard inicializado!', 'success');
+        } catch (cacheError) {
+          throw new Error(`Erro ao criar cache: ${cacheError.message}`);
+        }
+        
         log('');
 
         // ─── FINALIZAÇÃO ───
