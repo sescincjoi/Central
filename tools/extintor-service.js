@@ -4,7 +4,8 @@
 
 class ExtintorService {
   constructor() {
-    this.db = firebase.firestore();
+    // NÃO inicializar Firebase aqui - será feito no init()
+    this.db = null;
     this.cache = {
       extintores: null,
       edificacoes: null,
@@ -13,11 +14,35 @@ class ExtintorService {
     };
   }
 
+  // Inicializar após Firebase estar pronto
+  init() {
+    if (!this.db) {
+      if (typeof firebase === 'undefined') {
+        throw new Error('Firebase não foi carregado. Adicione o script do Firebase antes do extintor-service.js');
+      }
+      if (!firebase.firestore) {
+        throw new Error('Firestore não está disponível. Verifique se o script do Firestore foi carregado.');
+      }
+      this.db = firebase.firestore();
+      console.log('✅ ExtintorService inicializado');
+    }
+    return this;
+  }
+
+  // Garantir que está inicializado antes de usar
+  _ensureInit() {
+    if (!this.db) {
+      this.init();
+    }
+  }
+
   // ─────────────────────────────────────────────────────────
   //  CONFIGURAÇÃO
   // ─────────────────────────────────────────────────────────
   
   async getConfiguracao() {
+    this._ensureInit();
+    
     if (this.cache.config) return this.cache.config;
     
     const doc = await this.db.collection('configuracao').doc('base_atual').get();
@@ -36,6 +61,8 @@ class ExtintorService {
   }
 
   async setModoClassificacao(novoModo) {
+    this._ensureInit();
+    
     if (!['tipo_kg', 'tipo_capacidade'].includes(novoModo)) {
       throw new Error('Modo inválido. Use "tipo_kg" ou "tipo_capacidade"');
     }
@@ -56,6 +83,8 @@ class ExtintorService {
   // ─────────────────────────────────────────────────────────
   
   async listarExtintores(forcarRecarregar = false) {
+    this._ensureInit();
+    
     // Usar cache se disponível e recente (< 5 min)
     if (
       !forcarRecarregar && 
@@ -90,6 +119,8 @@ class ExtintorService {
   }
 
   async getExtintor(id) {
+    this._ensureInit();
+    
     const doc = await this.db
       .collection('extintores_instalados')
       .doc(id)
@@ -103,6 +134,8 @@ class ExtintorService {
   }
 
   async criarExtintor(dados) {
+    this._ensureInit();
+    
     const id = `${dados.edificacao}_${dados.numero}`;
     
     // Verificar se já existe
@@ -140,6 +173,8 @@ class ExtintorService {
   }
 
   async atualizarExtintor(id, dados) {
+    this._ensureInit();
+    
     const doc = await this.db.collection('extintores_instalados').doc(id).get();
     
     if (!doc.exists) {
@@ -166,6 +201,8 @@ class ExtintorService {
   }
 
   async desativarExtintor(id, motivo) {
+    this._ensureInit();
+    
     await this.db.collection('extintores_instalados').doc(id).update({
       ativo: false,
       status: "desativado",
@@ -185,6 +222,8 @@ class ExtintorService {
   // ─────────────────────────────────────────────────────────
   
   async listarEdificacoes() {
+    this._ensureInit();
+    
     if (this.cache.edificacoes) return this.cache.edificacoes;
 
     const doc = await this.db.collection('edificacoes').doc('lista').get();
@@ -248,6 +287,8 @@ class ExtintorService {
   // ─────────────────────────────────────────────────────────
   
   async buscarExtintores(filtros = {}) {
+    this._ensureInit();
+    
     let query = this.db.collection('extintores_instalados');
 
     if (filtros.ativo !== undefined) {
@@ -357,5 +398,9 @@ class ExtintorService {
   }
 }
 
-// Exportar instância única (singleton)
-const extintorService = new ExtintorService();
+// Exportar classe (não instanciar automaticamente)
+// O HTML deve chamar: const extintorService = new ExtintorService().init();
+// ou simplesmente usar: new ExtintorService().init().listarExtintores()
+if (typeof window !== 'undefined') {
+  window.ExtintorService = ExtintorService;
+}
