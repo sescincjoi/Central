@@ -925,10 +925,16 @@
 
     <!-- Extintor list -->
     <div id="ext-list">
-      <!-- Skeletons while loading -->
-      <div class="skeleton"></div>
-      <div class="skeleton" style="height:60px; opacity:0.7;"></div>
-      <div class="skeleton" style="height:60px; opacity:0.4;"></div>
+      <!-- Estado de carregamento -->
+      <div id="loading-extintores" class="card p-5" style="text-align:center;">
+        <div style="font-size:48px; margin-bottom:12px;">📥</div>
+        <div style="font-size:16px; font-weight:600; color:#1d1d1f; margin-bottom:4px;">
+          Carregando extintores...
+        </div>
+        <div style="font-size:13px; color:#86868b;">
+          Buscando dados do Firestore
+        </div>
+      </div>
     </div>
 
   </div><!-- /main -->
@@ -985,11 +991,12 @@
 
     function initAuth() {
       if (window.authUI && window.authUI.openModal && window.authGuard) {
-        window.addEventListener('auth-state-changed', (e) => {
+        window.addEventListener('auth-state-changed', async (e) => {
           if (e.detail && e.detail.user) {
             document.documentElement.style.display = '';
             document.body.classList.add('auth-ready');
-            // ── Auto-fill nome from displayName ──
+            
+            // Auto-fill nome
             const displayName = e.detail.user.displayName;
             if (displayName) {
               const input = document.getElementById('nomeUsuario');
@@ -998,12 +1005,15 @@
                 localStorage.setItem('nomeUsuario', displayName);
               }
             }
+            
+            // ═══ NOVO: Carregar extintores do Firestore ═══
+            await carregarExtintoresDoFirestore();
           }
         });
         if (authCore.initialized && authCore.isAuthenticated()) {
           document.documentElement.style.display = '';
           document.body.classList.add('auth-ready');
-          // ── Auto-fill on already-authenticated load ──
+          
           if (authCore.currentUser && authCore.currentUser.displayName) {
             const input = document.getElementById('nomeUsuario');
             if (input) {
@@ -1011,6 +1021,9 @@
               localStorage.setItem('nomeUsuario', authCore.currentUser.displayName);
             }
           }
+          
+          // ═══ NOVO: Carregar extintores do Firestore ═══
+          await carregarExtintoresDoFirestore();
         }
       } else {
         setTimeout(initAuth, 50);
@@ -1041,161 +1054,77 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ──────────────────────────────────────────
-    //  Data
-    // ──────────────────────────────────────────
-    const edificacoesDescr = {
-      "DESEMBARQUE": "Área de desembarque de passageiros.",
-      "TPS TÉRREO": "Terminal de passageiros – pavimento térreo.",
-      "TPS SUPERIOR": "Terminal de passageiros – pavimento superior.",
-      "RÁDIO": "Torre ATS | Chaves: TAG(SCI)",
-      "ADM": "Área administrativa.",
-      "CASA DE BOMBAS": "Casa de bombas.",
-      "CAMPO DE ANTENAS": "Área de antenas (frente ao TECA) | Chaves: 010",
-      "RAIO X": "Setor de Raio-X.",
-      "EMBARQUE": "Área de embarque de passageiros.",
-      "ELOS": "ELOS.",
-      "APOC": "Área APOC.",
-      "PORTÃO 1": "Portão 1.",
-      "KF CHILLER": "Setor KF/CHILLER.",
-      "PAA": "Área PAA.",
-      "MANUTENÇÃO": "Setor de manutenção.",
-      "GSE GOL AZUL RP": "Área GSE GOL/AZUL/RP.",
-      "SCI": "Seção Contra-incêndio."
-    };
+    // ══════════════════════════════════════════════════════════
+    //  VARIÁVEIS DINÂMICAS (carregadas do Firestore)
+    // ══════════════════════════════════════════════════════════
+    let edificacoesDescr = {};
+    let extintoresInfo = {};
+    let edificacoesArray = [];
+    let sistemaCarregado = false;
 
-    const extintoresInfo = {
-      "DESEMBARQUE": {
-        "24": { descricao: "Ao lado da sala técnica", tipo: "PQS BC", kg: 6 },
-        "25": { descricao: "Lado esquerdo", tipo: "PQS ABC", kg: 6 },
-        "26": { descricao: "Ao lado do hidrante", tipo: "PQS ABC", kg: 6 },
-        "27": { descricao: "Porta lado ar", tipo: "PQS ABC", kg: 6 }
-      },
-      "TPS TÉRREO": {
-        "16": { descricao: "Porta principal lado embarque", tipo: "PQS ABC", kg: 6 },
-        "17": { descricao: "Saída Charlie", tipo: "PQS ABC", kg: 6 },
-        "18": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
-        "19": { descricao: "Do lado do DEA", tipo: "PQS ABC", kg: 6 },
-        "20": { descricao: "Ao lado do banheiro", tipo: "PQS ABC", kg: 6 },
-        "21": { descricao: "Elevador", tipo: "CO²", kg: 6 },
-        "22": { descricao: "Porta principal lado desembarque", tipo: "PQS ABC", kg: 6 },
-        "23": { descricao: "Saída do desembarque", tipo: "CO²", kg: 6 },
-        "32": { descricao: "Sala de máquina elevador", tipo: "CO²", kg: 4 },
-        "33": { descricao: "Sala telemática", tipo: "CO²", kg: 6 },
-        "83": { descricao: "Sala de apoio/fiscal", tipo: "CO²", kg: 6 },
-        "85": { descricao: "Frente ao guichê Localiza", tipo: "PQS ABC", kg: 4 }
-      },
-      "TPS SUPERIOR": {
-        "28": { descricao: "Ao lado do elevador", tipo: "PQS ABC", kg: 6 },
-        "29": { descricao: "Início do corredor", tipo: "PQS ABC", kg: 6 },
-        "30": { descricao: "Corredor, frente ao COE", tipo: "PQS BC", kg: 6 },
-        "31": { descricao: "Ao lado da saída de emergência", tipo: "PQS ABC", kg: 6 },
-        "34": { descricao: "Sala COE", tipo: "PQS ABC", kg: 6 },
-        "35": { descricao: "Sala COE", tipo: "CO²", kg: 4 },
-        "36": { descricao: "Sala COE (Quadro elétrico)", tipo: "PQS ABC", kg: 6 },
-        "37": { descricao: "Sala COE STVV", tipo: "CO²", kg: 4 },
-        "97": { descricao: "Caixa d'água", tipo: "PQS BC", kg: 6 }
-      },
-      "RÁDIO": {
-        "1": { descricao: "Rádio", tipo: "PQS ABC", kg: 6 },
-        "2": { descricao: "Copa", tipo: "PQS ABC", kg: 6 },
-        "3": { descricao: "Meteorologia", tipo: "CO²", kg: 6 },
-        "4": { descricao: "Elevador cobertura", tipo: "CO²", kg: 6 },
-        "5": { descricao: "Elevador térreo", tipo: "CO²", kg: 6 },
-        "6": { descricao: "Central de alarme", tipo: "PQS ABC", kg: 6 },
-        "7": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
-        "8": { descricao: "Central de alarme", tipo: "CO²", kg: 4 },
-        "9": { descricao: "Andar 5/Equipamentos", tipo: "CO²", kg: 6 },
-        "10": { descricao: "Máquina do Elevador", tipo: "CO²", kg: 6 },
-        "84": { descricao: "Sala TEC VHF", tipo: "CO²", kg: 6 }
-      },
-      "ADM": {
-        "11": { descricao: "Corredor auditório", tipo: "CO²", kg: 6 },
-        "12": { descricao: "Corredor auditório", tipo: "PQS ABC", kg: 6 },
-        "13": { descricao: "Corredor almoxarife", tipo: "CO²", kg: 6 },
-        "14": { descricao: "Corredor almoxarife", tipo: "PQS ABC", kg: 6 }
-      },
-      "CASA DE BOMBAS": {
-        "15": { descricao: "Casa de Bombas", tipo: "CO²", kg: 6 }
-      },
-      "CAMPO DE ANTENAS": {
-        "88": { descricao: "Sala 01 | Chave: 01", tipo: "CO²", kg: 6 },
-        "89": { descricao: "Sala 03 | Chave: 03", tipo: "CO²", kg: 6 }
-      },
-      "RAIO X": {
-        "38": { descricao: "Entrada", tipo: "CO²", kg: 6 },
-        "39": { descricao: "Quadro de energia", tipo: "CO²", kg: 6 },
-        "40": { descricao: "Próximo a escada rolante", tipo: "PQS BC", kg: 4 }
-      },
-      "EMBARQUE": {
-        "41": { descricao: "Próximo a porta 1", tipo: "PQS ABC", kg: 6 },
-        "42": { descricao: "Próximo a porta 2", tipo: "PQS ABC", kg: 6 },
-        "43": { descricao: "Ao lado do elevador", tipo: "PQS BC", kg: 6 },
-        "44": { descricao: "Ao lado do Aéro Coffee", tipo: "CO²", kg: 6 },
-        "45": { descricao: "Sala Ar-condicionado", tipo: "PQS BC", kg: 4 }
-      },
-      "ELOS": {
-        "46": { descricao: "Corredor direito", tipo: "PQS ABC", kg: 4 },
-        "47": { descricao: "Posição 6 elevador", tipo: "PQS BC", kg: 4 },
-        "48": { descricao: "Posição 6 corredor", tipo: "PQS ABC", kg: 6 },
-        "49": { descricao: "Posição 7 corredor", tipo: "PQS BC", kg: 6 },
-        "50": { descricao: "Posição 7 elevador", tipo: "PQS ABC", kg: 6 },
-        "51": { descricao: "Posição 7 externo", tipo: "PQS BC", kg: 6 },
-        "52": { descricao: "Posição 6 externo", tipo: "PQS BC", kg: 6 }
-      },
-      "APOC": {
-        "53": { descricao: "Sala do APOC", tipo: "PQS BC", kg: 4 },
-        "54": { descricao: "Sala do APOC", tipo: "CO²", kg: 6 },
-        "55": { descricao: "Banheiro/Copa", tipo: "PQS BC", kg: 6 },
-        "56": { descricao: "Ao lado do hidrante", tipo: "PQS BC", kg: 6 }
-      },
-      "PORTÃO 1": {
-        "57": { descricao: "Guarita", tipo: "PQS ABC", kg: 6 }
-      },
-      "KF CHILLER": {
-        "58": { descricao: "Ao lado do P1", tipo: "CO²", kg: 6 },
-        "59": { descricao: "Interna da KF", tipo: "CO²", kg: 6 },
-        "60": { descricao: "Interna da KF", tipo: "PQS ABC", kg: 6 },
-        "61": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 },
-        "62": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 }
-      },
-      "PAA": {
-        "63": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
-        "64": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
-        "65": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
-        "66": { descricao: "Próximo do PAA", tipo: "PQS BC", kg: 6 }
-      },
-      "MANUTENÇÃO": {
-        "67": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
-        "68": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
-        "69": { descricao: "Entrada", tipo: "CO²", kg: 6 },
-        "70": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
-        "71": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 }
-      },
-      "GSE GOL AZUL RP": {
-        "72": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
-        "73": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
-        "74": { descricao: "Manutenção GOL", tipo: "PQS ABC", kg: 6 },
-        "75": { descricao: "Manutenção AZUL", tipo: "PQS ABC", kg: 6 }
-      },
-      "SCI": {
-        "76": { descricao: "Garagem", tipo: "CO²", kg: 6 },
-        "77": { descricao: "Garagem", tipo: "PQS BC", kg: 6 },
-        "78": { descricao: "Academia", tipo: "CO²", kg: 6 },
-        "79": { descricao: "Garagem", tipo: "CO²", kg: 6 },
-        "80": { descricao: "Reserva", tipo: "PQS ABC", kg: 4 },
-        "81": { descricao: "Auditório", tipo: "PQS BC", kg: 6 },
-        "82": { descricao: "Auditório", tipo: "CO²", kg: 6 },
-        "86": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 },
-        "87": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 }
+    // ══════════════════════════════════════════════════════════
+    //  CARREGAR EXTINTORES DO FIRESTORE
+    // ══════════════════════════════════════════════════════════
+    async function carregarExtintoresDoFirestore() {
+      try {
+        console.log('📥 Carregando extintores do Firestore...');
+        
+        // Usar service layer
+        const dados = await extintorService.getExtintoresFormatoAntigo();
+        
+        // Atualizar variáveis globais
+        edificacoesDescr = dados.edificacoesDescr;
+        extintoresInfo = dados.extintoresInfo;
+        edificacoesArray = dados.edificacoesArray;
+        
+        console.log(`✅ Carregados: ${edificacoesArray.length} edificações`);
+        
+        // Popular select de edificações
+        popularSelectEdificacoes();
+        
+        // Marcar como carregado
+        sistemaCarregado = true;
+        
+        // Iniciar listener do Realtime Database (vistorias)
+        iniciarListenerVistorias();
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar extintores:', error);
+        alert(
+          '❌ Erro ao carregar dados dos extintores.\n\n' +
+          'Possíveis causas:\n' +
+          '• A migração não foi executada\n' +
+          '• Problemas de conexão com o Firestore\n\n' +
+          'Verifique o console para mais detalhes.'
+        );
       }
-    };
-
-    const edificacoesArray = [
-      "DESEMBARQUE", "TPS TÉRREO", "TPS SUPERIOR", "RÁDIO", "ADM", "CASA DE BOMBAS",
-      "CAMPO DE ANTENAS", "RAIO X", "EMBARQUE", "ELOS", "APOC", "PORTÃO 1",
-      "KF CHILLER", "PAA", "MANUTENÇÃO", "GSE GOL AZUL RP", "SCI"
-    ];
+    }
+    
+    function popularSelectEdificacoes() {
+      const selectEl = document.getElementById('edificacao');
+      if (!selectEl) return;
+      
+      // Limpa opções existentes (mantém a primeira)
+      selectEl.innerHTML = '<option value="">Todas as edificações</option>';
+      
+      // Adiciona edificações
+      edificacoesArray.forEach(ed => {
+        const opt = document.createElement('option');
+        opt.value = ed;
+        opt.textContent = ed;
+        selectEl.appendChild(opt);
+      });
+    }
+    
+    function iniciarListenerVistorias() {
+      // Listener do Realtime Database (já existente no código)
+      db.ref('extintores').on('value', snapshot => {
+        globalData = snapshot.val() || {};
+        updateGlobalCounter();
+        updateSelectProgress();
+        renderList();
+      });
+    }
 
     // ──────────────────────────────────────────
     //  App state
@@ -1205,19 +1134,6 @@
     let searchQuery = '';
     let numeroAtual = null;
     let edificacaoAtual = null;
-
-    // ──────────────────────────────────────────
-    //  Populate building select
-    // ──────────────────────────────────────────
-    const selectEl = document.getElementById('edificacao');
-    if (selectEl) {
-      edificacoesArray.forEach(ed => {
-        const opt = document.createElement('option');
-        opt.value = ed;
-        opt.textContent = ed;
-        selectEl.appendChild(opt);
-      });
-    }
 
     // ──────────────────────────────────────────
     //  Firebase global listener
@@ -1288,6 +1204,10 @@
     // ──────────────────────────────────────────
     function renderList() {
       const container = document.getElementById('ext-list');
+      const loading = document.getElementById('loading-extintores');
+      
+      // Esconder loading se existir
+      if (loading) loading.style.display = 'none';
 
       // Build flat list
       let items = [];
