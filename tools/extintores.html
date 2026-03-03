@@ -989,7 +989,7 @@
     window.authGuard = authGuard;
     window.authLock = authLock;
 
-    function initAuth() {
+    async function initAuth() {
       if (window.authUI && window.authUI.openModal && window.authGuard) {
         window.addEventListener('auth-state-changed', async (e) => {
           if (e.detail && e.detail.user) {
