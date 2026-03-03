@@ -189,12 +189,15 @@
       appId: "1:712050420595:web:96ce82f25307c7aba4f306"
     };
     
+    // Variável global
+    let db;
+    
     console.log('🔧 Inicializando Firebase...');
     console.log('📋 Projeto:', firebaseConfig.projectId);
     
     try {
       firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
+      db = firebase.firestore(); // ← Agora atribui à variável global
       console.log('✅ Firebase inicializado com sucesso');
       console.log('✅ Firestore conectado');
     } catch (error) {
