@@ -1086,40 +1086,49 @@
     //  CARREGAR EXTINTORES DO FIRESTORE
     // ══════════════════════════════════════════════════════════
     async function carregarExtintoresDoFirestore() {
+      const loadingEl = document.getElementById('loading-extintores');
+      const extList = document.getElementById('ext-list');
+      
       try {
-        console.log('📥 Carregando extintores do Firestore...');
+        // Mostrar loading
+        if (loadingEl) {
+          loadingEl.style.display = 'block';
+        } else {
+          // Criar loading se não existir
+          if (extList) {
+            extList.innerHTML = `
+              <div id="loading-extintores" class="card p-5" style="text-align:center;">
+                <div style="font-size:48px; margin-bottom:12px;">📥</div>
+                <div style="font-size:16px; font-weight:600; color:#1d1d1f; margin-bottom:4px;">
+                  Carregando extintores...
+                </div>
+                <div style="font-size:13px; color:#86868b;">
+                  Buscando dados do Firestore
+                </div>
+              </div>`;
+          }
+        }
         
-        // ═══ NOVO: Inicializar service ═══
         const service = inicializarExtintorService();
-        
-        // Usar service layer
         const dados = await service.getExtintoresFormatoAntigo();
         
-        // Atualizar variáveis globais
         edificacoesDescr = dados.edificacoesDescr;
         extintoresInfo = dados.extintoresInfo;
         edificacoesArray = dados.edificacoesArray;
         
         console.log(`✅ Carregados: ${edificacoesArray.length} edificações`);
         
-        // Popular select de edificações
         popularSelectEdificacoes();
-        
-        // Marcar como carregado
         sistemaCarregado = true;
         
-        // Iniciar listener do Realtime Database (vistorias)
+        // Esconder loading
+        if (loadingEl) loadingEl.style.display = 'none';
+        
         iniciarListenerVistorias();
         
       } catch (error) {
-        console.error('❌ Erro ao carregar extintores:', error);
-        alert(
-          '❌ Erro ao carregar dados dos extintores.\n\n' +
-          'Possíveis causas:\n' +
-          '• A migração não foi executada\n' +
-          '• Problemas de conexão com o Firestore\n\n' +
-          'Verifique o console para mais detalhes.'
-        );
+        console.error('❌ Erro:', error);
+        if (loadingEl) loadingEl.style.display = 'none';
       }
     }
     
@@ -1140,12 +1149,17 @@
     }
     
     function iniciarListenerVistorias() {
-      // Listener do Realtime Database (já existente no código)
       db.ref('extintores').on('value', snapshot => {
         globalData = snapshot.val() || {};
-        updateGlobalCounter();
-        updateSelectProgress();
-        renderList();
+        
+        // ✅ Só atualiza se os extintores já foram carregados
+        if (Object.keys(extintoresInfo).length > 0) {
+          updateGlobalCounter();
+          updateSelectProgress();
+          renderList();
+        } else {
+          console.warn('⚠️ Aguardando carregamento dos extintores do Firestore...');
+        }
       });
     }
 
@@ -1170,25 +1184,31 @@
 
     function updateGlobalCounter() {
       let total = 0, done = 0;
-      Object.values(globalData).forEach(bldg => {
-        Object.values(bldg || {}).forEach(ext => {
+      
+      // ✅ Contar baseado no Firestore (fonte da verdade)
+      Object.entries(extintoresInfo).forEach(([edificacao, extintores]) => {
+        Object.keys(extintores).forEach(numero => {
           total++;
-          if (ext.vistoriado) done++;
+          
+          // Verificar vistoria no Realtime DB
+          const vistoriado = globalData[edificacao]?.[numero]?.vistoriado;
+          if (vistoriado) done++;
         });
       });
+      
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
+    
       const elDone = document.getElementById('global-done');
       const elTotal = document.getElementById('global-total');
       const elPending = document.getElementById('global-pending');
       const elPct = document.getElementById('global-pct');
       const fill = document.getElementById('global-fill');
-
+    
       if (elDone) elDone.textContent = done;
       if (elTotal) elTotal.textContent = total;
       if (elPending) elPending.textContent = total - done;
       if (elPct) elPct.textContent = pct + '%';
-
+    
       if (fill) {
         fill.style.width = pct + '%';
         fill.className = 'progress-fill' + (pct < 30 ? ' danger' : pct < 70 ? ' warn' : '');
@@ -1196,6 +1216,7 @@
     }
 
     function updateSelectProgress() {
+      const selectEl = document.getElementById('edificacao');
       if (!selectEl) return;
       const opts = selectEl.querySelectorAll('option[value]');
       opts.forEach(opt => {
