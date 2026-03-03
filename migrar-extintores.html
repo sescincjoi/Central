@@ -503,8 +503,9 @@
         // ─── PASSO 2: Migrar extintores instalados ───
         log('📦 [2/4] Migrando extintores instalados...', 'info');
         
+        let totalExtintores = 0; // ← Declarar fora do try para usar depois
+        
         try {
-          let totalExtintores = 0;
           const extintoresParaMigrar = [];
           
           // Preparar lista de extintores
