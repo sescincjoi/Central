@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações - Admin</title>
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f7;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 24px;
+    }
+    .radio-card {
+      border: 2px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .radio-card:hover {
+      border-color: #667eea;
+      background: #f9f9fb;
+    }
+    .radio-card.selected {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background: #f5f5f7;
+      color: #1d1d1f;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-purple { background: rgba(118, 75, 162, 0.1); color: #764ba2; }
+    .badge-orange { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+    .alert {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .alert h4 {
+      color: #856404;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .alert ul {
+      color: #856404;
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8" data-auth-required data-auth-login>
+
+  <!-- Header -->
+  <div class="max-w-4xl mx-auto mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-black text-gray-900">⚙️ Configurações</h1>
+        <p class="text-gray-500 mt-1">Sistema de Classificação de Extintores</p>
+      </div>
+      <button onclick="window.location.href='./admin-panel.html'" class="btn-secondary">
+        ← Voltar
+      </button>
+    </div>
+  </div>
+
+  <!-- Informações da Base -->
+  <div class="max-w-4xl mx-auto mb-6">
+    <div class="card">
+      <h2 class="text-xl font-bold mb-4">🏢 Informações da Base</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <div class="text-sm text-gray-500">Nome</div>
+          <div class="font-semibold" id="base-nome">-</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-500">Código</div>
+          <div class="font-semibold" id="base-codigo">-</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modo de Classificação -->
+  <div class="max-w-4xl mx-auto mb-6">
+    <div class="card">
+      <h2 class="text-xl font-bold mb-4">📏 Modo de Classificação</h2>
+      <p class="text-gray-600 mb-6">
+        Escolha como os extintores serão classificados no sistema
+      </p>
+
+      <!-- Opção 1: Tipo/Carga Nominal -->
+      <div class="radio-card mb-4" id="radio-carga" onclick="selecionarModo('tipo_carga_nominal')">
+        <div class="flex items-start gap-4">
+          <input type="radio" name="modo" value="tipo_carga_nominal" class="mt-1">
+          <div class="flex-1">
+            <div class="font-bold text-lg mb-1">
+              Tipo / Carga Nominal
+              <span class="badge badge-purple ml-2" id="badge-carga" style="display:none;">ATUAL</span>
+            </div>
+            <div class="text-gray-600 text-sm mb-3">
+              Classifica pela carga do agente extintor (kg ou L)
+            </div>
+            <div class="text-sm font-mono bg-gray-50 p-3 rounded">
+              <div>💧 Água Pressurizada 10L</div>
+              <div>🧯 PQS BC 6kg</div>
+              <div>❄️ CO² 4kg</div>
+              <div>🫧 Espuma Mecânica 6L</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opção 2: Tipo/Capacidade Extintora -->
+      <div class="radio-card" id="radio-capacidade" onclick="selecionarModo('tipo_capacidade')">
+        <div class="flex items-start gap-4">
+          <input type="radio" name="modo" value="tipo_capacidade" class="mt-1">
+          <div class="flex-1">
+            <div class="font-bold text-lg mb-1">
+              Tipo / Capacidade Extintora
+              <span class="badge badge-purple ml-2" id="badge-capacidade" style="display:none;">ATUAL</span>
+            </div>
+            <div class="text-gray-600 text-sm mb-3">
+              Classifica pela eficiência de combate ao fogo (norma técnica)
+            </div>
+            <div class="text-sm font-mono bg-gray-50 p-3 rounded">
+              <div>💧 Água Pressurizada 2A</div>
+              <div>🧯 PQS BC 40B:C</div>
+              <div>❄️ CO² 5B:C</div>
+              <div>🧯 PQS ABC 2A:20B:C</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerta de Mudança -->
+      <div id="alerta-mudanca" class="alert" style="display:none;">
+        <h4>⚠️ ATENÇÃO - Ao trocar o modo de classificação:</h4>
+        <ul>
+          <li>Todos os extintores serão marcados para revisão</li>
+          <li>Todas as vistorias atuais serão resetadas</li>
+          <li>Os dados antigos serão preservados (reversível)</li>
+          <li>Você precisará preencher os novos campos manualmente</li>
+        </ul>
+      </div>
+
+      <!-- Estatísticas -->
+      <div id="stats-revisao" class="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mt-4" style="display:none;">
+        <div class="flex items-center gap-3">
+          <div class="text-3xl">⚠️</div>
+          <div>
+            <div class="font-bold text-orange-800">
+              <span id="count-pendentes">0</span> extintores pendentes de revisão
+            </div>
+            <div class="text-sm text-orange-600">
+              Alguns extintores precisam ter seus dados atualizados
+            </div>
+          </div>
+          <button onclick="window.location.href='./admin-revisao.html'" 
+                  class="btn-primary ml-auto">
+            Revisar Agora
+          </button>
+        </div>
+      </div>
+
+      <!-- Botões -->
+      <div class="flex gap-3 mt-6">
+        <button onclick="window.location.href='./admin-panel.html'" class="btn-secondary flex-1">
+          Cancelar
+        </button>
+        <button id="btn-salvar" onclick="salvarConfiguracao()" class="btn-primary flex-1">
+          Salvar Configuração
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Histórico de Mudanças -->
+  <div class="max-w-4xl mx-auto">
+    <div class="card">
+      <h2 class="text-xl font-bold mb-4">📜 Histórico de Mudanças</h2>
+      <div id="historico-lista">
+        <div class="text-gray-500 text-center py-4">Nenhuma mudança registrada</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth System -->
+  <script type="module">
+    import authCore from './js/auth/auth-core.js';
+    import authUI from './js/auth/auth-ui.js';
+    import authGuard from './js/auth/auth-guard.js';
+
+    window.authCore = authCore;
+    window.authUI = authUI;
+    window.authGuard = authGuard;
+
+    function initAuth() {
+      if (window.authUI && window.authUI.openModal && window.authGuard) {
+        window.addEventListener('auth-state-changed', (e) => {
+          if (e.detail && e.detail.user) {
+            if (window.initPage) window.initPage();
+          }
+        });
+
+        if (authCore.initialized && authCore.isAuthenticated()) {
+          if (window.initPage) window.initPage();
+        }
+      } else {
+        setTimeout(initAuth, 50);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAuth);
+    } else {
+      initAuth();
+    }
+  </script>
+
+  <!-- Service Layer -->
+  <script src="./extintor-service.js"></script>
+
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //  FIREBASE CONFIG
+    // ══════════════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+
+    // ══════════════════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════════════════
+    let extintorService;
+    let modoAtual;
+    let modoSelecionado;
+    let baseAtual;
+
+    // ══════════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════════
+    async function init() {
+      try {
+        extintorService = new ExtintorService().init();
+        
+        await carregarDados();
+        await carregarHistorico();
+        await verificarPendentes();
+        
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('Erro ao carregar configurações: ' + error.message);
+      }
+    }
+
+    window.initPage = init;
+
+    async function carregarDados() {
+      baseAtual = await extintorService.getBaseAtual();
+      modoAtual = baseAtual.modo_classificacao;
+      modoSelecionado = modoAtual;
+
+      // Atualizar interface
+      document.getElementById('base-nome').textContent = baseAtual.nome;
+      document.getElementById('base-codigo').textContent = baseAtual.codigo;
+
+      // Marcar modo atual
+      const radioCarga = document.querySelector('input[value="tipo_carga_nominal"]');
+      const radioCapacidade = document.querySelector('input[value="tipo_capacidade"]');
+
+      if (modoAtual === 'tipo_carga_nominal') {
+        radioCarga.checked = true;
+        document.getElementById('radio-carga').classList.add('selected');
+        document.getElementById('badge-carga').style.display = 'inline-block';
+      } else {
+        radioCapacidade.checked = true;
+        document.getElementById('radio-capacidade').classList.add('selected');
+        document.getElementById('badge-capacidade').style.display = 'inline-block';
+      }
+    }
+
+    async function carregarHistorico() {
+      const historico = baseAtual.historico_mudancas || [];
+      const container = document.getElementById('historico-lista');
+
+      if (historico.length === 0) {
+        return;
+      }
+
+      container.innerHTML = '';
+
+      historico.reverse().forEach(mudanca => {
+        const data = new Date(mudanca.data).toLocaleString('pt-BR');
+        const html = `
+          <div class="border-l-4 border-purple-500 pl-4 py-3 mb-3">
+            <div class="font-semibold">${mudanca.de} → ${mudanca.para}</div>
+            <div class="text-sm text-gray-500">${data}</div>
+            ${mudanca.motivo ? `<div class="text-sm text-gray-600 mt-1">${mudanca.motivo}</div>` : ''}
+          </div>`;
+        container.innerHTML += html;
+      });
+    }
+
+    async function verificarPendentes() {
+      const pendentes = await extintorService.getExtintoresPendentesRevisao();
+      
+      if (pendentes.length > 0) {
+        document.getElementById('stats-revisao').style.display = 'flex';
+        document.getElementById('count-pendentes').textContent = pendentes.length;
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  SELEÇÃO DE MODO
+    // ══════════════════════════════════════════════════════════
+    function selecionarModo(modo) {
+      modoSelecionado = modo;
+
+      // Atualizar UI
+      document.querySelectorAll('.radio-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+
+      if (modo === 'tipo_carga_nominal') {
+        document.getElementById('radio-carga').classList.add('selected');
+        document.querySelector('input[value="tipo_carga_nominal"]').checked = true;
+      } else {
+        document.getElementById('radio-capacidade').classList.add('selected');
+        document.querySelector('input[value="tipo_capacidade"]').checked = true;
+      }
+
+      // Mostrar alerta se mudou
+      if (modo !== modoAtual) {
+        document.getElementById('alerta-mudanca').style.display = 'block';
+      } else {
+        document.getElementById('alerta-mudanca').style.display = 'none';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  SALVAR
+    // ══════════════════════════════════════════════════════════
+    async function salvarConfiguracao() {
+      if (modoSelecionado === modoAtual) {
+        alert('ℹ️ Nenhuma mudança foi feita.');
+        return;
+      }
+
+      const confirmar = confirm(
+        `⚠️ CONFIRMAR MUDANÇA\n\n` +
+        `De: ${modoAtual}\n` +
+        `Para: ${modoSelecionado}\n\n` +
+        `Isso irá:\n` +
+        `• Marcar todos os extintores para revisão\n` +
+        `• Resetar todas as vistorias\n` +
+        `• Preservar os dados antigos (reversível)\n\n` +
+        `Deseja continuar?`
+      );
+
+      if (!confirmar) return;
+
+      const motivo = prompt('Motivo da mudança (opcional):');
+
+      try {
+        const btn = document.getElementById('btn-salvar');
+        btn.disabled = true;
+        btn.textContent = '⏳ Salvando...';
+
+        await extintorService.trocarModoClassificacao(modoSelecionado, motivo || '');
+
+        alert('✅ Configuração salva com sucesso!\n\nTodos os extintores foram marcados para revisão.');
+        window.location.reload();
+
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('❌ Erro ao salvar: ' + error.message);
+        
+        document.getElementById('btn-salvar').disabled = false;
+        document.getElementById('btn-salvar').textContent = 'Salvar Configuração';
+      }
+    }
+  </script>
+</body>
+</html>
