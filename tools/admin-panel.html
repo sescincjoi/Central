@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin - Extintores</title>
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f7;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+      background: #f5f5f7;
+      color: #1d1d1f;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: 1px solid #e5e5ea;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: #e8e8ed;
+    }
+    .btn-danger {
+      background: #ff3b30;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-danger:hover {
+      background: #ff2d55;
+    }
+    .btn-success {
+      background: #34c759;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.show {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e5e5ea;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+    .label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #86868b;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 24px;
+      color: white;
+    }
+    .stat-number {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-top: 8px;
+    }
+    .extintor-card {
+      background: white;
+      border: 2px solid #f5f5f7;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    .extintor-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .extintor-card.desativado {
+      opacity: 0.5;
+      background: #f9f9f9;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-blue { background: rgba(102, 126, 234, 0.1); color: #667eea; }
+    .badge-purple { background: rgba(118, 75, 162, 0.1); color: #764ba2; }
+    .badge-green { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+    .badge-red { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
+    .badge-gray { background: rgba(0, 0, 0, 0.06); color: #86868b; }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+
+  <!-- Header -->
+  <div class="max-w-6xl mx-auto mb-8">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="text-3xl font-black text-gray-900">🎛️ Painel Admin</h1>
+        <p class="text-gray-500 mt-1">Gestão de Extintores</p>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="window.location.href='./inspecao.html'" class="btn-secondary">
+          ← Voltar para Inspeção
+        </button>
+        <button onclick="abrirModalNovo()" class="btn-primary">
+          + Novo Extintor
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="max-w-6xl mx-auto mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="stat-card">
+        <div class="stat-number" id="stat-total">0</div>
+        <div class="stat-label">Total de Extintores</div>
+      </div>
+      <div class="card p-6">
+        <div class="text-3xl font-black text-green-500" id="stat-ativos">0</div>
+        <div class="text-sm text-gray-500 mt-2">Ativos</div>
+      </div>
+      <div class="card p-6">
+        <div class="text-3xl font-black text-red-500" id="stat-desativados">0</div>
+        <div class="text-sm text-gray-500 mt-2">Desativados</div>
+      </div>
+      <div class="card p-6">
+        <div class="text-3xl font-black text-purple-500" id="stat-edificacoes">0</div>
+        <div class="text-sm text-gray-500 mt-2">Edificações</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="max-w-6xl mx-auto mb-6">
+    <div class="card p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="🔍 Buscar por nº, tipo, descrição..."
+            class="input-field"
+            oninput="filtrarExtintores()"
+          >
+        </div>
+        <div>
+          <select id="filtroEdificacao" class="input-field" onchange="filtrarExtintores()">
+            <option value="">Todas as edificações</option>
+          </select>
+        </div>
+        <div>
+          <select id="filtroStatus" class="input-field" onchange="filtrarExtintores()">
+            <option value="">Todos os status</option>
+            <option value="ativo">Ativos</option>
+            <option value="desativado">Desativados</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Extintores -->
+  <div class="max-w-6xl mx-auto">
+    <div id="listaExtintores">
+      <div class="text-center py-12">
+        <div class="text-4xl mb-4">📥</div>
+        <div class="text-gray-500">Carregando extintores...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Novo/Editar -->
+  <div id="modalExtintor" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold" id="modalTitulo">Novo Extintor</h2>
+        <button onclick="fecharModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+      </div>
+
+      <form id="formExtintor" onsubmit="salvarExtintor(event)">
+        <input type="hidden" id="extintor-id">
+        
+        <div class="space-y-4">
+          <div>
+            <label class="label">Número *</label>
+            <input type="text" id="extintor-numero" class="input-field" required>
+          </div>
+
+          <div>
+            <label class="label">Edificação *</label>
+            <select id="extintor-edificacao" class="input-field" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="label">Descrição da Localização *</label>
+            <input type="text" id="extintor-descricao" class="input-field" required 
+                   placeholder="Ex: Ao lado da sala técnica">
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="label">Tipo *</label>
+              <select id="extintor-tipo" class="input-field" required>
+                <option value="">Selecione...</option>
+                <option>PQS ABC</option>
+                <option>PQS BC</option>
+                <option>CO²</option>
+                <option>Água</option>
+                <option>Espuma</option>
+                <option>Classe K</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Kg *</label>
+              <select id="extintor-kg" class="input-field" required>
+                <option value="">Selecione...</option>
+                <option>4</option>
+                <option>6</option>
+                <option>10</option>
+                <option>12</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="label">Vencimento Nível 2 (Mês/Ano)</label>
+              <input type="month" id="extintor-n2" class="input-field">
+            </div>
+
+            <div>
+              <label class="label">Vencimento Nível 3 (Ano)</label>
+              <input type="number" id="extintor-n3" class="input-field" min="2020" max="2100" 
+                     placeholder="2027">
+            </div>
+          </div>
+
+          <div>
+            <label class="label">QR Code (Automático)</label>
+            <input type="text" id="extintor-qrcode" class="input-field" readonly 
+                   style="background: #f9f9f9;">
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+          <button type="button" onclick="fecharModal()" class="btn-secondary flex-1">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary flex-1">
+            Salvar Extintor
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Service Layer -->
+  <script src="./extintor-service.js"></script>
+
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //  FIREBASE CONFIG
+    // ══════════════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // ══════════════════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════════════════
+    let extintorService;
+    let todosExtintores = [];
+    let extintoresFiltrados = [];
+    let edificacoes = {};
+    let modoEdicao = false;
+
+    // ══════════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════════
+    async function init() {
+      try {
+        // Verificar autenticação
+        await verificarAuth();
+        
+        // Inicializar service
+        extintorService = new ExtintorService().init();
+        
+        // Carregar dados
+        await carregarDados();
+        
+        // Popular selects
+        popularSelectEdificacoes();
+        
+        // Renderizar
+        filtrarExtintores();
+        
+      } catch (error) {
+        console.error('❌ Erro ao inicializar:', error);
+        alert('Erro ao carregar painel: ' + error.message);
+      }
+    }
+
+    async function verificarAuth() {
+      return new Promise((resolve, reject) => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+          unsubscribe();
+          if (user) {
+            console.log('✅ Autenticado como:', user.email);
+            resolve(user);
+          } else {
+            alert('❌ Você precisa estar autenticado para acessar o painel admin.');
+            window.location.href = './inspecao.html';
+            reject(new Error('Não autenticado'));
+          }
+        });
+      });
+    }
+
+    async function carregarDados() {
+      console.log('📥 Carregando dados...');
+      
+      // Carregar extintores
+      todosExtintores = await extintorService.listarExtintores(true); // Forçar recarregar
+      extintoresFiltrados = [...todosExtintores];
+      
+      // Carregar edificações
+      edificacoes = await extintorService.listarEdificacoes();
+      
+      // Atualizar stats
+      atualizarStats();
+      
+      console.log(`✅ ${todosExtintores.length} extintores carregados`);
+    }
+
+    function atualizarStats() {
+      const total = todosExtintores.length;
+      const ativos = todosExtintores.filter(e => e.ativo).length;
+      const desativados = total - ativos;
+      const totalEdificacoes = Object.keys(edificacoes).length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-ativos').textContent = ativos;
+      document.getElementById('stat-desativados').textContent = desativados;
+      document.getElementById('stat-edificacoes').textContent = totalEdificacoes;
+    }
+
+    function popularSelectEdificacoes() {
+      const selects = ['filtroEdificacao', 'extintor-edificacao'];
+      
+      selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        // Limpar (manter primeira opção do filtro)
+        if (selectId === 'filtroEdificacao') {
+          select.innerHTML = '<option value="">Todas as edificações</option>';
+        } else {
+          select.innerHTML = '<option value="">Selecione...</option>';
+        }
+        
+        // Adicionar edificações
+        Object.keys(edificacoes).sort().forEach(nome => {
+          const opt = document.createElement('option');
+          opt.value = nome;
+          opt.textContent = nome;
+          select.appendChild(opt);
+        });
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  FILTROS
+    // ══════════════════════════════════════════════════════════
+    function filtrarExtintores() {
+      const busca = document.getElementById('searchInput').value.toLowerCase();
+      const edificacao = document.getElementById('filtroEdificacao').value;
+      const status = document.getElementById('filtroStatus').value;
+
+      extintoresFiltrados = todosExtintores.filter(ext => {
+        // Busca
+        if (busca) {
+          const match = 
+            ext.numero.toLowerCase().includes(busca) ||
+            ext.tipo.toLowerCase().includes(busca) ||
+            ext.descricao.toLowerCase().includes(busca) ||
+            ext.edificacao.toLowerCase().includes(busca);
+          if (!match) return false;
+        }
+
+        // Edificação
+        if (edificacao && ext.edificacao !== edificacao) return false;
+
+        // Status
+        if (status === 'ativo' && !ext.ativo) return false;
+        if (status === 'desativado' && ext.ativo) return false;
+
+        return true;
+      });
+
+      renderizarLista();
+    }
+
+    function renderizarLista() {
+      const container = document.getElementById('listaExtintores');
+
+      if (extintoresFiltrados.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12">
+            <div class="text-4xl mb-4">🔍</div>
+            <div class="text-gray-500">Nenhum extintor encontrado</div>
+          </div>`;
+        return;
+      }
+
+      // Agrupar por edificação
+      const porEdificacao = {};
+      extintoresFiltrados.forEach(ext => {
+        if (!porEdificacao[ext.edificacao]) {
+          porEdificacao[ext.edificacao] = [];
+        }
+        porEdificacao[ext.edificacao].push(ext);
+      });
+
+      // Renderizar
+      let html = '';
+      Object.keys(porEdificacao).sort().forEach(edificacao => {
+        const extintores = porEdificacao[edificacao];
+        
+        html += `
+          <div class="mb-6">
+            <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2">
+              📍 ${edificacao}
+              <span class="badge badge-gray">${extintores.length}</span>
+            </h3>`;
+
+        extintores.sort((a, b) => parseInt(a.numero) - parseInt(b.numero)).forEach(ext => {
+          html += criarCardExtintor(ext);
+        });
+
+        html += `</div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function criarCardExtintor(ext) {
+      const statusClass = ext.ativo ? '' : 'desativado';
+      const statusBadge = ext.ativo 
+        ? '<span class="badge badge-green">Ativo</span>' 
+        : '<span class="badge badge-red">Desativado</span>';
+
+      return `
+        <div class="extintor-card ${statusClass}">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl font-bold">Nº ${ext.numero}</span>
+                <span class="badge badge-blue">${ext.tipo} ${ext.kg}kg</span>
+                ${statusBadge}
+              </div>
+              <div class="text-sm text-gray-600 mb-2">${ext.descricao}</div>
+              <div class="flex gap-4 text-xs text-gray-400">
+                ${ext.vencimento_nivel2 ? `<span>N2: ${ext.vencimento_nivel2}</span>` : ''}
+                ${ext.vencimento_nivel3 ? `<span>N3: ${ext.vencimento_nivel3}</span>` : ''}
+                <span>QR: ${ext.qrcode || '-'}</span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editarExtintor('${ext.id}')" class="btn-secondary text-sm">
+                ✏️ Editar
+              </button>
+              ${ext.ativo 
+                ? `<button onclick="desativarExtintor('${ext.id}')" class="btn-danger">🗑️ Desativar</button>`
+                : `<button onclick="reativarExtintor('${ext.id}')" class="btn-success">✅ Reativar</button>`
+              }
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MODAL
+    // ══════════════════════════════════════════════════════════
+    function abrirModalNovo() {
+      modoEdicao = false;
+      document.getElementById('modalTitulo').textContent = 'Novo Extintor';
+      document.getElementById('formExtintor').reset();
+      document.getElementById('extintor-id').value = '';
+      document.getElementById('modalExtintor').classList.add('show');
+    }
+
+    async function editarExtintor(id) {
+      modoEdicao = true;
+      document.getElementById('modalTitulo').textContent = 'Editar Extintor';
+      
+      const ext = todosExtintores.find(e => e.id === id);
+      if (!ext) return;
+
+      document.getElementById('extintor-id').value = ext.id;
+      document.getElementById('extintor-numero').value = ext.numero;
+      document.getElementById('extintor-edificacao').value = ext.edificacao;
+      document.getElementById('extintor-descricao').value = ext.descricao;
+      document.getElementById('extintor-tipo').value = ext.tipo;
+      document.getElementById('extintor-kg').value = ext.kg;
+      document.getElementById('extintor-n2').value = ext.vencimento_nivel2 || '';
+      document.getElementById('extintor-n3').value = ext.vencimento_nivel3 || '';
+      document.getElementById('extintor-qrcode').value = ext.qrcode || '';
+
+      document.getElementById('modalExtintor').classList.add('show');
+    }
+
+    function fecharModal() {
+      document.getElementById('modalExtintor').classList.remove('show');
+    }
+
+    async function salvarExtintor(event) {
+      event.preventDefault();
+
+      const id = document.getElementById('extintor-id').value;
+      const dados = {
+        numero: document.getElementById('extintor-numero').value,
+        edificacao: document.getElementById('extintor-edificacao').value,
+        descricao: document.getElementById('extintor-descricao').value,
+        tipo: document.getElementById('extintor-tipo').value,
+        kg: parseInt(document.getElementById('extintor-kg').value),
+        vencimento_nivel2: document.getElementById('extintor-n2').value,
+        vencimento_nivel3: document.getElementById('extintor-n3').value ? 
+          parseInt(document.getElementById('extintor-n3').value) : null,
+        qrcode: document.getElementById('extintor-qrcode').value || 
+          `EXT-SBJV-${dados.edificacao.substring(0,6).toUpperCase()}-${dados.numero}`,
+        atualizado_por: auth.currentUser.email
+      };
+
+      try {
+        if (modoEdicao && id) {
+          // Editar
+          await extintorService.atualizarExtintor(id, dados);
+          alert('✅ Extintor atualizado com sucesso!');
+        } else {
+          // Criar
+          dados.criado_por = auth.currentUser.email;
+          await extintorService.criarExtintor(dados);
+          alert('✅ Extintor criado com sucesso!');
+        }
+
+        fecharModal();
+        await carregarDados();
+        filtrarExtintores();
+
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('❌ Erro ao salvar: ' + error.message);
+      }
+    }
+
+    async function desativarExtintor(id) {
+      if (!confirm('Deseja realmente desativar este extintor?')) return;
+
+      const motivo = prompt('Motivo da desativação:');
+      if (!motivo) return;
+
+      try {
+        await extintorService.desativarExtintor(id, motivo);
+        alert('✅ Extintor desativado!');
+        await carregarDados();
+        filtrarExtintores();
+      } catch (error) {
+        alert('❌ Erro: ' + error.message);
+      }
+    }
+
+    async function reativarExtintor(id) {
+      if (!confirm('Deseja realmente reativar este extintor?')) return;
+
+      try {
+        await extintorService.atualizarExtintor(id, {
+          ativo: true,
+          status: 'operacional',
+          atualizado_por: auth.currentUser.email
+        });
+        alert('✅ Extintor reativado!');
+        await carregarDados();
+        filtrarExtintores();
+      } catch (error) {
+        alert('❌ Erro: ' + error.message);
+      }
+    }
+
+    // Auto-gerar QR Code
+    document.getElementById('extintor-edificacao').addEventListener('change', gerarQRCode);
+    document.getElementById('extintor-numero').addEventListener('input', gerarQRCode);
+
+    function gerarQRCode() {
+      const edificacao = document.getElementById('extintor-edificacao').value;
+      const numero = document.getElementById('extintor-numero').value;
+      
+      if (edificacao && numero) {
+        const qrcode = `EXT-SBJV-${edificacao.substring(0,6).toUpperCase()}-${numero}`;
+        document.getElementById('extintor-qrcode').value = qrcode;
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  START
+    // ══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
