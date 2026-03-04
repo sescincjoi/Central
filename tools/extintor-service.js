@@ -175,12 +175,15 @@ class ExtintorService {
   async getConfiguracao() {
     this._ensureInit();
     
+    // DEPRECATED: buscar da coleção antiga configuracao
+    // Mantido para compatibilidade
     if (this.cache.config) return this.cache.config;
     
     const doc = await this.db.collection('configuracao').doc('base_atual').get();
     
     if (!doc.exists) {
-      throw new Error('Configuração não encontrada no Firestore. Execute a migração primeiro.');
+      console.warn('⚠️ Configuração antiga não encontrada');
+      return null;
     }
     
     this.cache.config = doc.data();
@@ -188,8 +191,16 @@ class ExtintorService {
   }
 
   async getModoClassificacao() {
-    const config = await this.getConfiguracao();
-    return config.modo_classificacao || 'tipo_kg';
+    // NOVO: Buscar da coleção bases
+    try {
+      const base = await this.getBaseAtual();
+      return base.modo_classificacao || 'tipo_carga_nominal';
+    } catch (error) {
+      console.error('❌ Erro ao buscar modo da base:', error);
+      // Fallback: tentar configuração antiga
+      const config = await this.getConfiguracao();
+      return config?.modo_classificacao || 'tipo_carga_nominal';
+    }
   }
 
   async setModoClassificacao(novoModo) {
