@@ -182,7 +182,10 @@
         <p class="text-gray-500 mt-1">Gestão de Extintores</p>
       </div>
       <div class="flex gap-3">
-        <button onclick="window.location.href='./extintores.html'" class="btn-secondary">
+        <button onclick="window.location.href='./admin-configuracoes.html'" class="btn-secondary">
+          ⚙️ Configurações
+        </button>
+        <button onclick="window.location.href='./inspecao.html'" class="btn-secondary">
           ← Voltar para Inspeção
         </button>
         <button onclick="abrirModalNovo()" class="btn-primary">
@@ -210,6 +213,27 @@
       <div class="card p-6">
         <div class="text-3xl font-black text-purple-500" id="stat-edificacoes">0</div>
         <div class="text-sm text-gray-500 mt-2">Edificações</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerta de Revisão Pendente -->
+  <div class="max-w-6xl mx-auto mb-6" id="alerta-revisao" style="display:none;">
+    <div class="card" style="background: #fff3cd; border: 2px solid #ffc107;">
+      <div class="flex items-center gap-4">
+        <div class="text-4xl">⚠️</div>
+        <div class="flex-1">
+          <div class="font-bold text-lg" style="color: #856404;">
+            <span id="count-revisao">0</span> extintores pendentes de revisão
+          </div>
+          <div class="text-sm" style="color: #856404;">
+            O modo de classificação foi alterado. Alguns extintores precisam ter seus dados atualizados.
+          </div>
+        </div>
+        <button onclick="window.location.href='./admin-revisao.html'" 
+                style="background: #ff9500; color: white; padding: 12px 24px; border-radius: 10px; font-weight: 600; border: none; cursor: pointer;">
+          Revisar Agora
+        </button>
       </div>
     </div>
   </div>
@@ -283,30 +307,38 @@
                    placeholder="Ex: Ao lado da sala técnica">
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="label">Tipo *</label>
-              <select id="extintor-tipo" class="input-field" required>
-                <option value="">Selecione...</option>
-                <option>PQS ABC</option>
-                <option>PQS BC</option>
-                <option>CO²</option>
-                <option>Água</option>
-                <option>Espuma</option>
-                <option>Classe K</option>
-              </select>
-            </div>
+          <div>
+            <label class="label">Tipo *</label>
+            <select id="extintor-tipo" class="input-field" required onchange="atualizarOpcoesClassificacao()">
+              <option value="">Selecione...</option>
+              <option>Água Pressurizada</option>
+              <option>Espuma Mecânica</option>
+              <option>PQS BC</option>
+              <option>PQS ABC</option>
+              <option>CO²</option>
+              <option>Pó Classe D</option>
+              <option>Classe K</option>
+            </select>
+          </div>
 
-            <div>
-              <label class="label">Kg *</label>
-              <select id="extintor-kg" class="input-field" required>
+          <!-- CAMPO CARGA NOMINAL (modo tipo_carga_nominal) -->
+          <div id="campo-carga-nominal" style="display:none;">
+            <label class="label">Carga Nominal *</label>
+            <div class="flex gap-2">
+              <select id="extintor-carga-valor" class="input-field flex-1">
                 <option value="">Selecione...</option>
-                <option>4</option>
-                <option>6</option>
-                <option>10</option>
-                <option>12</option>
               </select>
+              <input type="text" id="extintor-carga-unidade" class="input-field" 
+                     style="width: 60px; background: #f5f5f7;" readonly>
             </div>
+          </div>
+
+          <!-- CAMPO CAPACIDADE EXTINTORA (modo tipo_capacidade) -->
+          <div id="campo-capacidade" style="display:none;">
+            <label class="label">Capacidade Extintora *</label>
+            <select id="extintor-capacidade" class="input-field">
+              <option value="">Selecione...</option>
+            </select>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
@@ -327,6 +359,12 @@
             <input type="text" id="extintor-qrcode" class="input-field" readonly 
                    style="background: #f9f9f9;">
           </div>
+
+          <!-- Prévia -->
+          <div id="preview-extintor" style="background: #f5f5f7; padding: 12px; border-radius: 8px; display:none;">
+            <div class="text-xs text-gray-500 mb-1">💡 Visualização:</div>
+            <div class="font-semibold" id="preview-texto">-</div>
+          </div>
         </div>
 
         <div class="flex gap-3 mt-8">
@@ -343,9 +381,9 @@
 
   <!-- Auth System -->
   <script type="module">
-    import authCore from '../js/auth/auth-core.js';
-    import authUI from '../js/auth/auth-ui.js';
-    import authGuard from '../js/auth/auth-guard.js';
+    import authCore from './js/auth/auth-core.js';
+    import authUI from './js/auth/auth-ui.js';
+    import authGuard from './js/auth/auth-guard.js';
 
     window.authCore = authCore;
     window.authUI = authUI;
@@ -407,6 +445,11 @@
     let extintoresFiltrados = [];
     let edificacoes = {};
     let modoEdicao = false;
+    
+    // Novos: modo de classificação
+    let modoClassificacao = 'tipo_carga_nominal';
+    let opcoesCargaNominal = {};
+    let opcoesCapacidade = {};
 
     // ══════════════════════════════════════════════════════════
     //  INIT
@@ -439,8 +482,15 @@
     async function carregarDados() {
       console.log('📥 Carregando dados...');
       
+      // Carregar modo de classificação
+      modoClassificacao = await extintorService.getModoClassificacao();
+      opcoesCargaNominal = await extintorService.getOpcoesCargaNominal();
+      opcoesCapacidade = await extintorService.getOpcoesCapacidade();
+      
+      console.log('✅ Modo:', modoClassificacao);
+      
       // Carregar extintores
-      todosExtintores = await extintorService.listarExtintores(true); // Forçar recarregar
+      todosExtintores = await extintorService.listarExtintores(true);
       extintoresFiltrados = [...todosExtintores];
       
       // Carregar edificações
@@ -449,7 +499,19 @@
       // Atualizar stats
       atualizarStats();
       
+      // Verificar pendentes de revisão
+      await verificarPendentesRevisao();
+      
       console.log(`✅ ${todosExtintores.length} extintores carregados`);
+    }
+
+    async function verificarPendentesRevisao() {
+      const pendentes = todosExtintores.filter(e => e.requer_revisao === true);
+      
+      if (pendentes.length > 0) {
+        document.getElementById('alerta-revisao').style.display = 'block';
+        document.getElementById('count-revisao').textContent = pendentes.length;
+      }
     }
 
     function atualizarStats() {
@@ -568,6 +630,14 @@
       const statusBadge = ext.ativo 
         ? '<span class="badge badge-green">Ativo</span>' 
         : '<span class="badge badge-red">Desativado</span>';
+      
+      // Formatar classificação
+      const classificacao = extintorService.formatarExtintor(ext);
+      
+      // Badge de revisão
+      const badgeRevisao = ext.requer_revisao 
+        ? '<span class="badge badge-orange">Requer Revisão</span>' 
+        : '';
 
       return `
         <div class="extintor-card ${statusClass}">
@@ -575,8 +645,9 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-xl font-bold">Nº ${ext.numero}</span>
-                <span class="badge badge-blue">${ext.tipo} ${ext.kg}kg</span>
+                <span class="badge badge-blue">${classificacao}</span>
                 ${statusBadge}
+                ${badgeRevisao}
               </div>
               <div class="text-sm text-gray-600 mb-2">${ext.descricao}</div>
               <div class="flex gap-4 text-xs text-gray-400">
@@ -599,6 +670,129 @@
     }
 
     // ══════════════════════════════════════════════════════════
+    //  FORMULÁRIO ADAPTATIVO
+    // ══════════════════════════════════════════════════════════
+    
+    function configurarFormularioPorModo() {
+      const campoCarga = document.getElementById('campo-carga-nominal');
+      const campoCapacidade = document.getElementById('campo-capacidade');
+      
+      if (modoClassificacao === 'tipo_carga_nominal') {
+        campoCarga.style.display = 'block';
+        campoCapacidade.style.display = 'none';
+        document.getElementById('extintor-carga-valor').required = true;
+        document.getElementById('extintor-capacidade').required = false;
+      } else {
+        campoCarga.style.display = 'none';
+        campoCapacidade.style.display = 'block';
+        document.getElementById('extintor-carga-valor').required = false;
+        document.getElementById('extintor-capacidade').required = true;
+      }
+    }
+
+    function atualizarOpcoesClassificacao() {
+      const tipo = document.getElementById('extintor-tipo').value;
+      
+      if (!tipo) {
+        limparOpcoesClassificacao();
+        return;
+      }
+
+      if (modoClassificacao === 'tipo_carga_nominal') {
+        atualizarOpcoesCargaNominal(tipo);
+      } else {
+        atualizarOpcoesCapacidade(tipo);
+      }
+      
+      atualizarPreview();
+    }
+
+    function atualizarOpcoesCargaNominal(tipo) {
+      const config = opcoesCargaNominal[tipo];
+      
+      if (!config) {
+        limparOpcoesClassificacao();
+        return;
+      }
+
+      const selectValor = document.getElementById('extintor-carga-valor');
+      const inputUnidade = document.getElementById('extintor-carga-unidade');
+      
+      // Atualizar unidade
+      inputUnidade.value = config.unidade;
+      
+      // Atualizar valores
+      selectValor.innerHTML = '<option value="">Selecione...</option>';
+      config.valores.forEach(valor => {
+        const opt = document.createElement('option');
+        opt.value = valor;
+        opt.textContent = valor;
+        selectValor.appendChild(opt);
+      });
+      
+      selectValor.onchange = atualizarPreview;
+    }
+
+    function atualizarOpcoesCapacidade(tipo) {
+      const opcoes = opcoesCapacidade[tipo];
+      
+      if (!opcoes) {
+        limparOpcoesClassificacao();
+        return;
+      }
+
+      const selectCapacidade = document.getElementById('extintor-capacidade');
+      selectCapacidade.innerHTML = '<option value="">Selecione...</option>';
+      
+      opcoes.forEach(opcao => {
+        const opt = document.createElement('option');
+        opt.value = opcao;
+        opt.textContent = opcao;
+        selectCapacidade.appendChild(opt);
+      });
+      
+      selectCapacidade.onchange = atualizarPreview;
+    }
+
+    function limparOpcoesClassificacao() {
+      document.getElementById('extintor-carga-valor').innerHTML = '<option value="">Selecione...</option>';
+      document.getElementById('extintor-carga-unidade').value = '';
+      document.getElementById('extintor-capacidade').innerHTML = '<option value="">Selecione...</option>';
+      document.getElementById('preview-extintor').style.display = 'none';
+    }
+
+    function atualizarPreview() {
+      const tipo = document.getElementById('extintor-tipo').value;
+      const preview = document.getElementById('preview-extintor');
+      const previewTexto = document.getElementById('preview-texto');
+      
+      if (!tipo) {
+        preview.style.display = 'none';
+        return;
+      }
+
+      let texto = tipo;
+      
+      if (modoClassificacao === 'tipo_carga_nominal') {
+        const valor = document.getElementById('extintor-carga-valor').value;
+        const unidade = document.getElementById('extintor-carga-unidade').value;
+        
+        if (valor && unidade) {
+          texto = `${tipo} ${valor}${unidade}`;
+        }
+      } else {
+        const capacidade = document.getElementById('extintor-capacidade').value;
+        
+        if (capacidade) {
+          texto = `${tipo} ${capacidade}`;
+        }
+      }
+      
+      previewTexto.textContent = texto;
+      preview.style.display = 'block';
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  MODAL
     // ══════════════════════════════════════════════════════════
     function abrirModalNovo() {
@@ -606,6 +800,11 @@
       document.getElementById('modalTitulo').textContent = 'Novo Extintor';
       document.getElementById('formExtintor').reset();
       document.getElementById('extintor-id').value = '';
+      
+      // Configurar formulário por modo
+      configurarFormularioPorModo();
+      limparOpcoesClassificacao();
+      
       document.getElementById('modalExtintor').classList.add('show');
     }
 
@@ -621,10 +820,26 @@
       document.getElementById('extintor-edificacao').value = ext.edificacao;
       document.getElementById('extintor-descricao').value = ext.descricao;
       document.getElementById('extintor-tipo').value = ext.tipo;
-      document.getElementById('extintor-kg').value = ext.kg;
       document.getElementById('extintor-n2').value = ext.vencimento_nivel2 || '';
       document.getElementById('extintor-n3').value = ext.vencimento_nivel3 || '';
       document.getElementById('extintor-qrcode').value = ext.qrcode || '';
+
+      // Configurar formulário por modo
+      configurarFormularioPorModo();
+      
+      // Carregar opções do tipo
+      atualizarOpcoesClassificacao();
+      
+      // Preencher valores
+      if (ext.carga_nominal_valor) {
+        document.getElementById('extintor-carga-valor').value = ext.carga_nominal_valor;
+      }
+      
+      if (ext.capacidade_extintora) {
+        document.getElementById('extintor-capacidade').value = ext.capacidade_extintora;
+      }
+      
+      atualizarPreview();
 
       document.getElementById('modalExtintor').classList.add('show');
     }
@@ -637,19 +852,30 @@
       event.preventDefault();
 
       const id = document.getElementById('extintor-id').value;
+      const tipo = document.getElementById('extintor-tipo').value;
+      
       const dados = {
         numero: document.getElementById('extintor-numero').value,
         edificacao: document.getElementById('extintor-edificacao').value,
         descricao: document.getElementById('extintor-descricao').value,
-        tipo: document.getElementById('extintor-tipo').value,
-        kg: parseInt(document.getElementById('extintor-kg').value),
+        tipo: tipo,
         vencimento_nivel2: document.getElementById('extintor-n2').value,
         vencimento_nivel3: document.getElementById('extintor-n3').value ? 
           parseInt(document.getElementById('extintor-n3').value) : null,
-        qrcode: document.getElementById('extintor-qrcode').value || 
-          `EXT-SBJV-${dados.edificacao.substring(0,6).toUpperCase()}-${dados.numero}`,
-        atualizado_por: auth.currentUser.email
+        qrcode: document.getElementById('extintor-qrcode').value,
+        atualizado_por: firebase.auth().currentUser ? firebase.auth().currentUser.email : 'admin'
       };
+
+      // Preencher campos conforme o modo
+      if (modoClassificacao === 'tipo_carga_nominal') {
+        dados.carga_nominal_valor = parseInt(document.getElementById('extintor-carga-valor').value);
+        dados.carga_nominal_unidade = document.getElementById('extintor-carga-unidade').value;
+        dados.capacidade_extintora = ""; // Manter vazio
+      } else {
+        dados.capacidade_extintora = document.getElementById('extintor-capacidade').value;
+        dados.carga_nominal_valor = null; // Manter null
+        dados.carga_nominal_unidade = "";
+      }
 
       try {
         if (modoEdicao && id) {
@@ -658,7 +884,13 @@
           alert('✅ Extintor atualizado com sucesso!');
         } else {
           // Criar
-          dados.criado_por = auth.currentUser.email;
+          dados.criado_por = firebase.auth().currentUser ? firebase.auth().currentUser.email : 'admin';
+          
+          // Auto-gerar QR Code se vazio
+          if (!dados.qrcode) {
+            dados.qrcode = `EXT-SBJV-${dados.edificacao.substring(0,6).toUpperCase()}-${dados.numero}`;
+          }
+          
           await extintorService.criarExtintor(dados);
           alert('✅ Extintor criado com sucesso!');
         }
