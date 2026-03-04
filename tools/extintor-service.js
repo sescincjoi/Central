@@ -37,6 +37,138 @@ class ExtintorService {
   }
 
   // ─────────────────────────────────────────────────────────
+  //  BASES E CONFIGURAÇÃO
+  // ─────────────────────────────────────────────────────────
+  
+  async getBaseAtual() {
+    this._ensureInit();
+    
+    const doc = await this.db.collection('bases').doc('aeroporto-joinville').get();
+    
+    if (!doc.exists) {
+      throw new Error('Base não encontrada. Execute o script de migração primeiro.');
+    }
+    
+    return { id: doc.id, ...doc.data() };
+  }
+
+  async getModoClassificacao() {
+    const base = await this.getBaseAtual();
+    return base.modo_classificacao || 'tipo_carga_nominal';
+  }
+
+  async getOpcoesCargaNominal() {
+    const base = await this.getBaseAtual();
+    return base.opcoes_carga_nominal || {};
+  }
+
+  async getOpcoesCapacidade() {
+    const base = await this.getBaseAtual();
+    return base.opcoes_capacidade || {};
+  }
+
+  async trocarModoClassificacao(novoModo, motivo = '') {
+    this._ensureInit();
+    
+    if (!['tipo_carga_nominal', 'tipo_capacidade'].includes(novoModo)) {
+      throw new Error('Modo inválido. Use "tipo_carga_nominal" ou "tipo_capacidade"');
+    }
+
+    const base = await this.getBaseAtual();
+    const modoAntigo = base.modo_classificacao;
+
+    if (modoAntigo === novoModo) {
+      throw new Error('Este modo já está ativo');
+    }
+
+    // Registrar mudança no histórico
+    const mudanca = {
+      data: new Date().toISOString(),
+      de: modoAntigo,
+      para: novoModo,
+      motivo: motivo,
+      por: 'admin' // TODO: pegar do auth
+    };
+
+    // Atualizar base
+    await this.db.collection('bases').doc('aeroporto-joinville').update({
+      modo_classificacao: novoModo,
+      historico_mudancas: firebase.firestore.FieldValue.arrayUnion(mudanca),
+      atualizado_em: new Date().toISOString()
+    });
+
+    // Marcar todos extintores para revisão
+    await this.marcarTodosParaRevisao(novoModo);
+
+    // Resetar vistorias
+    await this.resetarTodasVistorias();
+
+    return {
+      sucesso: true,
+      modo_antigo: modoAntigo,
+      modo_novo: novoModo,
+      mensagem: `Modo alterado para ${novoModo}`
+    };
+  }
+
+  async marcarTodosParaRevisao(novoModo) {
+    this._ensureInit();
+    
+    const snapshot = await this.db.collection('extintores_instalados').get();
+    const batch = this.db.batch();
+    let count = 0;
+
+    snapshot.forEach(doc => {
+      batch.update(doc.ref, {
+        modo_atual: novoModo,
+        requer_revisao: true,
+        atualizado_em: new Date().toISOString()
+      });
+      count++;
+    });
+
+    await batch.commit();
+    console.log(`✅ ${count} extintores marcados para revisão`);
+    return count;
+  }
+
+  async resetarTodasVistorias() {
+    // TODO: Implementar reset no Realtime Database
+    // Por enquanto apenas log
+    console.log('⚠️ Vistorias devem ser resetadas manualmente no Realtime Database');
+    return true;
+  }
+
+  async getExtintoresPendentesRevisao() {
+    this._ensureInit();
+    
+    const snapshot = await this.db
+      .collection('extintores_instalados')
+      .where('requer_revisao', '==', true)
+      .get();
+
+    const extintores = [];
+    snapshot.forEach(doc => {
+      extintores.push({ id: doc.id, ...doc.data() });
+    });
+
+    return extintores;
+  }
+
+  async marcarExtintorRevisado(extintorId) {
+    this._ensureInit();
+    
+    await this.db.collection('extintores_instalados').doc(extintorId).update({
+      requer_revisao: false,
+      revisado_em: new Date().toISOString(),
+      revisado_por: 'admin', // TODO: pegar do auth
+      atualizado_em: new Date().toISOString()
+    });
+
+    return { sucesso: true };
+  }
+
+  // ─────────────────────────────────────────────────────────
   //  CONFIGURAÇÃO
   // ─────────────────────────────────────────────────────────
   
@@ -144,14 +276,27 @@ class ExtintorService {
       throw new Error(`Extintor ${dados.numero} já existe na edificação ${dados.edificacao}`);
     }
 
+    // Obter modo atual
+    const modo = await this.getModoClassificacao();
+
     const extintor = {
       id: id,
       numero: dados.numero,
       edificacao: dados.edificacao,
       descricao: dados.descricao,
       tipo: dados.tipo,
-      kg: dados.kg || null,
+      
+      // ═══ CARGA NOMINAL ═══
+      carga_nominal_valor: dados.carga_nominal_valor || null,
+      carga_nominal_unidade: dados.carga_nominal_unidade || "",
+      
+      // ═══ CAPACIDADE EXTINTORA ═══
       capacidade_extintora: dados.capacidade_extintora || "",
+      
+      // ═══ CONTROLE ═══
+      modo_atual: modo,
+      requer_revisao: false,
+      
       localizacao_gps: dados.localizacao_gps || null,
       qrcode: dados.qrcode || `EXT-SBJV-${dados.edificacao.substring(0, 6).toUpperCase()}-${dados.numero}`,
       ativo: true,
@@ -381,6 +526,40 @@ class ExtintorService {
     });
 
     return stats;
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  HELPERS
+  // ─────────────────────────────────────────────────────────
+  
+  formatarCargaNominal(extintor) {
+    const { tipo, carga_nominal_valor, carga_nominal_unidade } = extintor;
+    
+    if (!carga_nominal_valor) {
+      return tipo;
+    }
+    
+    return `${tipo} ${carga_nominal_valor}${carga_nominal_unidade}`;
+  }
+
+  formatarCapacidadeExtintora(extintor) {
+    const { tipo, capacidade_extintora } = extintor;
+    
+    if (!capacidade_extintora) {
+      return tipo;
+    }
+    
+    return `${tipo} ${capacidade_extintora}`;
+  }
+
+  formatarExtintor(extintor) {
+    const modo = extintor.modo_atual || 'tipo_carga_nominal';
+    
+    if (modo === 'tipo_capacidade') {
+      return this.formatarCapacidadeExtintora(extintor);
+    } else {
+      return this.formatarCargaNominal(extintor);
+    }
   }
 
   // ─────────────────────────────────────────────────────────
