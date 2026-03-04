@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migração - Criar Coleção Bases</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+    }
+    h1 {
+      color: #1d1d1f;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #86868b;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .warning h3 {
+      color: #856404;
+      font-size: 18px;
+      margin: 0 0 10px 0;
+    }
+    .warning p {
+      color: #856404;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #log {
+      background: #1d1d1f;
+      color: #00ff00;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      display: none;
+    }
+    #log.show { display: block; }
+    .success { color: #00ff00; }
+    .error { color: #ff3b30; }
+    .info { color: #00bfff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Criar Coleção de Bases</h1>
+    <p class="subtitle">ETAPA 1: Preparar sistema para classificação flexível</p>
+
+    <div class="warning">
+      <h3>⚠️ O que este script faz:</h3>
+      <p>
+        • Cria a coleção <strong>bases</strong> no Firestore<br>
+        • Configura padrões de Carga Nominal por tipo<br>
+        • Configura padrões de Capacidade Extintora<br>
+        • Define modo inicial como "tipo_carga_nominal"<br>
+        • Mantém compatibilidade com sistema atual<br><br>
+        <strong>⚠️ Execute apenas UMA vez!</strong>
+      </p>
+    </div>
+
+    <button id="btnMigrar" class="btn" onclick="criarBases()">
+      🚀 CRIAR COLEÇÃO BASES
+    </button>
+
+    <div id="log"></div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //  FIREBASE CONFIG
+    // ══════════════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const logEl = document.getElementById('log');
+    
+    function log(msg, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+      
+      logEl.innerHTML += `<span class="${className}">[${timestamp}] ${prefix} ${msg}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(`[${timestamp}] ${msg}`);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  CRIAR COLEÇÃO BASES
+    // ══════════════════════════════════════════════════════════
+    async function criarBases() {
+      const btn = document.getElementById('btnMigrar');
+      btn.disabled = true;
+      btn.textContent = '⏳ Criando...';
+      
+      logEl.classList.add('show');
+      logEl.innerHTML = '';
+      
+      try {
+        log('🚀 Iniciando criação da coleção bases...', 'info');
+        log('');
+
+        // Verificar se já existe
+        const existente = await db.collection('bases').doc('aeroporto-joinville').get();
+        if (existente.exists) {
+          log('⚠️  Coleção já existe! Atualizando...', 'info');
+        }
+
+        // Dados da base
+        const baseData = {
+          id: "aeroporto-joinville",
+          nome: "SCI Aeroporto de Joinville",
+          codigo: "SBJV",
+          ativo: true,
+          
+          // ═══ MODO DE CLASSIFICAÇÃO ═══
+          modo_classificacao: "tipo_carga_nominal",
+          
+          // ═══ PADRÕES DE CARGA NOMINAL ═══
+          opcoes_carga_nominal: {
+            "Água Pressurizada": {
+              unidade: "L",
+              valores: [10, 15, 20]
+            },
+            "Espuma Mecânica": {
+              unidade: "L",
+              valores: [6, 10, 20]
+            },
+            "PQS BC": {
+              unidade: "kg",
+              valores: [1, 2, 4, 6, 8, 12, 20, 50]
+            },
+            "PQS ABC": {
+              unidade: "kg",
+              valores: [1, 2, 4, 6, 8, 12, 20, 50]
+            },
+            "CO²": {
+              unidade: "kg",
+              valores: [2, 4, 6, 10, 25]
+            },
+            "Pó Classe D": {
+              unidade: "kg",
+              valores: [4, 6, 9, 12, 20]
+            },
+            "Classe K": {
+              unidade: "L",
+              valores: [6, 10]
+            }
+          },
+          
+          // ═══ PADRÕES DE CAPACIDADE EXTINTORA ═══
+          opcoes_capacidade: {
+            "Água Pressurizada": ["2A", "3A", "4A"],
+            "Espuma Mecânica": ["2A:20B", "3A:40B", "4A:40B"],
+            "PQS BC": ["20B:C", "40B:C", "60B:C", "80B:C"],
+            "PQS ABC": ["2A:20B:C", "3A:40B:C", "4A:40B:C", "6A:60B:C", "6A:80B:C"],
+            "CO²": ["5B:C", "10B:C"],
+            "Pó Classe D": ["D-Magnésio", "D-Sódio", "D-Potássio", "D-Lítio", "D-Titânio", "D-Zircônio", "D-Alumínio", "D-Ligas"],
+            "Classe K": ["K"]
+          },
+          
+          // ═══ HISTÓRICO ═══
+          historico_mudancas: [],
+          
+          // ═══ CONFIGURAÇÕES ANTIGAS (compatibilidade) ═══
+          sheets_historico_id: "",
+          sheets_visualizacao_id: "",
+          
+          // ═══ AUDITORIA ═══
+          criado_em: new Date().toISOString(),
+          atualizado_em: new Date().toISOString()
+        };
+
+        // Salvar no Firestore
+        await db.collection('bases').doc('aeroporto-joinville').set(baseData);
+        
+        log('✅ Coleção "bases" criada com sucesso!', 'success');
+        log('');
+        log('📊 Detalhes:', 'info');
+        log('   • ID: aeroporto-joinville', 'info');
+        log('   • Modo: tipo_carga_nominal', 'info');
+        log('   • 7 tipos de extintores configurados', 'info');
+        log('   • Padrões de carga nominal definidos', 'info');
+        log('   • Padrões de capacidade extintora definidos', 'info');
+        log('');
+        log('═══════════════════════════════════════', 'success');
+        log('🎉 MIGRAÇÃO CONCLUÍDA!', 'success');
+        log('═══════════════════════════════════════', 'success');
+        log('');
+        log('✅ Próximo passo:', 'info');
+        log('   Substitua o extintor-service.js pela versão nova', 'info');
+
+        btn.textContent = '✅ Concluído!';
+        btn.style.background = '#34C759';
+
+      } catch (error) {
+        log('', 'error');
+        log('❌ ERRO:', 'error');
+        log(`   ${error.message}`, 'error');
+        console.error('Erro completo:', error);
+        
+        btn.disabled = false;
+        btn.textContent = '🔄 Tentar Novamente';
+        btn.style.background = '#FF3B30';
+      }
+    }
+  </script>
+</body>
+</html>
