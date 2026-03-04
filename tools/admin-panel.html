@@ -674,15 +674,41 @@
     // ══════════════════════════════════════════════════════════
     
     function configurarFormularioPorModo() {
+      console.log('🔧 Configurando formulário - Modo:', modoClassificacao);
+      
       const campoCarga = document.getElementById('campo-carga-nominal');
       const campoCapacidade = document.getElementById('campo-capacidade');
       
+      if (!campoCarga || !campoCapacidade) {
+        console.error('❌ Elementos do formulário não encontrados!');
+        return;
+      }
+      
+      console.log('   📦 Elemento campoCarga:', campoCarga);
+      console.log('   📦 Elemento campoCapacidade:', campoCapacidade);
+      
       if (modoClassificacao === 'tipo_carga_nominal') {
+        console.log('✅ Mostrando campo: Carga Nominal');
         campoCarga.style.display = 'block';
         campoCapacidade.style.display = 'none';
         document.getElementById('extintor-carga-valor').required = true;
         document.getElementById('extintor-capacidade').required = false;
+      } else if (modoClassificacao === 'tipo_capacidade') {
+        console.log('✅ Mostrando campo: Capacidade Extintora');
+        campoCarga.style.display = 'none';
+        campoCapacidade.style.display = 'block';
+        document.getElementById('extintor-carga-valor').required = false;
+        document.getElementById('extintor-capacidade').required = true;
       } else {
+        console.error('❌ Modo desconhecido:', modoClassificacao);
+      }
+      
+      console.log('   📊 Estado final:');
+      console.log('      - campoCarga.display:', campoCarga.style.display);
+      console.log('      - campoCapacidade.display:', campoCapacidade.style.display);
+    }
+      } else {
+        console.log('✅ Mostrando campo: Capacidade Extintora');
         campoCarga.style.display = 'none';
         campoCapacidade.style.display = 'block';
         document.getElementById('extintor-carga-valor').required = false;
@@ -801,11 +827,14 @@
       document.getElementById('formExtintor').reset();
       document.getElementById('extintor-id').value = '';
       
-      // Configurar formulário por modo
-      configurarFormularioPorModo();
-      limparOpcoesClassificacao();
-      
+      // IMPORTANTE: Configurar formulário DEPOIS de abrir modal
       document.getElementById('modalExtintor').classList.add('show');
+      
+      // Pequeno delay para garantir que elementos estão visíveis
+      setTimeout(() => {
+        configurarFormularioPorModo();
+        limparOpcoesClassificacao();
+      }, 50);
     }
 
     async function editarExtintor(id) {
