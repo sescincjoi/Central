@@ -291,12 +291,16 @@
         <div class="space-y-4">
           <div>
             <label class="label">Número *</label>
-            <input type="text" id="extintor-numero" class="input-field" required>
+            <input type="text" id="extintor-numero" class="input-field" required 
+                   oninput="validarNumeroExtintor()">
+            <div id="alerta-numero-duplicado" style="display:none; color: #ff3b30; font-size: 12px; margin-top: 4px;">
+              ⚠️ Este número já existe nesta edificação
+            </div>
           </div>
 
           <div>
             <label class="label">Edificação *</label>
-            <select id="extintor-edificacao" class="input-field" required>
+            <select id="extintor-edificacao" class="input-field" required onchange="validarNumeroExtintor()">
               <option value="">Selecione...</option>
             </select>
           </div>
@@ -687,13 +691,17 @@
       console.log('   📦 Elemento campoCarga:', campoCarga);
       console.log('   📦 Elemento campoCapacidade:', campoCapacidade);
       
-      if (modoClassificacao === 'tipo_carga_nominal') {
+      // Compatibilidade: tipo_kg é o mesmo que tipo_carga_nominal
+      const modo = modoClassificacao === 'tipo_kg' ? 'tipo_carga_nominal' : modoClassificacao;
+      console.log('   🔄 Modo normalizado:', modo);
+      
+      if (modo === 'tipo_carga_nominal') {
         console.log('✅ Mostrando campo: Carga Nominal');
         campoCarga.style.display = 'block';
         campoCapacidade.style.display = 'none';
         document.getElementById('extintor-carga-valor').required = true;
         document.getElementById('extintor-capacidade').required = false;
-      } else if (modoClassificacao === 'tipo_capacidade') {
+      } else if (modo === 'tipo_capacidade') {
         console.log('✅ Mostrando campo: Capacidade Extintora');
         campoCarga.style.display = 'none';
         campoCapacidade.style.display = 'block';
@@ -811,6 +819,32 @@
     }
 
     // ══════════════════════════════════════════════════════════
+    //  VALIDAÇÕES
+    // ══════════════════════════════════════════════════════════
+    
+    function validarNumeroExtintor() {
+      if (modoEdicao) return; // Não validar em modo edição
+      
+      const numero = document.getElementById('extintor-numero').value;
+      const edificacao = document.getElementById('extintor-edificacao').value;
+      const alerta = document.getElementById('alerta-numero-duplicado');
+      
+      if (!numero || !edificacao) {
+        alerta.style.display = 'none';
+        return;
+      }
+      
+      const idNovo = `${edificacao}_${numero}`;
+      const jaExiste = todosExtintores.find(e => e.id === idNovo);
+      
+      if (jaExiste) {
+        alerta.style.display = 'block';
+      } else {
+        alerta.style.display = 'none';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  MODAL
     // ══════════════════════════════════════════════════════════
     function abrirModalNovo() {
@@ -874,10 +908,23 @@
 
       const id = document.getElementById('extintor-id').value;
       const tipo = document.getElementById('extintor-tipo').value;
+      const numero = document.getElementById('extintor-numero').value;
+      const edificacao = document.getElementById('extintor-edificacao').value;
+      
+      // ═══ VALIDAÇÃO MANUAL DE DUPLICADO ═══
+      if (!modoEdicao) {
+        const idNovo = `${edificacao}_${numero}`;
+        const jaExiste = todosExtintores.find(e => e.id === idNovo);
+        
+        if (jaExiste) {
+          alert(`❌ Erro: Extintor nº ${numero} já existe na edificação ${edificacao}!\n\nEscolha outro número ou edite o existente.`);
+          return;
+        }
+      }
       
       const dados = {
-        numero: document.getElementById('extintor-numero').value,
-        edificacao: document.getElementById('extintor-edificacao').value,
+        numero: numero,
+        edificacao: edificacao,
         descricao: document.getElementById('extintor-descricao').value,
         tipo: tipo,
         vencimento_nivel2: document.getElementById('extintor-n2').value,
@@ -929,11 +976,25 @@
     async function desativarExtintor(id) {
       if (!confirm('Deseja realmente desativar este extintor?')) return;
 
-      const motivo = prompt('Motivo da desativação:');
-      if (!motivo) return;
+      let motivo = '';
+      
+      // Loop até digitar um motivo válido
+      while (!motivo || motivo.trim() === '') {
+        motivo = prompt('Motivo da desativação (obrigatório):');
+        
+        // Se cancelou, abortar
+        if (motivo === null) {
+          return;
+        }
+        
+        // Se não digitou nada, avisar
+        if (!motivo || motivo.trim() === '') {
+          alert('⚠️ O motivo é obrigatório!\n\nPor favor, informe o motivo da desativação.');
+        }
+      }
 
       try {
-        await extintorService.desativarExtintor(id, motivo);
+        await extintorService.desativarExtintor(id, motivo.trim());
         alert('✅ Extintor desativado!');
         await carregarDados();
         filtrarExtintores();
