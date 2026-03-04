@@ -281,10 +281,28 @@ class ExtintorService {
     
     const id = `${dados.edificacao}_${dados.numero}`;
     
-    // Verificar se já existe
-    const existe = await this.db.collection('extintores_instalados').doc(id).get();
-    if (existe.exists) {
+    // ═══ VALIDAÇÃO 1: Verificar se já existe nesta edificação ═══
+    const existeNaEdificacao = await this.db.collection('extintores_instalados').doc(id).get();
+    if (existeNaEdificacao.exists) {
       throw new Error(`Extintor ${dados.numero} já existe na edificação ${dados.edificacao}`);
+    }
+
+    // ═══ VALIDAÇÃO 2: Verificar se número já existe em QUALQUER edificação ═══
+    const snapshot = await this.db
+      .collection('extintores_instalados')
+      .where('numero', '==', dados.numero)
+      .where('ativo', '==', true)
+      .get();
+    
+    if (!snapshot.empty) {
+      const existente = snapshot.docs[0].data();
+      throw new Error(
+        `❌ Número ${dados.numero} já está em uso!\n\n` +
+        `Extintor existente:\n` +
+        `• Edificação: ${existente.edificacao}\n` +
+        `• Localização: ${existente.descricao}\n\n` +
+        `Cada extintor deve ter um número único no sistema.`
+      );
     }
 
     // Obter modo atual
