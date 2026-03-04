@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revisão em Massa - Admin</title>
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f7;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 24px;
+    }
+    .extintor-item {
+      border: 2px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .extintor-item:hover {
+      border-color: #667eea;
+      background: #f9f9fb;
+    }
+    .extintor-item.selected {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
+    }
+    .extintor-item.concluido {
+      opacity: 0.5;
+      border-color: #34c759;
+      background: rgba(52, 199, 89, 0.05);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background: #f5f5f7;
+      color: #1d1d1f;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-success {
+      background: #34c759;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-purple { background: rgba(118, 75, 162, 0.1); color: #764ba2; }
+    .badge-orange { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+    .badge-green { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+    .progress-bar {
+      background: #e5e5ea;
+      border-radius: 10px;
+      height: 12px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      height: 100%;
+      transition: width 0.3s;
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e5e5ea;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8" data-auth-required data-auth-login>
+
+  <!-- Header -->
+  <div class="max-w-6xl mx-auto mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-black text-gray-900">📋 Revisão em Massa</h1>
+        <p class="text-gray-500 mt-1">Atualizar extintores após mudança de modo</p>
+      </div>
+      <button onclick="window.location.href='./admin-panel.html'" class="btn-secondary">
+        ← Voltar
+      </button>
+    </div>
+  </div>
+
+  <!-- Progresso -->
+  <div class="max-w-6xl mx-auto mb-6">
+    <div class="card">
+      <div class="flex items-center justify-between mb-3">
+        <div class="font-bold text-lg">Progresso</div>
+        <div class="text-sm text-gray-500">
+          <span id="count-concluidos">0</span> de <span id="count-total">0</span> concluídos
+        </div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modo Atual -->
+  <div class="max-w-6xl mx-auto mb-6">
+    <div class="card">
+      <div class="text-sm text-gray-500 mb-1">Modo de Classificação Atual</div>
+      <div class="font-bold text-lg" id="modo-atual">-</div>
+    </div>
+  </div>
+
+  <!-- Filtros e Ações em Massa -->
+  <div class="max-w-6xl mx-auto mb-6">
+    <div class="card">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="text-sm font-semibold text-gray-600 mb-2 block">Filtrar por Tipo</label>
+          <select id="filtro-tipo" class="input-field" onchange="filtrarExtintores()">
+            <option value="">Todos os tipos</option>
+          </select>
+        </div>
+        <div id="campo-carga-massa" style="display:none;">
+          <label class="text-sm font-semibold text-gray-600 mb-2 block">Carga Nominal</label>
+          <div class="flex gap-2">
+            <select id="carga-massa-valor" class="input-field flex-1">
+              <option value="">Selecione...</option>
+            </select>
+            <input type="text" id="carga-massa-unidade" class="input-field" 
+                   style="width: 60px; background: #f5f5f7;" readonly>
+          </div>
+        </div>
+        <div id="campo-capacidade-massa" style="display:none;">
+          <label class="text-sm font-semibold text-gray-600 mb-2 block">Capacidade Extintora</label>
+          <select id="capacidade-massa" class="input-field">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button onclick="aplicarEmMassa()" class="btn-success w-full">
+            Aplicar aos Selecionados
+          </button>
+        </div>
+      </div>
+      
+      <div class="flex gap-3">
+        <button onclick="selecionarTodos()" class="btn-secondary flex-1">
+          ☑️ Selecionar Todos
+        </button>
+        <button onclick="desselecionarTodos()" class="btn-secondary flex-1">
+          ☐ Desmarcar Todos
+        </button>
+        <button onclick="selecionarVisiveis()" class="btn-secondary flex-1">
+          ☑️ Selecionar Filtrados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Extintores -->
+  <div class="max-w-6xl mx-auto">
+    <div id="lista-extintores">
+      <div class="text-center py-12">
+        <div class="text-4xl mb-4">📥</div>
+        <div class="text-gray-500">Carregando extintores...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth System -->
+  <script type="module">
+    import authCore from '../js/auth/auth-core.js';
+    import authUI from '../js/auth/auth-ui.js';
+    import authGuard from '../js/auth/auth-guard.js';
+
+    window.authCore = authCore;
+    window.authUI = authUI;
+    window.authGuard = authGuard;
+
+    function initAuth() {
+      if (window.authUI && window.authUI.openModal && window.authGuard) {
+        window.addEventListener('auth-state-changed', (e) => {
+          if (e.detail && e.detail.user) {
+            if (window.initPage) window.initPage();
+          }
+        });
+
+        if (authCore.initialized && authCore.isAuthenticated()) {
+          if (window.initPage) window.initPage();
+        }
+      } else {
+        setTimeout(initAuth, 50);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAuth);
+    } else {
+      initAuth();
+    }
+  </script>
+
+  <!-- Service Layer -->
+  <script src="./extintor-service.js"></script>
+
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //  FIREBASE CONFIG
+    // ══════════════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+
+    // ══════════════════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════════════════
+    let extintorService;
+    let extintoresPendentes = [];
+    let extintoresFiltrados = [];
+    let selecionados = new Set();
+    let modoClassificacao = '';
+    let opcoesCargaNominal = {};
+    let opcoesCapacidade = {};
+
+    // ══════════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════════
+    async function init() {
+      try {
+        extintorService = new ExtintorService().init();
+        
+        await carregarDados();
+        popularFiltros();
+        renderizarLista();
+        
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('Erro ao carregar: ' + error.message);
+      }
+    }
+
+    window.initPage = init;
+
+    async function carregarDados() {
+      console.log('📥 Carregando dados...');
+      
+      // Carregar modo
+      modoClassificacao = await extintorService.getModoClassificacao();
+      opcoesCargaNominal = await extintorService.getOpcoesCargaNominal();
+      opcoesCapacidade = await extintorService.getOpcoesCapacidade();
+      
+      const modoNome = modoClassificacao === 'tipo_carga_nominal' 
+        ? 'Tipo / Carga Nominal' 
+        : 'Tipo / Capacidade Extintora';
+      
+      document.getElementById('modo-atual').textContent = modoNome;
+      
+      // Configurar campos em massa
+      if (modoClassificacao === 'tipo_carga_nominal') {
+        document.getElementById('campo-carga-massa').style.display = 'block';
+        document.getElementById('campo-capacidade-massa').style.display = 'none';
+      } else {
+        document.getElementById('campo-carga-massa').style.display = 'none';
+        document.getElementById('campo-capacidade-massa').style.display = 'block';
+      }
+      
+      // Carregar pendentes
+      extintoresPendentes = await extintorService.getExtintoresPendentesRevisao();
+      extintoresFiltrados = [...extintoresPendentes];
+      
+      // Atualizar contadores
+      atualizarProgresso();
+      
+      console.log(`✅ ${extintoresPendentes.length} extintores pendentes`);
+    }
+
+    function popularFiltros() {
+      // Popular filtro de tipos
+      const tipos = [...new Set(extintoresPendentes.map(e => e.tipo))].sort();
+      const selectTipo = document.getElementById('filtro-tipo');
+      
+      tipos.forEach(tipo => {
+        const opt = document.createElement('option');
+        opt.value = tipo;
+        opt.textContent = tipo;
+        selectTipo.appendChild(opt);
+      });
+      
+      // Popular opções de capacidade em massa
+      if (modoClassificacao === 'tipo_capacidade') {
+        const selectCap = document.getElementById('capacidade-massa');
+        Object.values(opcoesCapacidade).flat().forEach(cap => {
+          const opt = document.createElement('option');
+          opt.value = cap;
+          opt.textContent = cap;
+          selectCap.appendChild(opt);
+        });
+      }
+    }
+
+    function atualizarProgresso() {
+      const total = extintoresPendentes.length;
+      const concluidos = extintoresPendentes.filter(e => !e.requer_revisao).length;
+      const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 0;
+      
+      document.getElementById('count-total').textContent = total;
+      document.getElementById('count-concluidos').textContent = concluidos;
+      document.getElementById('progress-fill').style.width = percentual + '%';
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  FILTROS
+    // ══════════════════════════════════════════════════════════
+    function filtrarExtintores() {
+      const tipoFiltro = document.getElementById('filtro-tipo').value;
+      
+      extintoresFiltrados = extintoresPendentes.filter(ext => {
+        if (tipoFiltro && ext.tipo !== tipoFiltro) return false;
+        return true;
+      });
+      
+      // Atualizar opções em massa baseado no tipo
+      if (tipoFiltro && modoClassificacao === 'tipo_carga_nominal') {
+        atualizarOpcoesCargaMassa(tipoFiltro);
+      } else if (tipoFiltro && modoClassificacao === 'tipo_capacidade') {
+        atualizarOpcoesCapacidadeMassa(tipoFiltro);
+      }
+      
+      renderizarLista();
+    }
+
+    function atualizarOpcoesCargaMassa(tipo) {
+      const config = opcoesCargaNominal[tipo];
+      if (!config) return;
+      
+      const selectValor = document.getElementById('carga-massa-valor');
+      const inputUnidade = document.getElementById('carga-massa-unidade');
+      
+      inputUnidade.value = config.unidade;
+      selectValor.innerHTML = '<option value="">Selecione...</option>';
+      
+      config.valores.forEach(valor => {
+        const opt = document.createElement('option');
+        opt.value = valor;
+        opt.textContent = valor;
+        selectValor.appendChild(opt);
+      });
+    }
+
+    function atualizarOpcoesCapacidadeMassa(tipo) {
+      const opcoes = opcoesCapacidade[tipo];
+      if (!opcoes) return;
+      
+      const select = document.getElementById('capacidade-massa');
+      select.innerHTML = '<option value="">Selecione...</option>';
+      
+      opcoes.forEach(opcao => {
+        const opt = document.createElement('option');
+        opt.value = opcao;
+        opt.textContent = opcao;
+        select.appendChild(opt);
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  RENDERIZAR
+    // ══════════════════════════════════════════════════════════
+    function renderizarLista() {
+      const container = document.getElementById('lista-extintores');
+      
+      if (extintoresFiltrados.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12">
+            <div class="text-4xl mb-4">✅</div>
+            <div class="text-gray-500">Nenhum extintor pendente de revisão!</div>
+          </div>`;
+        return;
+      }
+      
+      let html = '<div class="card">';
+      
+      extintoresFiltrados.forEach(ext => {
+        const checked = selecionados.has(ext.id);
+        const concluido = !ext.requer_revisao;
+        const classes = `extintor-item ${checked ? 'selected' : ''} ${concluido ? 'concluido' : ''}`;
+        
+        const classificacao = extintorService.formatarExtintor(ext);
+        
+        html += `
+          <div class="${classes}" onclick="toggleSelecao('${ext.id}')">
+            <div class="flex items-center gap-4">
+              <input type="checkbox" ${checked ? 'checked' : ''} ${concluido ? 'disabled' : ''}
+                     onclick="event.stopPropagation(); toggleSelecao('${ext.id}')"
+                     style="width: 20px; height: 20px; cursor: pointer;">
+              <div class="flex-1">
+                <div class="font-bold">
+                  Nº ${ext.numero} • ${ext.edificacao}
+                  ${concluido ? '<span class="badge badge-green ml-2">✓ Revisado</span>' : 
+                               '<span class="badge badge-orange ml-2">Pendente</span>'}
+                </div>
+                <div class="text-sm text-gray-600">${ext.descricao}</div>
+                <div class="text-sm text-gray-500 mt-1">
+                  ${classificacao}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  SELEÇÃO
+    // ══════════════════════════════════════════════════════════
+    function toggleSelecao(id) {
+      const extintor = extintoresFiltrados.find(e => e.id === id);
+      if (extintor && extintor.requer_revisao === false) return; // Já revisado
+      
+      if (selecionados.has(id)) {
+        selecionados.delete(id);
+      } else {
+        selecionados.add(id);
+      }
+      renderizarLista();
+    }
+
+    function selecionarTodos() {
+      extintoresPendentes
+        .filter(e => e.requer_revisao)
+        .forEach(e => selecionados.add(e.id));
+      renderizarLista();
+    }
+
+    function desselecionarTodos() {
+      selecionados.clear();
+      renderizarLista();
+    }
+
+    function selecionarVisiveis() {
+      extintoresFiltrados
+        .filter(e => e.requer_revisao)
+        .forEach(e => selecionados.add(e.id));
+      renderizarLista();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  APLICAR EM MASSA
+    // ══════════════════════════════════════════════════════════
+    async function aplicarEmMassa() {
+      if (selecionados.size === 0) {
+        alert('⚠️ Selecione pelo menos um extintor!');
+        return;
+      }
+      
+      let dados = {};
+      
+      if (modoClassificacao === 'tipo_carga_nominal') {
+        const valor = document.getElementById('carga-massa-valor').value;
+        const unidade = document.getElementById('carga-massa-unidade').value;
+        
+        if (!valor || !unidade) {
+          alert('⚠️ Selecione a carga nominal!');
+          return;
+        }
+        
+        dados.carga_nominal_valor = parseInt(valor);
+        dados.carga_nominal_unidade = unidade;
+      } else {
+        const capacidade = document.getElementById('capacidade-massa').value;
+        
+        if (!capacidade) {
+          alert('⚠️ Selecione a capacidade extintora!');
+          return;
+        }
+        
+        dados.capacidade_extintora = capacidade;
+      }
+      
+      const confirmar = confirm(
+        `Aplicar aos ${selecionados.size} extintores selecionados?\n\n` +
+        `Valor: ${JSON.stringify(dados)}`
+      );
+      
+      if (!confirmar) return;
+      
+      try {
+        let sucesso = 0;
+        let erros = 0;
+        
+        for (const id of selecionados) {
+          try {
+            await extintorService.atualizarExtintor(id, dados);
+            await extintorService.marcarExtintorRevisado(id);
+            sucesso++;
+          } catch (error) {
+            console.error(`Erro em ${id}:`, error);
+            erros++;
+          }
+        }
+        
+        alert(`✅ Aplicado com sucesso!\n\n${sucesso} extintores atualizados${erros > 0 ? `\n${erros} erros` : ''}`);
+        
+        // Recarregar
+        selecionados.clear();
+        await carregarDados();
+        filtrarExtintores();
+        
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('❌ Erro ao aplicar: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
