@@ -172,7 +172,7 @@
     .badge-gray { background: rgba(0, 0, 0, 0.06); color: #86868b; }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8" data-auth-required data-auth-login>
 
   <!-- Header -->
   <div class="max-w-6xl mx-auto mb-8">
@@ -341,6 +341,45 @@
     </div>
   </div>
 
+  <!-- Auth System -->
+  <script type="module">
+    import authCore from './js/auth/auth-core.js';
+    import authUI from './js/auth/auth-ui.js';
+    import authGuard from './js/auth/auth-guard.js';
+
+    window.authCore = authCore;
+    window.authUI = authUI;
+    window.authGuard = authGuard;
+
+    // Inicializar auth
+    function initAuth() {
+      if (window.authUI && window.authUI.openModal && window.authGuard) {
+        window.addEventListener('auth-state-changed', (e) => {
+          if (e.detail && e.detail.user) {
+            console.log('✅ Autenticado como:', e.detail.user.email);
+            // Iniciar painel
+            if (window.initPanel) window.initPanel();
+          } else {
+            console.log('❌ Não autenticado');
+          }
+        });
+
+        if (authCore.initialized && authCore.isAuthenticated()) {
+          console.log('✅ Já autenticado');
+          if (window.initPanel) window.initPanel();
+        }
+      } else {
+        setTimeout(initAuth, 50);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAuth);
+    } else {
+      initAuth();
+    }
+  </script>
+
   <!-- Service Layer -->
   <script src="./extintor-service.js"></script>
 
@@ -374,8 +413,7 @@
     // ══════════════════════════════════════════════════════════
     async function init() {
       try {
-        // Verificar autenticação
-        await verificarAuth();
+        console.log('🎛️ Inicializando painel admin...');
         
         // Inicializar service
         extintorService = new ExtintorService().init();
@@ -395,21 +433,8 @@
       }
     }
 
-    async function verificarAuth() {
-      return new Promise((resolve, reject) => {
-        const unsubscribe = auth.onAuthStateChanged(user => {
-          unsubscribe();
-          if (user) {
-            console.log('✅ Autenticado como:', user.email);
-            resolve(user);
-          } else {
-            alert('❌ Você precisa estar autenticado para acessar o painel admin.');
-            window.location.href = './inspecao.html';
-            reject(new Error('Não autenticado'));
-          }
-        });
-      });
-    }
+    // Expor init globalmente para ser chamado após auth
+    window.initPanel = init;
 
     async function carregarDados() {
       console.log('📥 Carregando dados...');
@@ -696,9 +721,8 @@
     }
 
     // ══════════════════════════════════════════════════════════
-    //  START
+    //  AUTH irá chamar window.initPanel() quando pronto
     // ══════════════════════════════════════════════════════════
-    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
