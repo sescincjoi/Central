@@ -707,14 +707,6 @@
       console.log('      - campoCarga.display:', campoCarga.style.display);
       console.log('      - campoCapacidade.display:', campoCapacidade.style.display);
     }
-      } else {
-        console.log('✅ Mostrando campo: Capacidade Extintora');
-        campoCarga.style.display = 'none';
-        campoCapacidade.style.display = 'block';
-        document.getElementById('extintor-carga-valor').required = false;
-        document.getElementById('extintor-capacidade').required = true;
-      }
-    }
 
     function atualizarOpcoesClassificacao() {
       const tipo = document.getElementById('extintor-tipo').value;
