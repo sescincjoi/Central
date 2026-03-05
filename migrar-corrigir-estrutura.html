@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Correção - Preservar Dados Duais</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+    }
+    h1 {
+      color: #1d1d1f;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+    }
+    #log {
+      background: #1d1d1f;
+      color: #00ff00;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      display: none;
+    }
+    #log.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Corrigir Estrutura Dual</h1>
+    <p style="color: #86868b; margin-bottom: 30px;">
+      Garantir que todos extintores tenham ambos os campos preservados
+    </p>
+
+    <div class="warning">
+      <h3 style="color: #856404; margin: 0 0 10px;">⚠️ O que este script faz:</h3>
+      <p style="color: #856404; margin: 0; line-height: 1.6;">
+        • Busca todos os extintores<br>
+        • Converte campo "kg" antigo para "carga_nominal_valor/unidade"<br>
+        • Garante que ambos campos existam (preservação dual)<br>
+        • Mantém dados existentes intactos<br><br>
+        <strong>Execute apenas UMA vez após migração!</strong>
+      </p>
+    </div>
+
+    <button class="btn" onclick="corrigirExtintores()">
+      🚀 CORRIGIR EXTINTORES
+    </button>
+
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const logEl = document.getElementById('log');
+    
+    function log(msg, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      const color = type === 'success' ? '#00ff00' : type === 'error' ? '#ff3b30' : '#00bfff';
+      
+      logEl.innerHTML += `<span style="color:${color}">[${timestamp}] ${prefix} ${msg}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function corrigirExtintores() {
+      const btn = document.querySelector('.btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Corrigindo...';
+      
+      logEl.classList.add('show');
+      logEl.innerHTML = '';
+      
+      try {
+        log('🚀 Iniciando correção...', 'info');
+        log('');
+
+        const snapshot = await db.collection('extintores_instalados').get();
+        log(`📊 ${snapshot.size} extintores encontrados`, 'info');
+        log('');
+
+        const batch = db.batch();
+        let corrigidos = 0;
+        let jaCertos = 0;
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const updates = {};
+          let precisaAtualizar = false;
+
+          // ═══ MIGRAÇÃO DO CAMPO "kg" ANTIGO ═══
+          if (data.kg !== undefined && !data.carga_nominal_valor) {
+            // Converter kg antigo para estrutura nova
+            updates.carga_nominal_valor = data.kg;
+            updates.carga_nominal_unidade = 'kg'; // Assumir kg por padrão
+            
+            // Tentar determinar unidade correta pelo tipo
+            if (data.tipo && (data.tipo.includes('Água') || data.tipo.includes('Espuma'))) {
+              updates.carga_nominal_unidade = 'L';
+            }
+            
+            precisaAtualizar = true;
+            log(`🔄 Convertendo ${doc.id}: kg=${data.kg} → ${data.kg}${updates.carga_nominal_unidade}`, 'info');
+          }
+
+          // ═══ GARANTIR CAMPOS EXISTEM ═══
+          if (data.carga_nominal_valor === undefined) {
+            updates.carga_nominal_valor = null;
+            precisaAtualizar = true;
+          }
+
+          if (data.carga_nominal_unidade === undefined) {
+            updates.carga_nominal_unidade = '';
+            precisaAtualizar = true;
+          }
+
+          if (data.capacidade_extintora === undefined) {
+            updates.capacidade_extintora = '';
+            precisaAtualizar = true;
+          }
+
+          if (data.modo_atual === undefined) {
+            updates.modo_atual = 'tipo_carga_nominal';
+            precisaAtualizar = true;
+          }
+
+          if (data.requer_revisao === undefined) {
+            updates.requer_revisao = false;
+            precisaAtualizar = true;
+          }
+
+          if (precisaAtualizar) {
+            batch.update(doc.ref, {
+              ...updates,
+              atualizado_em: new Date().toISOString()
+            });
+            corrigidos++;
+          } else {
+            jaCertos++;
+          }
+        });
+
+        if (corrigidos > 0) {
+          await batch.commit();
+          log('', 'success');
+          log(`✅ ${corrigidos} extintores corrigidos`, 'success');
+        }
+
+        if (jaCertos > 0) {
+          log(`✅ ${jaCertos} já estavam corretos`, 'info');
+        }
+
+        log('');
+        log('═══════════════════════════════════════', 'success');
+        log('🎉 CORREÇÃO CONCLUÍDA!', 'success');
+        log('═══════════════════════════════════════', 'success');
+
+        btn.textContent = '✅ Concluído!';
+        btn.style.background = '#34C759';
+
+      } catch (error) {
+        log('', 'error');
+        log('❌ ERRO:', 'error');
+        log(`   ${error.message}`, 'error');
+        console.error('Erro completo:', error);
+        
+        btn.disabled = false;
+        btn.textContent = '🔄 Tentar Novamente';
+        btn.style.background = '#FF3B30';
+      }
+    }
+  </script>
+</body>
+</html>
