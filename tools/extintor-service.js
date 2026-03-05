@@ -97,8 +97,8 @@ class ExtintorService {
       atualizado_em: new Date().toISOString()
     });
 
-    // Marcar todos extintores para revisão
-    await this.marcarTodosParaRevisao(novoModo);
+    // Marcar todos extintores para revisão (sem limpar dados!)
+    await this.marcarTodosParaRevisaoSemLimpar(novoModo);
 
     // Resetar vistorias
     await this.resetarTodasVistorias();
@@ -107,11 +107,11 @@ class ExtintorService {
       sucesso: true,
       modo_antigo: modoAntigo,
       modo_novo: novoModo,
-      mensagem: `Modo alterado para ${novoModo}`
+      mensagem: `Modo alterado para ${novoModo}. Dados antigos preservados.`
     };
   }
 
-  async marcarTodosParaRevisao(novoModo) {
+  async marcarTodosParaRevisaoSemLimpar(novoModo) {
     this._ensureInit();
     
     const snapshot = await this.db.collection('extintores_instalados').get();
@@ -119,6 +119,8 @@ class ExtintorService {
     let count = 0;
 
     snapshot.forEach(doc => {
+      // IMPORTANTE: Apenas atualizar modo_atual e requer_revisao
+      // NÃO limpar carga_nominal_valor, carga_nominal_unidade, capacidade_extintora
       batch.update(doc.ref, {
         modo_atual: novoModo,
         requer_revisao: true,
@@ -128,8 +130,13 @@ class ExtintorService {
     });
 
     await batch.commit();
-    console.log(`✅ ${count} extintores marcados para revisão`);
+    console.log(`✅ ${count} extintores marcados para revisão (dados preservados)`);
     return count;
+  }
+
+  // Manter função antiga para compatibilidade (deprecated)
+  async marcarTodosParaRevisao(novoModo) {
+    return this.marcarTodosParaRevisaoSemLimpar(novoModo);
   }
 
   async resetarTodasVistorias() {
