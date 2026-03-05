@@ -119,7 +119,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  DADOS ORIGINAIS DOS EXTINTORES
+    //  DADOS ORIGINAIS DOS EXTINTORES (EXATOS DO migrar-extintores.html)
     // ═══════════════════════════════════════════════════════════
     const extintoresInfo = {
       "DESEMBARQUE": {
@@ -151,107 +151,100 @@
         "35": { descricao: "Sala COE", tipo: "CO²", kg: 4 },
         "36": { descricao: "Sala COE (Quadro elétrico)", tipo: "PQS ABC", kg: 6 },
         "37": { descricao: "Sala COE STVV", tipo: "CO²", kg: 4 },
-        "38": { descricao: "Sala Meteorologia", tipo: "PQS ABC", kg: 6 },
-        "39": { descricao: "Sala Meteorologia (Quadro elétrico)", tipo: "PQS ABC", kg: 6 },
-        "40": { descricao: "Sala Gerencia", tipo: "PQS ABC", kg: 6 },
-        "41": { descricao: "Quadro elétrico Gerencia", tipo: "PQS ABC", kg: 6 },
-        "84": { descricao: "Ao lado da saída de emergência", tipo: "PQS ABC", kg: 6 }
+        "97": { descricao: "Caixa d'água", tipo: "PQS BC", kg: 6 }
       },
-      "ESTACIONAMENTO": {
-        "42": { descricao: "Entre os pilares 1A e 1B", tipo: "PQS ABC", kg: 6 },
-        "43": { descricao: "Entre os pilares 2A e 2B", tipo: "PQS ABC", kg: 6 },
-        "44": { descricao: "Entre os pilares 3A e 3B", tipo: "PQS ABC", kg: 6 },
-        "45": { descricao: "Entre os pilares 3A e 3B", tipo: "PQS ABC", kg: 6 },
-        "46": { descricao: "Entre os pilares 4A e 4B", tipo: "PQS ABC", kg: 6 },
-        "47": { descricao: "Entre os pilares 4A e 4B", tipo: "PQS ABC", kg: 6 },
-        "48": { descricao: "Entre os pilares 5A e 5B", tipo: "PQS ABC", kg: 6 },
-        "49": { descricao: "Entre os pilares 5A e 5B", tipo: "PQS ABC", kg: 6 },
-        "50": { descricao: "Entre os pilares 6A e 6B", tipo: "PQS ABC", kg: 6 },
-        "51": { descricao: "Entre os pilares 6A e 6B", tipo: "PQS ABC", kg: 6 },
-        "52": { descricao: "Entre os pilares 7A e 7B", tipo: "PQS ABC", kg: 6 },
-        "53": { descricao: "Entre os pilares 7A e 7B", tipo: "PQS ABC", kg: 6 }
+      "RÁDIO": {
+        "1": { descricao: "Rádio", tipo: "PQS ABC", kg: 6 },
+        "2": { descricao: "Copa", tipo: "PQS ABC", kg: 6 },
+        "3": { descricao: "Meteorologia", tipo: "CO²", kg: 6 },
+        "4": { descricao: "Elevador cobertura", tipo: "CO²", kg: 6 },
+        "5": { descricao: "Elevador térreo", tipo: "CO²", kg: 6 },
+        "6": { descricao: "Central de alarme", tipo: "PQS ABC", kg: 6 },
+        "7": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
+        "8": { descricao: "Central de alarme", tipo: "CO²", kg: 4 },
+        "9": { descricao: "Andar 5/Equipamentos", tipo: "CO²", kg: 6 },
+        "10": { descricao: "Máquina do Elevador", tipo: "CO²", kg: 6 },
+        "84": { descricao: "Sala TEC VHF", tipo: "CO²", kg: 6 }
       },
-      "SCI": {
-        "1": { descricao: "Sala 1", tipo: "CO²", kg: 6 },
-        "2": { descricao: "Sala 2", tipo: "PQS ABC", kg: 6 },
-        "3": { descricao: "Almoxarifado", tipo: "CO²", kg: 6 },
-        "4": { descricao: "Almoxarifado", tipo: "PQS ABC", kg: 6 },
-        "5": { descricao: "Oficina", tipo: "PQS ABC", kg: 6 },
-        "6": { descricao: "Oficina", tipo: "CO²", kg: 6 },
-        "7": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
-        "8": { descricao: "Guarita", tipo: "PQS ABC", kg: 6 }
-      },
-      "MEIO FIO": {
-        "9": { descricao: "Poste 1 (próximo guarita)", tipo: "PQS ABC", kg: 6 },
-        "10": { descricao: "Poste 2", tipo: "PQS ABC", kg: 6 },
-        "11": { descricao: "Poste 3", tipo: "PQS ABC", kg: 6 },
-        "12": { descricao: "Poste 4", tipo: "PQS ABC", kg: 6 },
-        "13": { descricao: "Poste 5", tipo: "PQS ABC", kg: 6 },
-        "14": { descricao: "Poste 6", tipo: "PQS ABC", kg: 6 },
-        "15": { descricao: "Poste 7 (final)", tipo: "PQS ABC", kg: 6 }
-      },
-      "HANGAR": {
-        "54": { descricao: "Ao lado da porta de acesso", tipo: "PQS ABC", kg: 6 },
-        "55": { descricao: "Lado esquerdo próximo ao depósito", tipo: "PQS ABC", kg: 6 },
-        "56": { descricao: "Lado esquerdo próximo à oficina", tipo: "PQS ABC", kg: 6 },
-        "57": { descricao: "Lado esquerdo ao lado do quadro elétrico", tipo: "PQS ABC", kg: 6 },
-        "58": { descricao: "Próximo ao portão direito", tipo: "PQS ABC", kg: 6 },
-        "59": { descricao: "Próximo ao portão esquerdo", tipo: "PQS ABC", kg: 6 },
-        "60": { descricao: "Próximo ao portão central", tipo: "PQS ABC", kg: 6 },
-        "61": { descricao: "Próximo ao portão esquerdo", tipo: "PQS ABC", kg: 6 },
-        "62": { descricao: "Próximo ao portão direito", tipo: "PQS ABC", kg: 6 },
-        "63": { descricao: "Parede direita central", tipo: "PQS ABC", kg: 6 },
-        "64": { descricao: "Parede direita próximo ao portão", tipo: "PQS ABC", kg: 6 },
-        "65": { descricao: "Depósito", tipo: "PQS ABC", kg: 6 },
-        "66": { descricao: "Oficina", tipo: "CO²", kg: 6 },
-        "67": { descricao: "Oficina", tipo: "PQS ABC", kg: 6 }
-      },
-      "PÁTIO DE AERONAVES": {
-        "68": { descricao: "Pátio P1", tipo: "PQS BC", kg: 50 },
-        "69": { descricao: "Pátio P2", tipo: "PQS BC", kg: 50 },
-        "70": { descricao: "Pátio P3", tipo: "PQS BC", kg: 50 },
-        "71": { descricao: "Pátio P4", tipo: "PQS BC", kg: 50 }
-      },
-      "ESTAÇÃO DE TRATAMENTO DE ESGOTO": {
-        "72": { descricao: "Próximo ao portão de entrada", tipo: "PQS ABC", kg: 6 },
-        "73": { descricao: "Próximo ao quadro de comando", tipo: "PQS ABC", kg: 6 }
-      },
-      "RESERVATÓRIO DE ÁGUA": {
-        "74": { descricao: "Próximo ao portão de entrada", tipo: "PQS ABC", kg: 6 },
-        "75": { descricao: "Próximo ao quadro de comando", tipo: "PQS ABC", kg: 6 }
-      },
-      "CASA DE GÁS": {
-        "76": { descricao: "Parte interna lado esquerdo", tipo: "PQS BC", kg: 6 },
-        "77": { descricao: "Parte interna lado direito", tipo: "PQS BC", kg: 6 },
-        "78": { descricao: "Parte externa", tipo: "PQS BC", kg: 6 }
-      },
-      "SUBESTAÇÃO": {
-        "79": { descricao: "Próximo ao transformador 1", tipo: "PQS ABC", kg: 6 },
-        "80": { descricao: "Próximo ao transformador 2", tipo: "PQS ABC", kg: 6 }
-      },
-      "GERADOR": {
-        "81": { descricao: "Próximo ao painel de controle", tipo: "PQS ABC", kg: 6 },
-        "82": { descricao: "Próximo ao tanque de combustível", tipo: "PQS BC", kg: 6 }
+      "ADM": {
+        "11": { descricao: "Corredor auditório", tipo: "CO²", kg: 6 },
+        "12": { descricao: "Corredor auditório", tipo: "PQS ABC", kg: 6 },
+        "13": { descricao: "Corredor almoxarife", tipo: "CO²", kg: 6 },
+        "14": { descricao: "Corredor almoxarife", tipo: "PQS ABC", kg: 6 }
       },
       "CASA DE BOMBAS": {
-        "86": { descricao: "Próximo à bomba 1", tipo: "PQS ABC", kg: 6 },
-        "87": { descricao: "Próximo à bomba 2", tipo: "PQS ABC", kg: 6 }
+        "15": { descricao: "Casa de Bombas", tipo: "CO²", kg: 6 }
       },
-      "GINÁSIO": {
-        "88": { descricao: "Entrada principal", tipo: "PQS ABC", kg: 6 },
-        "89": { descricao: "Vestiário masculino", tipo: "PQS ABC", kg: 6 },
-        "90": { descricao: "Vestiário feminino", tipo: "PQS ABC", kg: 6 }
+      "CAMPO DE ANTENAS": {
+        "88": { descricao: "Sala 01 | Chave: 01", tipo: "CO²", kg: 6 },
+        "89": { descricao: "Sala 03 | Chave: 03", tipo: "CO²", kg: 6 }
       },
-      "RESTAURANTE": {
-        "91": { descricao: "Cozinha", tipo: "PQS ABC", kg: 6 },
-        "92": { descricao: "Salão", tipo: "PQS ABC", kg: 6 },
-        "93": { descricao: "Depósito", tipo: "PQS ABC", kg: 6 }
+      "RAIO X": {
+        "38": { descricao: "Entrada", tipo: "CO²", kg: 6 },
+        "39": { descricao: "Quadro de energia", tipo: "CO²", kg: 6 },
+        "40": { descricao: "Próximo a escada rolante", tipo: "PQS BC", kg: 4 }
       },
-      "ALOJAMENTO": {
-        "94": { descricao: "Corredor 1º andar", tipo: "PQS ABC", kg: 6 },
-        "95": { descricao: "Corredor 2º andar", tipo: "PQS ABC", kg: 6 },
-        "96": { descricao: "Sala de convivência", tipo: "PQS ABC", kg: 6 },
-        "97": { descricao: "Cozinha", tipo: "PQS ABC", kg: 6 }
+      "EMBARQUE": {
+        "41": { descricao: "Próximo a porta 1", tipo: "PQS ABC", kg: 6 },
+        "42": { descricao: "Próximo a porta 2", tipo: "PQS ABC", kg: 6 },
+        "43": { descricao: "Ao lado do elevador", tipo: "PQS BC", kg: 6 },
+        "44": { descricao: "Ao lado do Aéro Coffee", tipo: "CO²", kg: 6 },
+        "45": { descricao: "Sala Ar-condicionado", tipo: "PQS BC", kg: 4 }
+      },
+      "ELOS": {
+        "46": { descricao: "Corredor direito", tipo: "PQS ABC", kg: 4 },
+        "47": { descricao: "Posição 6 elevador", tipo: "PQS BC", kg: 4 },
+        "48": { descricao: "Posição 6 corredor", tipo: "PQS ABC", kg: 6 },
+        "49": { descricao: "Posição 7 corredor", tipo: "PQS BC", kg: 6 },
+        "50": { descricao: "Posição 7 elevador", tipo: "PQS ABC", kg: 6 },
+        "51": { descricao: "Posição 7 externo", tipo: "PQS BC", kg: 6 },
+        "52": { descricao: "Posição 6 externo", tipo: "PQS BC", kg: 6 }
+      },
+      "APOC": {
+        "53": { descricao: "Sala do APOC", tipo: "PQS BC", kg: 4 },
+        "54": { descricao: "Sala do APOC", tipo: "CO²", kg: 6 },
+        "55": { descricao: "Banheiro/Copa", tipo: "PQS BC", kg: 6 },
+        "56": { descricao: "Ao lado do hidrante", tipo: "PQS BC", kg: 6 }
+      },
+      "PORTÃO 1": {
+        "57": { descricao: "Guarita", tipo: "PQS ABC", kg: 6 }
+      },
+      "KF CHILLER": {
+        "58": { descricao: "Ao lado do P1", tipo: "CO²", kg: 6 },
+        "59": { descricao: "Interna da KF", tipo: "CO²", kg: 6 },
+        "60": { descricao: "Interna da KF", tipo: "PQS ABC", kg: 6 },
+        "61": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 },
+        "62": { descricao: "Entrada do Chiller", tipo: "PQS ABC", kg: 6 }
+      },
+      "PAA": {
+        "63": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "64": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "65": { descricao: "Próximo do PAA", tipo: "PQS ABC", kg: 6 },
+        "66": { descricao: "Próximo do PAA", tipo: "PQS BC", kg: 6 }
+      },
+      "MANUTENÇÃO": {
+        "67": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
+        "68": { descricao: "Entrada", tipo: "PQS ABC", kg: 6 },
+        "69": { descricao: "Entrada", tipo: "CO²", kg: 6 },
+        "70": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "71": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 }
+      },
+      "GSE GOL AZUL RP": {
+        "72": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "73": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "74": { descricao: "Manutenção GOL", tipo: "PQS ABC", kg: 6 },
+        "75": { descricao: "Manutenção AZUL", tipo: "PQS ABC", kg: 6 }
+      },
+      "SCI": {
+        "76": { descricao: "Garagem", tipo: "CO²", kg: 6 },
+        "77": { descricao: "Garagem", tipo: "PQS BC", kg: 6 },
+        "78": { descricao: "Academia", tipo: "CO²", kg: 6 },
+        "79": { descricao: "Garagem", tipo: "CO²", kg: 6 },
+        "80": { descricao: "Reserva", tipo: "PQS ABC", kg: 4 },
+        "81": { descricao: "Auditório", tipo: "PQS BC", kg: 6 },
+        "82": { descricao: "Auditório", tipo: "CO²", kg: 6 },
+        "86": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 },
+        "87": { descricao: "Almox SCI", tipo: "PQS BC", kg: 4 }
       }
     };
 
