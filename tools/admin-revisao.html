@@ -152,7 +152,7 @@
           </select>
         </div>
         <div id="campo-carga-massa" style="display:none;">
-          <label class="text-sm font-semibold text-gray-600 mb-2 block">Carga Nominal</label>
+          <label class="text-sm font-semibold text-gray-600 mb-2 block">Carga Nominal (opcional)</label>
           <div class="flex gap-2">
             <select id="carga-massa-valor" class="input-field flex-1">
               <option value="">Selecione...</option>
@@ -162,16 +162,22 @@
           </div>
         </div>
         <div id="campo-capacidade-massa" style="display:none;">
-          <label class="text-sm font-semibold text-gray-600 mb-2 block">Capacidade Extintora</label>
+          <label class="text-sm font-semibold text-gray-600 mb-2 block">Capacidade (opcional)</label>
           <select id="capacidade-massa" class="input-field">
             <option value="">Selecione...</option>
           </select>
         </div>
         <div class="flex items-end">
           <button onclick="aplicarEmMassa()" class="btn-success w-full">
-            Aplicar aos Selecionados
+            Atualizar Selecionados
           </button>
         </div>
+      </div>
+      
+      <div class="flex gap-3 mb-4">
+        <button onclick="confirmarRevisaoVisual()" class="btn-primary flex-1">
+          ✅ Confirmar Revisão Visual dos Selecionados
+        </button>
       </div>
       
       <div class="flex gap-3">
@@ -484,7 +490,57 @@
     }
 
     // ══════════════════════════════════════════════════════════
-    //  APLICAR EM MASSA
+    //  CONFIRMAR REVISÃO VISUAL (sem alterar dados)
+    // ══════════════════════════════════════════════════════════
+    async function confirmarRevisaoVisual() {
+      if (selecionados.size === 0) {
+        alert('⚠️ Selecione pelo menos um extintor!');
+        return;
+      }
+      
+      const confirmar = confirm(
+        `✅ CONFIRMAR REVISÃO VISUAL\n\n` +
+        `Marcar ${selecionados.size} extintor(es) como revisado(s)?\n\n` +
+        `Os dados atuais serão mantidos.\n` +
+        `Você está apenas confirmando que conferiu visualmente.`
+      );
+      
+      if (!confirmar) return;
+      
+      try {
+        let sucesso = 0;
+        let erros = 0;
+        
+        for (const id of selecionados) {
+          try {
+            // Apenas marcar como revisado, SEM alterar dados
+            await extintorService.marcarExtintorRevisado(id);
+            sucesso++;
+          } catch (error) {
+            console.error(`Erro em ${id}:`, error);
+            erros++;
+          }
+        }
+        
+        alert(
+          `✅ Revisão confirmada!\n\n` +
+          `${sucesso} extintor(es) marcado(s) como revisado(s)` +
+          `${erros > 0 ? `\n${erros} erro(s)` : ''}`
+        );
+        
+        // Recarregar
+        selecionados.clear();
+        await carregarDados();
+        filtrarExtintores();
+        
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('❌ Erro ao confirmar: ' + error.message);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  APLICAR EM MASSA (alterar dados + marcar revisado)
     // ══════════════════════════════════════════════════════════
     async function aplicarEmMassa() {
       if (selecionados.size === 0) {
@@ -493,32 +549,39 @@
       }
       
       let dados = {};
+      let temDadosParaAtualizar = false;
       
       if (modoClassificacao === 'tipo_carga_nominal') {
         const valor = document.getElementById('carga-massa-valor').value;
         const unidade = document.getElementById('carga-massa-unidade').value;
         
-        if (!valor || !unidade) {
-          alert('⚠️ Selecione a carga nominal!');
-          return;
+        if (valor && unidade) {
+          dados.carga_nominal_valor = parseInt(valor);
+          dados.carga_nominal_unidade = unidade;
+          temDadosParaAtualizar = true;
         }
-        
-        dados.carga_nominal_valor = parseInt(valor);
-        dados.carga_nominal_unidade = unidade;
       } else {
         const capacidade = document.getElementById('capacidade-massa').value;
         
-        if (!capacidade) {
-          alert('⚠️ Selecione a capacidade extintora!');
-          return;
+        if (capacidade) {
+          dados.capacidade_extintora = capacidade;
+          temDadosParaAtualizar = true;
         }
-        
-        dados.capacidade_extintora = capacidade;
+      }
+      
+      if (!temDadosParaAtualizar) {
+        alert(
+          '⚠️ Nenhum dado foi selecionado para atualizar!\n\n' +
+          'Se você apenas quer confirmar a revisão visual sem alterar dados,\n' +
+          'use o botão "✅ Confirmar Revisão Visual".'
+        );
+        return;
       }
       
       const confirmar = confirm(
-        `Aplicar aos ${selecionados.size} extintores selecionados?\n\n` +
-        `Valor: ${JSON.stringify(dados)}`
+        `Atualizar ${selecionados.size} extintor(es) selecionado(s)?\n\n` +
+        `Novos valores: ${JSON.stringify(dados)}\n\n` +
+        `Os extintores serão marcados como revisados.`
       );
       
       if (!confirmar) return;
