@@ -170,6 +170,53 @@
     .badge-green { background: rgba(52, 199, 89, 0.1); color: #34c759; }
     .badge-red { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
     .badge-gray { background: rgba(0, 0, 0, 0.06); color: #86868b; }
+    .badge-orange { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid #e5e5ea;
+      margin-bottom: 24px;
+    }
+    .tab {
+      padding: 12px 24px;
+      font-weight: 600;
+      color: #86868b;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 15px;
+    }
+    .tab:hover {
+      color: #667eea;
+    }
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Edificação card */
+    .edificacao-card {
+      background: white;
+      border: 2px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: all 0.2s;
+    }
+    .edificacao-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
   </style>
 </head>
 <body class="p-4 md:p-8" data-auth-required data-auth-login>
@@ -238,6 +285,21 @@
     </div>
   </div>
 
+  <!-- Tabs -->
+  <div class="max-w-6xl mx-auto">
+    <div class="tabs">
+      <button class="tab active" onclick="trocarAba('extintores')">
+        🧯 Extintores
+      </button>
+      <button class="tab" onclick="trocarAba('edificacoes')">
+        🏢 Edificações
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Content: Extintores -->
+  <div id="tab-extintores" class="tab-content active">
+
   <!-- Filtros -->
   <div class="max-w-6xl mx-auto mb-6">
     <div class="card p-4">
@@ -277,7 +339,75 @@
     </div>
   </div>
 
-  <!-- Modal Novo/Editar -->
+  </div>
+  <!-- Fim Tab Content: Extintores -->
+
+  <!-- Tab Content: Edificações -->
+  <div id="tab-edificacoes" class="tab-content">
+    
+    <!-- Botão Adicionar -->
+    <div class="max-w-6xl mx-auto mb-6">
+      <button onclick="abrirModalNovaEdificacao()" class="btn-primary">
+        + Nova Edificação
+      </button>
+    </div>
+
+    <!-- Lista de Edificações -->
+    <div class="max-w-6xl mx-auto">
+      <div id="listaEdificacoes">
+        <div class="text-center py-12">
+          <div class="text-4xl mb-4">📥</div>
+          <div class="text-gray-500">Carregando edificações...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- Fim Tab Content: Edificações -->
+
+  <!-- Modal Nova/Editar Edificação -->
+  <div id="modalEdificacao" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold" id="modalEdificacaoTitulo">Nova Edificação</h2>
+        <button onclick="fecharModalEdificacao()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+      </div>
+
+      <form id="formEdificacao" onsubmit="salvarEdificacao(event)">
+        <input type="hidden" id="edificacao-id-antigo">
+        
+        <div class="space-y-4">
+          <div>
+            <label class="label">Nome *</label>
+            <input type="text" id="edificacao-nome" class="input-field" required
+                   placeholder="Ex: HANGAR 2">
+          </div>
+
+          <div>
+            <label class="label">Descrição</label>
+            <input type="text" id="edificacao-descricao" class="input-field"
+                   placeholder="Ex: Hangar de manutenção 2">
+          </div>
+
+          <div id="edificacao-info" class="text-sm text-gray-500" style="display:none;">
+            Total de extintores: <span id="edificacao-total">0</span>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+          <button type="button" onclick="fecharModalEdificacao()" class="btn-secondary flex-1">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary flex-1">
+            Salvar Edificação
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Novo/Editar Extintor -->
+  <div id="modalExtintor" class="modal">
   <div id="modalExtintor" class="modal">
     <div class="modal-content">
       <div class="flex items-center justify-between mb-6">
@@ -419,6 +549,265 @@
       document.addEventListener('DOMContentLoaded', initAuth);
     } else {
       initAuth();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  TABS
+    // ══════════════════════════════════════════════════════════
+    function trocarAba(aba) {
+      // Remover active de todas as tabs
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      
+      // Ativar tab selecionada
+      if (aba === 'extintores') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('tab-extintores').classList.add('active');
+      } else if (aba === 'edificacoes') {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('tab-edificacoes').classList.add('active');
+        renderizarEdificacoes();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  RENDERIZAR EDIFICAÇÕES
+    // ══════════════════════════════════════════════════════════
+    function renderizarEdificacoes() {
+      const container = document.getElementById('listaEdificacoes');
+      
+      if (Object.keys(edificacoes).length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12">
+            <div class="text-4xl mb-4">🏢</div>
+            <div class="text-gray-500">Nenhuma edificação encontrada</div>
+          </div>`;
+        return;
+      }
+
+      // Contar extintores por edificação
+      const contagemExtintores = {};
+      todosExtintores.forEach(ext => {
+        if (!contagemExtintores[ext.edificacao]) {
+          contagemExtintores[ext.edificacao] = 0;
+        }
+        contagemExtintores[ext.edificacao]++;
+      });
+
+      let html = '';
+      const edificacoesOrdenadas = Object.keys(edificacoes).sort();
+
+      edificacoesOrdenadas.forEach(nome => {
+        const ed = edificacoes[nome];
+        const totalExt = contagemExtintores[nome] || 0;
+        
+        html += `
+          <div class="edificacao-card">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="text-xl font-bold mb-1">📍 ${nome}</div>
+                ${ed.descricao ? `<div class="text-sm text-gray-600 mb-2">${ed.descricao}</div>` : ''}
+                <div class="text-sm text-gray-500">
+                  ${totalExt} extintor${totalExt !== 1 ? 'es' : ''}
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="editarEdificacao('${nome}')" class="btn-secondary text-sm">
+                  ✏️ Editar
+                </button>
+                <button onclick="excluirEdificacao('${nome}')" class="btn-danger"
+                        ${totalExt > 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+                  🗑️ Excluir
+                </button>
+              </div>
+            </div>
+          </div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  MODAL EDIFICAÇÃO
+    // ══════════════════════════════════════════════════════════
+    function abrirModalNovaEdificacao() {
+      document.getElementById('modalEdificacaoTitulo').textContent = 'Nova Edificação';
+      document.getElementById('formEdificacao').reset();
+      document.getElementById('edificacao-id-antigo').value = '';
+      document.getElementById('edificacao-info').style.display = 'none';
+      document.getElementById('modalEdificacao').classList.add('show');
+    }
+
+    function editarEdificacao(nome) {
+      const ed = edificacoes[nome];
+      if (!ed) return;
+
+      document.getElementById('modalEdificacaoTitulo').textContent = 'Editar Edificação';
+      document.getElementById('edificacao-id-antigo').value = nome;
+      document.getElementById('edificacao-nome').value = nome;
+      document.getElementById('edificacao-descricao').value = ed.descricao || '';
+      
+      // Mostrar info
+      const totalExt = todosExtintores.filter(e => e.edificacao === nome).length;
+      document.getElementById('edificacao-total').textContent = totalExt;
+      document.getElementById('edificacao-info').style.display = 'block';
+      
+      document.getElementById('modalEdificacao').classList.add('show');
+    }
+
+    function fecharModalEdificacao() {
+      document.getElementById('modalEdificacao').classList.remove('show');
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  SALVAR EDIFICAÇÃO
+    // ══════════════════════════════════════════════════════════
+    async function salvarEdificacao(event) {
+      event.preventDefault();
+
+      const nomeAntigo = document.getElementById('edificacao-id-antigo').value;
+      const nomeNovo = document.getElementById('edificacao-nome').value.trim().toUpperCase();
+      const descricao = document.getElementById('edificacao-descricao').value.trim();
+
+      if (!nomeNovo) {
+        alert('⚠️ Nome é obrigatório!');
+        return;
+      }
+
+      try {
+        const db = firebase.firestore();
+
+        if (nomeAntigo && nomeAntigo !== nomeNovo) {
+          // RENOMEAR EDIFICAÇÃO
+          
+          // Verificar se novo nome já existe
+          if (edificacoes[nomeNovo]) {
+            alert('❌ Já existe uma edificação com este nome!');
+            return;
+          }
+
+          // Verificar se tem extintores
+          const extintoresDaEdificacao = todosExtintores.filter(e => e.edificacao === nomeAntigo);
+          
+          if (extintoresDaEdificacao.length > 0) {
+            const confirmar = confirm(
+              `⚠️ ATENÇÃO!\n\n` +
+              `Esta edificação tem ${extintoresDaEdificacao.length} extintor(es).\n\n` +
+              `Ao renomear, TODOS os extintores serão atualizados.\n\n` +
+              `Deseja continuar?`
+            );
+
+            if (!confirmar) return;
+
+            // Atualizar todos os extintores (batch)
+            const batch = db.batch();
+            
+            extintoresDaEdificacao.forEach(ext => {
+              const novoId = `${nomeNovo}_${ext.numero}`;
+              const refAntiga = db.collection('extintores_instalados').doc(ext.id);
+              const refNova = db.collection('extintores_instalados').doc(novoId);
+              
+              // Copiar para novo ID
+              batch.set(refNova, {
+                ...ext,
+                id: novoId,
+                edificacao: nomeNovo,
+                atualizado_em: new Date().toISOString()
+              });
+              
+              // Deletar antigo
+              batch.delete(refAntiga);
+            });
+
+            await batch.commit();
+            alert(`✅ Edificação renomeada!\n${extintoresDaEdificacao.length} extintores atualizados.`);
+          }
+
+          // Atualizar edificação
+          await db.collection('edificacoes').doc('lista').update({
+            [nomeAntigo]: firebase.firestore.FieldValue.delete(),
+            [nomeNovo]: {
+              nome: nomeNovo,
+              descricao: descricao,
+              total_extintores: extintoresDaEdificacao.length,
+              atualizada_em: new Date().toISOString()
+            }
+          });
+
+        } else {
+          // CRIAR ou EDITAR (sem renomear)
+          
+          if (!nomeAntigo && edificacoes[nomeNovo]) {
+            alert('❌ Já existe uma edificação com este nome!');
+            return;
+          }
+
+          const totalExt = todosExtintores.filter(e => e.edificacao === nomeNovo).length;
+
+          await db.collection('edificacoes').doc('lista').update({
+            [nomeNovo]: {
+              nome: nomeNovo,
+              descricao: descricao,
+              total_extintores: totalExt,
+              ...(nomeAntigo ? { atualizada_em: new Date().toISOString() } : { criada_em: new Date().toISOString() })
+            }
+          });
+
+          alert(nomeAntigo ? '✅ Edificação atualizada!' : '✅ Edificação criada!');
+        }
+
+        fecharModalEdificacao();
+        await carregarDados();
+        popularSelectEdificacoes();
+        renderizarEdificacoes();
+
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('❌ Erro ao salvar: ' + error.message);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  EXCLUIR EDIFICAÇÃO
+    // ══════════════════════════════════════════════════════════
+    async function excluirEdificacao(nome) {
+      // Verificar se tem extintores
+      const totalExt = todosExtintores.filter(e => e.edificacao === nome).length;
+      
+      if (totalExt > 0) {
+        alert(
+          `❌ Não é possível excluir!\n\n` +
+          `Esta edificação possui ${totalExt} extintor(es).\n\n` +
+          `Remova ou transfira os extintores antes de excluir a edificação.`
+        );
+        return;
+      }
+
+      const confirmar = confirm(
+        `⚠️ Confirma exclusão da edificação?\n\n` +
+        `${nome}\n\n` +
+        `Esta ação não pode ser desfeita.`
+      );
+
+      if (!confirmar) return;
+
+      try {
+        const db = firebase.firestore();
+        
+        await db.collection('edificacoes').doc('lista').update({
+          [nome]: firebase.firestore.FieldValue.delete()
+        });
+
+        alert('✅ Edificação excluída!');
+
+        await carregarDados();
+        popularSelectEdificacoes();
+        renderizarEdificacoes();
+
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('❌ Erro ao excluir: ' + error.message);
+      }
     }
   </script>
 
