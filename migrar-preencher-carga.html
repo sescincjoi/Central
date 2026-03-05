@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Correção - Preencher Carga Nominal</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 900px;
+      width: 100%;
+    }
+    h1 {
+      color: #1d1d1f;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+    }
+    #log {
+      background: #1d1d1f;
+      color: #00ff00;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 500px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      display: none;
+    }
+    #log.show { display: block; }
+    .success { color: #00ff00; }
+    .error { color: #ff3b30; }
+    .info { color: #00bfff; }
+    .warn { color: #ff9500; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Preencher Carga Nominal</h1>
+    <p style="color: #86868b; margin-bottom: 30px;">
+      Usar dados originais do extintoresInfo para preencher campos corretos
+    </p>
+
+    <div class="warning">
+      <h3 style="color: #856404; margin: 0 0 10px;">⚠️ O que este script faz:</h3>
+      <p style="color: #856404; margin: 0; line-height: 1.6;">
+        • Usa dados originais de <strong>extintoresInfo</strong><br>
+        • Preenche <strong>carga_nominal_valor</strong> e <strong>carga_nominal_unidade</strong><br>
+        • Detecta automaticamente unidade correta (kg ou L) pelo tipo<br>
+        • Atualiza todos os 97 extintores<br><br>
+        <strong>Execute para corrigir dados!</strong>
+      </p>
+    </div>
+
+    <button class="btn" onclick="preencherCargaNominal()">
+      🚀 PREENCHER CARGA NOMINAL
+    </button>
+
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+      authDomain: "ronda-extintores.firebaseapp.com",
+      projectId: "ronda-extintores",
+      storageBucket: "ronda-extintores.firebasestorage.app",
+      messagingSenderId: "712050420595",
+      appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const logEl = document.getElementById('log');
+    
+    function log(msg, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warn' ? '⚠️' : 'ℹ️';
+      const className = type;
+      
+      logEl.innerHTML += `<span class="${className}">[${timestamp}] ${prefix} ${msg}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  DADOS ORIGINAIS DOS EXTINTORES
+    // ═══════════════════════════════════════════════════════════
+    const extintoresInfo = {
+      "DESEMBARQUE": {
+        "24": { descricao: "Ao lado da sala técnica", tipo: "PQS BC", kg: 6 },
+        "25": { descricao: "Lado esquerdo", tipo: "PQS ABC", kg: 6 },
+        "26": { descricao: "Ao lado do hidrante", tipo: "PQS ABC", kg: 6 },
+        "27": { descricao: "Porta lado ar", tipo: "PQS ABC", kg: 6 }
+      },
+      "TPS TÉRREO": {
+        "16": { descricao: "Porta principal lado embarque", tipo: "PQS ABC", kg: 6 },
+        "17": { descricao: "Saída Charlie", tipo: "PQS ABC", kg: 6 },
+        "18": { descricao: "Central de alarme", tipo: "CO²", kg: 6 },
+        "19": { descricao: "Do lado do DEA", tipo: "PQS ABC", kg: 6 },
+        "20": { descricao: "Ao lado do banheiro", tipo: "PQS ABC", kg: 6 },
+        "21": { descricao: "Elevador", tipo: "CO²", kg: 6 },
+        "22": { descricao: "Porta principal lado desembarque", tipo: "PQS ABC", kg: 6 },
+        "23": { descricao: "Saída do desembarque", tipo: "CO²", kg: 6 },
+        "32": { descricao: "Sala de máquina elevador", tipo: "CO²", kg: 4 },
+        "33": { descricao: "Sala telemática", tipo: "CO²", kg: 6 },
+        "83": { descricao: "Sala de apoio/fiscal", tipo: "CO²", kg: 6 },
+        "85": { descricao: "Frente ao guichê Localiza", tipo: "PQS ABC", kg: 4 }
+      },
+      "TPS SUPERIOR": {
+        "28": { descricao: "Ao lado do elevador", tipo: "PQS ABC", kg: 6 },
+        "29": { descricao: "Início do corredor", tipo: "PQS ABC", kg: 6 },
+        "30": { descricao: "Corredor, frente ao COE", tipo: "PQS BC", kg: 6 },
+        "31": { descricao: "Ao lado da saída de emergência", tipo: "PQS ABC", kg: 6 },
+        "34": { descricao: "Sala COE", tipo: "PQS ABC", kg: 6 },
+        "35": { descricao: "Sala COE", tipo: "CO²", kg: 4 },
+        "36": { descricao: "Sala COE (Quadro elétrico)", tipo: "PQS ABC", kg: 6 },
+        "37": { descricao: "Sala COE STVV", tipo: "CO²", kg: 4 },
+        "38": { descricao: "Sala Meteorologia", tipo: "PQS ABC", kg: 6 },
+        "39": { descricao: "Sala Meteorologia (Quadro elétrico)", tipo: "PQS ABC", kg: 6 },
+        "40": { descricao: "Sala Gerencia", tipo: "PQS ABC", kg: 6 },
+        "41": { descricao: "Quadro elétrico Gerencia", tipo: "PQS ABC", kg: 6 },
+        "84": { descricao: "Ao lado da saída de emergência", tipo: "PQS ABC", kg: 6 }
+      },
+      "ESTACIONAMENTO": {
+        "42": { descricao: "Entre os pilares 1A e 1B", tipo: "PQS ABC", kg: 6 },
+        "43": { descricao: "Entre os pilares 2A e 2B", tipo: "PQS ABC", kg: 6 },
+        "44": { descricao: "Entre os pilares 3A e 3B", tipo: "PQS ABC", kg: 6 },
+        "45": { descricao: "Entre os pilares 3A e 3B", tipo: "PQS ABC", kg: 6 },
+        "46": { descricao: "Entre os pilares 4A e 4B", tipo: "PQS ABC", kg: 6 },
+        "47": { descricao: "Entre os pilares 4A e 4B", tipo: "PQS ABC", kg: 6 },
+        "48": { descricao: "Entre os pilares 5A e 5B", tipo: "PQS ABC", kg: 6 },
+        "49": { descricao: "Entre os pilares 5A e 5B", tipo: "PQS ABC", kg: 6 },
+        "50": { descricao: "Entre os pilares 6A e 6B", tipo: "PQS ABC", kg: 6 },
+        "51": { descricao: "Entre os pilares 6A e 6B", tipo: "PQS ABC", kg: 6 },
+        "52": { descricao: "Entre os pilares 7A e 7B", tipo: "PQS ABC", kg: 6 },
+        "53": { descricao: "Entre os pilares 7A e 7B", tipo: "PQS ABC", kg: 6 }
+      },
+      "SCI": {
+        "1": { descricao: "Sala 1", tipo: "CO²", kg: 6 },
+        "2": { descricao: "Sala 2", tipo: "PQS ABC", kg: 6 },
+        "3": { descricao: "Almoxarifado", tipo: "CO²", kg: 6 },
+        "4": { descricao: "Almoxarifado", tipo: "PQS ABC", kg: 6 },
+        "5": { descricao: "Oficina", tipo: "PQS ABC", kg: 6 },
+        "6": { descricao: "Oficina", tipo: "CO²", kg: 6 },
+        "7": { descricao: "Corredor", tipo: "PQS ABC", kg: 6 },
+        "8": { descricao: "Guarita", tipo: "PQS ABC", kg: 6 }
+      },
+      "MEIO FIO": {
+        "9": { descricao: "Poste 1 (próximo guarita)", tipo: "PQS ABC", kg: 6 },
+        "10": { descricao: "Poste 2", tipo: "PQS ABC", kg: 6 },
+        "11": { descricao: "Poste 3", tipo: "PQS ABC", kg: 6 },
+        "12": { descricao: "Poste 4", tipo: "PQS ABC", kg: 6 },
+        "13": { descricao: "Poste 5", tipo: "PQS ABC", kg: 6 },
+        "14": { descricao: "Poste 6", tipo: "PQS ABC", kg: 6 },
+        "15": { descricao: "Poste 7 (final)", tipo: "PQS ABC", kg: 6 }
+      },
+      "HANGAR": {
+        "54": { descricao: "Ao lado da porta de acesso", tipo: "PQS ABC", kg: 6 },
+        "55": { descricao: "Lado esquerdo próximo ao depósito", tipo: "PQS ABC", kg: 6 },
+        "56": { descricao: "Lado esquerdo próximo à oficina", tipo: "PQS ABC", kg: 6 },
+        "57": { descricao: "Lado esquerdo ao lado do quadro elétrico", tipo: "PQS ABC", kg: 6 },
+        "58": { descricao: "Próximo ao portão direito", tipo: "PQS ABC", kg: 6 },
+        "59": { descricao: "Próximo ao portão esquerdo", tipo: "PQS ABC", kg: 6 },
+        "60": { descricao: "Próximo ao portão central", tipo: "PQS ABC", kg: 6 },
+        "61": { descricao: "Próximo ao portão esquerdo", tipo: "PQS ABC", kg: 6 },
+        "62": { descricao: "Próximo ao portão direito", tipo: "PQS ABC", kg: 6 },
+        "63": { descricao: "Parede direita central", tipo: "PQS ABC", kg: 6 },
+        "64": { descricao: "Parede direita próximo ao portão", tipo: "PQS ABC", kg: 6 },
+        "65": { descricao: "Depósito", tipo: "PQS ABC", kg: 6 },
+        "66": { descricao: "Oficina", tipo: "CO²", kg: 6 },
+        "67": { descricao: "Oficina", tipo: "PQS ABC", kg: 6 }
+      },
+      "PÁTIO DE AERONAVES": {
+        "68": { descricao: "Pátio P1", tipo: "PQS BC", kg: 50 },
+        "69": { descricao: "Pátio P2", tipo: "PQS BC", kg: 50 },
+        "70": { descricao: "Pátio P3", tipo: "PQS BC", kg: 50 },
+        "71": { descricao: "Pátio P4", tipo: "PQS BC", kg: 50 }
+      },
+      "ESTAÇÃO DE TRATAMENTO DE ESGOTO": {
+        "72": { descricao: "Próximo ao portão de entrada", tipo: "PQS ABC", kg: 6 },
+        "73": { descricao: "Próximo ao quadro de comando", tipo: "PQS ABC", kg: 6 }
+      },
+      "RESERVATÓRIO DE ÁGUA": {
+        "74": { descricao: "Próximo ao portão de entrada", tipo: "PQS ABC", kg: 6 },
+        "75": { descricao: "Próximo ao quadro de comando", tipo: "PQS ABC", kg: 6 }
+      },
+      "CASA DE GÁS": {
+        "76": { descricao: "Parte interna lado esquerdo", tipo: "PQS BC", kg: 6 },
+        "77": { descricao: "Parte interna lado direito", tipo: "PQS BC", kg: 6 },
+        "78": { descricao: "Parte externa", tipo: "PQS BC", kg: 6 }
+      },
+      "SUBESTAÇÃO": {
+        "79": { descricao: "Próximo ao transformador 1", tipo: "PQS ABC", kg: 6 },
+        "80": { descricao: "Próximo ao transformador 2", tipo: "PQS ABC", kg: 6 }
+      },
+      "GERADOR": {
+        "81": { descricao: "Próximo ao painel de controle", tipo: "PQS ABC", kg: 6 },
+        "82": { descricao: "Próximo ao tanque de combustível", tipo: "PQS BC", kg: 6 }
+      },
+      "CASA DE BOMBAS": {
+        "86": { descricao: "Próximo à bomba 1", tipo: "PQS ABC", kg: 6 },
+        "87": { descricao: "Próximo à bomba 2", tipo: "PQS ABC", kg: 6 }
+      },
+      "GINÁSIO": {
+        "88": { descricao: "Entrada principal", tipo: "PQS ABC", kg: 6 },
+        "89": { descricao: "Vestiário masculino", tipo: "PQS ABC", kg: 6 },
+        "90": { descricao: "Vestiário feminino", tipo: "PQS ABC", kg: 6 }
+      },
+      "RESTAURANTE": {
+        "91": { descricao: "Cozinha", tipo: "PQS ABC", kg: 6 },
+        "92": { descricao: "Salão", tipo: "PQS ABC", kg: 6 },
+        "93": { descricao: "Depósito", tipo: "PQS ABC", kg: 6 }
+      },
+      "ALOJAMENTO": {
+        "94": { descricao: "Corredor 1º andar", tipo: "PQS ABC", kg: 6 },
+        "95": { descricao: "Corredor 2º andar", tipo: "PQS ABC", kg: 6 },
+        "96": { descricao: "Sala de convivência", tipo: "PQS ABC", kg: 6 },
+        "97": { descricao: "Cozinha", tipo: "PQS ABC", kg: 6 }
+      }
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    //  FUNÇÃO PRINCIPAL
+    // ═══════════════════════════════════════════════════════════
+    async function preencherCargaNominal() {
+      const btn = document.querySelector('.btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Preenchendo...';
+      
+      logEl.classList.add('show');
+      logEl.innerHTML = '';
+      
+      try {
+        log('🚀 Iniciando preenchimento de carga nominal...', 'info');
+        log('');
+
+        let total = 0;
+        let atualizados = 0;
+        let erros = 0;
+
+        // Para cada edificação
+        for (const [edificacao, extintores] of Object.entries(extintoresInfo)) {
+          log(`📍 Processando: ${edificacao}`, 'info');
+          
+          // Para cada extintor
+          for (const [numero, dados] of Object.entries(extintores)) {
+            total++;
+            const id = `${edificacao}_${numero}`;
+            
+            try {
+              // Determinar unidade baseado no tipo
+              let unidade = 'kg'; // Padrão
+              
+              if (dados.tipo.includes('Água') || dados.tipo.includes('Espuma')) {
+                unidade = 'L';
+              }
+              
+              // Atualizar no Firestore
+              await db.collection('extintores_instalados').doc(id).update({
+                carga_nominal_valor: dados.kg,
+                carga_nominal_unidade: unidade,
+                atualizado_em: new Date().toISOString()
+              });
+              
+              log(`   ✅ ${numero}: ${dados.tipo} ${dados.kg}${unidade}`, 'success');
+              atualizados++;
+              
+            } catch (error) {
+              log(`   ❌ ${numero}: ${error.message}`, 'error');
+              erros++;
+            }
+          }
+          
+          log('', 'info');
+        }
+
+        log('═══════════════════════════════════════', 'success');
+        log(`🎉 PREENCHIMENTO CONCLUÍDO!`, 'success');
+        log('═══════════════════════════════════════', 'success');
+        log('', 'info');
+        log(`📊 Estatísticas:`, 'info');
+        log(`   • Total processado: ${total}`, 'info');
+        log(`   • Atualizados: ${atualizados}`, 'success');
+        if (erros > 0) {
+          log(`   • Erros: ${erros}`, 'error');
+        }
+
+        btn.textContent = '✅ Concluído!';
+        btn.style.background = '#34C759';
+
+      } catch (error) {
+        log('', 'error');
+        log('❌ ERRO GERAL:', 'error');
+        log(`   ${error.message}`, 'error');
+        console.error('Erro completo:', error);
+        
+        btn.disabled = false;
+        btn.textContent = '🔄 Tentar Novamente';
+        btn.style.background = '#FF3B30';
+      }
+    }
+  </script>
+</body>
+</html>
