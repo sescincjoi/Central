@@ -1058,9 +1058,9 @@
     let edificacoesDescr = {};
     let extintoresInfo = {};
     let edificacoesArray = [];
-    let modoClassificacao = 'tipo_carga_nominal'; // ← modo ativo carregado do Firestore
+    let modoClassificacao = 'tipo_carga_nominal';
     let sistemaCarregado = false;
-
+    let opcoesCapacidade = {};
     let extintorService;
     
     // ──────────────────────────────────────────
@@ -1120,6 +1120,8 @@
         extintoresInfo   = dados.extintoresInfo;
         edificacoesArray = dados.edificacoesArray;
         modoClassificacao = dados.modo || 'tipo_carga_nominal'; // ← captura o modo configurado
+
+        await carregarOpcoesCapacidade();
         
         console.log(`✅ Carregados: ${edificacoesArray.length} edificações | Modo: ${modoClassificacao}`);
         
@@ -1370,6 +1372,72 @@
       return div;
     }
 
+    // ══════════════════════════════════════════════════════════
+    //  ATUALIZAR OPÇÕES DA PERGUNTA 1.2 DINAMICAMENTE
+    // ══════════════════════════════════════════════════════════
+    function atualizarOpcoes12(tipoSelecionado) {
+      if (!tipoSelecionado) return;
+      
+      // Buscar configuração do tipo no Firestore
+      const config = opcoesCapacidade[tipoSelecionado];
+      
+      if (!config) {
+        console.warn(`⚠️ Tipo "${tipoSelecionado}" não encontrado nas opções`);
+        return;
+      }
+      
+      const container12 = document.getElementById('p1_2');
+      if (!container12) return;
+      
+      // Determinar label baseado no modo do tipo
+      const labelTexto = config.modo === 'tipo_capacidade' 
+        ? 'Capacidade Extintora:' 
+        : 'Carga Nominal:';
+      
+      // Atualizar label
+      const label = container12.querySelector('label');
+      if (label) {
+        label.innerHTML = `1.2 — ${labelTexto}<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p>`;
+      }
+      
+      // Atualizar select com valores do Firestore
+      const select = container12.querySelector('select[name="p1_2"]');
+      if (select) {
+        select.innerHTML = '<option value="">-- Selecione --</option>' +
+          config.valores.map(v => `<option>${v}</option>`).join('');
+      }
+      
+      console.log(`✅ Opções atualizadas para ${tipoSelecionado}:`, config.valores);
+    }
+    
+    // ══════════════════════════════════════════════════════════
+    //  CARREGAR OPÇÕES DE CAPACIDADE DO FIRESTORE
+    // ══════════════════════════════════════════════════════════
+    async function carregarOpcoesCapacidade() {
+      try {
+        const firestore = firebase.firestore();
+        
+        // Buscar base ativa
+        const snapshot = await firestore.collection('bases')
+          .where('ativa', '==', true)
+          .limit(1)
+          .get();
+        
+        if (snapshot.empty) {
+          console.warn('⚠️ Nenhuma base ativa encontrada');
+          return;
+        }
+        
+        const baseData = snapshot.docs[0].data();
+        opcoesCapacidade = baseData.opcoes_capacidade || {};
+        
+        console.log('✅ Opções de capacidade carregadas do Firestore:', opcoesCapacidade);
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar opções de capacidade:', error);
+      }
+    }
+    
     // ──────────────────────────────────────────
     //  Modal
     // ──────────────────────────────────────────
@@ -1421,7 +1489,7 @@
 
         <div class="pergunta" id="p1_1" style="display:none;">
           <label>1.1 — Tipo do extintor encontrado:<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
-          <select name="p1_1">
+          <select name="p1_1" onchange="atualizarOpcoes12(this.value)">
             <option value="">-- Selecione --</option>
             <option>PQS ABC</option><option>PQS BC</option><option>CO²</option>
             <option>Água</option><option>Espuma</option><option>Classe K</option>
@@ -1429,13 +1497,9 @@
         </div>
 
         <div class="pergunta" id="p1_2" style="display:none;">
-          <label>1.2 — ${modoClassificacao === 'tipo_capacidade' ? 'Capacidade extintora encontrada:' : 'Capacidade (Kg):'}<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
+          <label>1.2 — Capacidade:<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
           <select name="p1_2">
             <option value="">-- Selecione --</option>
-            ${modoClassificacao === 'tipo_capacidade'
-              ? '<option>1A</option><option>2A</option><option>3A</option><option>4A</option><option>10B:C</option><option>20B:C</option><option>40B:C</option><option>80B:C</option><option>2A:10B:C</option><option>2A:20B:C</option><option>3A:40B:C</option><option>5B:C</option>'
-              : '<option>4</option><option>6</option><option>10</option>'
-            }
           </select>
         </div>
 
