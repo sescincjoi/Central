@@ -427,41 +427,55 @@ class ExtintorService {
   // ─────────────────────────────────────────────────────────
   
   async getExtintoresFormatoAntigo() {
-    const extintores = await this.listarExtintores();
-    const edificacoes = await this.listarEdificacoes();
+  const extintores = await this.listarExtintores();
+  const edificacoes = await this.listarEdificacoes();
+  const modo = await this.getModoClassificacao();
 
-    // Formatar no estilo antigo: { "EDIFICACAO": { "numero": { dados } } }
-    const extintoresInfo = {};
-    const edificacoesDescr = {};
-    const edificacoesArray = [];
+  const extintoresInfo = {};
+  const edificacoesDescr = {};
+  const edificacoesArray = [];
 
-    // Edificações
-    Object.entries(edificacoes).forEach(([nome, dados]) => {
-      edificacoesDescr[nome] = dados.descricao;
-      edificacoesArray.push(nome);
-      extintoresInfo[nome] = {};
-    });
+  Object.entries(edificacoes).forEach(([nome, dados]) => {
+    edificacoesDescr[nome] = dados.descricao;
+    edificacoesArray.push(nome);
+    extintoresInfo[nome] = {};
+  });
 
-    // Extintores
-    extintores.forEach(ext => {
-      if (!extintoresInfo[ext.edificacao]) {
-        extintoresInfo[ext.edificacao] = {};
-      }
-      
-      extintoresInfo[ext.edificacao][ext.numero] = {
-        descricao: ext.descricao,
-        tipo: ext.tipo,
-        kg: ext.kg,
-        capacidade_extintora: ext.capacidade_extintora
-      };
-    });
+  extintores.forEach(ext => {
+    if (!extintoresInfo[ext.edificacao]) {
+      extintoresInfo[ext.edificacao] = {};
+    }
 
-    return {
-      extintoresInfo,
-      edificacoesDescr,
-      edificacoesArray
+    // Calcular classificação conforme o modo configurado
+    let classificacao;
+    if (modo === 'tipo_capacidade') {
+      classificacao = ext.capacidade_extintora
+        ? `${ext.tipo} ${ext.capacidade_extintora}`
+        : ext.tipo;
+    } else {
+      classificacao = ext.carga_nominal_valor
+        ? `${ext.tipo} ${ext.carga_nominal_valor}${ext.carga_nominal_unidade}`
+        : ext.tipo;
+    }
+
+    extintoresInfo[ext.edificacao][ext.numero] = {
+      descricao: ext.descricao,
+      tipo: ext.tipo,
+      kg: ext.kg, // mantido por compatibilidade legada
+      carga_nominal_valor: ext.carga_nominal_valor,
+      carga_nominal_unidade: ext.carga_nominal_unidade,
+      capacidade_extintora: ext.capacidade_extintora,
+      classificacao: classificacao
     };
-  }
+  });
+
+  return {
+    extintoresInfo,
+    edificacoesDescr,
+    edificacoesArray,
+    modo // expõe o modo para a página usar
+  };
+}
 
   // ─────────────────────────────────────────────────────────
   //  BUSCA E FILTROS
