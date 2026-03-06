@@ -1399,7 +1399,7 @@
         // Modo capacidade: pergunta mais clara
         const partes = classificacaoExibida.split(' ');
         const capacidade = partes[partes.length - 1]; // Última parte = capacidade (ex: "40B:C")
-        pergunta1Texto = `Este extintor é um ${classificacaoExibida} com Capacidade Extintora de ${capacidade} ou superior?`;
+        pergunta1Texto = `Este extintor é um ${info.tipo} com Capacidade Extintora de ${capacidade} ou superior?`;
       } else {
         // Modo carga nominal: pergunta direta
         pergunta1Texto = `Este extintor é um ${classificacaoExibida}?`;
