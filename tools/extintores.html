@@ -1393,14 +1393,26 @@
       // Usar classificacao conforme modo configurado
       const classificacaoExibida = info.classificacao || info.tipo;
 
+      // ═══ NOVO: Enunciado adaptativo da pergunta 1 ═══
+      let pergunta1Texto;
+      if (modoClassificacao === 'tipo_capacidade') {
+        // Modo capacidade: pergunta mais clara
+        const partes = classificacaoExibida.split(' ');
+        const capacidade = partes[partes.length - 1]; // Última parte = capacidade (ex: "40B:C")
+        pergunta1Texto = `Este extintor possui Capacidade Extintora de ${capacidade} ou superior?`;
+      } else {
+        // Modo carga nominal: pergunta direta
+        pergunta1Texto = `Este extintor é um ${classificacaoExibida}?`;
+      }
+      
       document.getElementById('modalTitulo').textContent  = `Extintor ${numero}`;
       document.getElementById('modalTipo').textContent    = `Tipo: ${classificacaoExibida}`;
       document.getElementById('modalDescricao').textContent = info.descricao;
-
+      
       const form = document.getElementById('formInspecao');
       form.innerHTML = `
         <div class="pergunta">
-          <label>1 — Este extintor é um ${classificacaoExibida}?</label>
+          <label>1 — ${pergunta1Texto}</label>
           <div>
             <input type="radio" name="p1" value="Sim" onchange="mostrarTipoAlternativo(this.value)" required> Sim
             <input type="radio" name="p1" value="Não" onchange="mostrarTipoAlternativo(this.value)" required> Não
