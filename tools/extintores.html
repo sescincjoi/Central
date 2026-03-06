@@ -596,6 +596,7 @@
     .pergunta select,
     .pergunta input[type="month"],
     .pergunta input[type="number"],
+    .pergunta input[type="text"],
     .pergunta textarea {
       width: calc(100% - 28px);
       margin: 0 14px 12px;
@@ -997,7 +998,6 @@
             document.documentElement.style.display = '';
             document.body.classList.add('auth-ready');
             
-            // Auto-fill nome
             const displayName = e.detail.user.displayName;
             if (displayName) {
               const input = document.getElementById('nomeUsuario');
@@ -1007,7 +1007,6 @@
               }
             }
             
-            // ═══ NOVO: Carregar extintores do Firestore ═══
             await carregarExtintoresDoFirestore();
           }
         });
@@ -1023,7 +1022,6 @@
             }
           }
           
-          // ═══ NOVO: Carregar extintores do Firestore ═══
           await carregarExtintoresDoFirestore();
         }
       } else {
@@ -1039,9 +1037,6 @@
   </script>
 
   <script>
-    // ──────────────────────────────────────────
-    //  Firebase config
-    // ──────────────────────────────────────────
     const firebaseConfig = {
       apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
       authDomain: "ronda-extintores.firebaseapp.com",
@@ -1056,19 +1051,15 @@
     const db = firebase.database();
 
     // ══════════════════════════════════════════════════════════
-    //  VARIÁVEIS DINÂMICAS (carregadas do Firestore)
+    //  VARIÁVEIS DINÂMICAS
     // ══════════════════════════════════════════════════════════
     let edificacoesDescr = {};
     let extintoresInfo = {};
     let edificacoesArray = [];
     let sistemaCarregado = false;
-
-    // Service layer (inicializar após Firebase estar pronto)
+    let modoClassificacao = 'tipo_carga_nominal'; // ✅ NOVO
     let extintorService;
     
-    // ══════════════════════════════════════════════════════════
-    //  INICIALIZAR SERVICE
-    // ══════════════════════════════════════════════════════════
     function inicializarExtintorService() {
       if (!extintorService) {
         try {
@@ -1082,19 +1073,14 @@
       return extintorService;
     }
 
-    // ══════════════════════════════════════════════════════════
-    //  CARREGAR EXTINTORES DO FIRESTORE
-    // ══════════════════════════════════════════════════════════
     async function carregarExtintoresDoFirestore() {
       const loadingEl = document.getElementById('loading-extintores');
       const extList = document.getElementById('ext-list');
       
       try {
-        // Mostrar loading
         if (loadingEl) {
           loadingEl.style.display = 'block';
         } else {
-          // Criar loading se não existir
           if (extList) {
             extList.innerHTML = `
               <div id="loading-extintores" class="card p-5" style="text-align:center;">
@@ -1110,6 +1096,11 @@
         }
         
         const service = inicializarExtintorService();
+        
+        // ✅ NOVO: Carregar modo
+        modoClassificacao = await service.getModoClassificacao();
+        console.log(`✅ Modo: ${modoClassificacao}`);
+        
         const dados = await service.getExtintoresFormatoAntigo();
         
         edificacoesDescr = dados.edificacoesDescr;
@@ -1121,7 +1112,6 @@
         popularSelectEdificacoes();
         sistemaCarregado = true;
         
-        // Esconder loading
         if (loadingEl) loadingEl.style.display = 'none';
         
         iniciarListenerVistorias();
@@ -1136,10 +1126,8 @@
       const selectEl = document.getElementById('edificacao');
       if (!selectEl) return;
       
-      // Limpa opções existentes (mantém a primeira)
       selectEl.innerHTML = '<option value="">Todas as edificações</option>';
       
-      // Adiciona edificações
       edificacoesArray.forEach(ed => {
         const opt = document.createElement('option');
         opt.value = ed;
@@ -1152,45 +1140,28 @@
       db.ref('extintores').on('value', snapshot => {
         globalData = snapshot.val() || {};
         
-        // ✅ Só atualiza se os extintores já foram carregados
         if (Object.keys(extintoresInfo).length > 0) {
           updateGlobalCounter();
           updateSelectProgress();
           renderList();
         } else {
-          console.warn('⚠️ Aguardando carregamento dos extintores do Firestore...');
+          console.warn('⚠️ Aguardando carregamento...');
         }
       });
     }
 
-    // ──────────────────────────────────────────
-    //  App state
-    // ──────────────────────────────────────────
     let globalData = {};
     let currentBuilding = '';
     let searchQuery = '';
     let numeroAtual = null;
     let edificacaoAtual = null;
 
-    // ──────────────────────────────────────────
-    //  Firebase global listener
-    // ──────────────────────────────────────────
-    db.ref('extintores').on('value', snapshot => {
-      globalData = snapshot.val() || {};
-      updateGlobalCounter();
-      updateSelectProgress();
-      renderList();
-    });
-
     function updateGlobalCounter() {
       let total = 0, done = 0;
       
-      // ✅ Contar baseado no Firestore (fonte da verdade)
       Object.entries(extintoresInfo).forEach(([edificacao, extintores]) => {
         Object.keys(extintores).forEach(numero => {
           total++;
-          
-          // Verificar vistoria no Realtime DB
           const vistoriado = globalData[edificacao]?.[numero]?.vistoriado;
           if (vistoriado) done++;
         });
@@ -1230,9 +1201,6 @@
       });
     }
 
-    // ──────────────────────────────────────────
-    //  Event handlers
-    // ──────────────────────────────────────────
     function onBuildingChange(val) {
       currentBuilding = val;
       renderList();
@@ -1243,17 +1211,18 @@
       renderList();
     }
 
-    // ──────────────────────────────────────────
-    //  Render list
-    // ──────────────────────────────────────────
+    // ✅ NOVO: Formatação adaptativa
+    function formatarExtintor(extintor) {
+      if (!extintor || !extintorService) return 'N/D';
+      return extintorService.formatarExtintor(extintor);
+    }
+
     function renderList() {
       const container = document.getElementById('ext-list');
       const loading = document.getElementById('loading-extintores');
       
-      // Esconder loading se existir
       if (loading) loading.style.display = 'none';
 
-      // Build flat list
       let items = [];
       const buildingsToShow = currentBuilding ? [currentBuilding] : edificacoesArray;
 
@@ -1266,26 +1235,22 @@
             numero: parseInt(num),
             numeroStr: num,
             edificacao: ed,
-            tipo: staticBldg[num].tipo,
-            kg: staticBldg[num].kg,
-            descricao: staticBldg[num].descricao,
+            ...staticBldg[num], // ✅ Todos dados do extintor
             vistoriado: !!fb.vistoriado,
             por: fb.por || ''
           });
         });
       });
 
-      // Apply search
       if (searchQuery) {
         items = items.filter(item =>
           item.numeroStr.includes(searchQuery) ||
-          item.tipo.toLowerCase().includes(searchQuery) ||
-          item.descricao.toLowerCase().includes(searchQuery) ||
+          (item.tipo && item.tipo.toLowerCase().includes(searchQuery)) ||
+          (item.descricao && item.descricao.toLowerCase().includes(searchQuery)) ||
           item.edificacao.toLowerCase().includes(searchQuery)
         );
       }
 
-      // Sort: pending first (numeric), then done (numeric)
       items.sort((a, b) => {
         if (a.vistoriado !== b.vistoriado) return a.vistoriado ? 1 : -1;
         return a.numero - b.numero;
@@ -1294,7 +1259,6 @@
       const pending = items.filter(i => !i.vistoriado);
       const done = items.filter(i => i.vistoriado);
 
-      // Update building info card
       if (currentBuilding) {
         const allForBldg = Object.keys(extintoresInfo[currentBuilding] || {});
         const bldgTotal = allForBldg.length;
@@ -1314,7 +1278,6 @@
         document.getElementById('building-info-card').style.display = 'none';
       }
 
-      // Render rows
       if (items.length === 0) {
         container.innerHTML = `
           <div class="empty-state">
@@ -1352,11 +1315,13 @@
       div.className = 'ext-row ' + (item.vistoriado ? 'inspected' : 'pending');
       div.onclick = () => abrirModal(item.edificacao, item.numeroStr);
 
-      // Type badge color
-      const typeColor = item.tipo.includes('CO') ? '#5856D6' :
-        item.tipo.includes('ABC') ? '#007AFF' : '#FF9500';
-      const typeBg = item.tipo.includes('CO') ? 'rgba(88,86,214,0.1)' :
-        item.tipo.includes('ABC') ? 'rgba(0,122,255,0.1)' : 'rgba(255,149,0,0.1)';
+      // ✅ NOVO: Formatação adaptativa
+      const classificacao = formatarExtintor(item);
+
+      const typeColor = item.tipo && item.tipo.includes('CO') ? '#5856D6' :
+        item.tipo && item.tipo.includes('ABC') ? '#007AFF' : '#FF9500';
+      const typeBg = item.tipo && item.tipo.includes('CO') ? 'rgba(88,86,214,0.1)' :
+        item.tipo && item.tipo.includes('ABC') ? 'rgba(0,122,255,0.1)' : 'rgba(255,149,0,0.1)';
 
       div.innerHTML = `
         <div class="status-dot ${item.vistoriado ? 'done' : 'pending'}">
@@ -1365,10 +1330,10 @@
         <div style="flex:1; min-width:0;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px;">
             <span style="font-size:16px; font-weight:800; color:#1d1d1f; flex-shrink:0;">Nº ${item.numero}</span>
-            <span style="font-size:11px; font-weight:700; color:${typeColor}; background:${typeBg}; padding:2px 7px; border-radius:7px; flex-shrink:0;">${item.tipo} ${item.kg}kg</span>
+            <span style="font-size:11px; font-weight:700; color:${typeColor}; background:${typeBg}; padding:2px 7px; border-radius:7px; flex-shrink:0;">${classificacao}</span>
             ${!currentBuilding ? `<span style="font-size:10px; font-weight:600; color:#86868b; background:#f5f5f7; padding:2px 6px; border-radius:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${item.edificacao}</span>` : ''}
           </div>
-          <div style="font-size:13px; color:#86868b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 4px);">${item.descricao}</div>
+          <div style="font-size:13px; color:#86868b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 4px);">${item.descricao || 'Sem descrição'}</div>
           ${item.vistoriado && item.por ? `
             <div style="margin-top:4px; display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#34C759; background:rgba(52,199,89,0.1); padding:2px 8px; border-radius:6px;">
               <svg viewBox="0 0 24 24" width="10" height="10" fill="#34C759"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
@@ -1382,9 +1347,6 @@
       return div;
     }
 
-    // ──────────────────────────────────────────
-    //  Modal
-    // ──────────────────────────────────────────
     function abrirModal(edificacao, numero) {
       const nomeUsuario = document.getElementById('nomeUsuario').value.trim();
       if (!nomeUsuario) {
@@ -1396,16 +1358,22 @@
       numeroAtual = numero;
       edificacaoAtual = edificacao;
 
-      const info = extintoresInfo[edificacao]?.[numero] || { descricao: 'Descrição não cadastrada', tipo: 'N/D', kg: 'N/D' };
+      const info = extintoresInfo[edificacao]?.[numero] || { 
+        descricao: 'Descrição não cadastrada', 
+        tipo: 'N/D'
+      };
+
+      // ✅ NOVO: Formatação adaptativa no modal
+      const classificacao = formatarExtintor(info);
 
       document.getElementById('modalTitulo').textContent = `Extintor ${numero}`;
-      document.getElementById('modalTipo').textContent = `Tipo: ${info.tipo} ${info.kg}Kg`;
+      document.getElementById('modalTipo').textContent = `Tipo: ${classificacao}`;
       document.getElementById('modalDescricao').textContent = info.descricao;
 
       const form = document.getElementById('formInspecao');
       form.innerHTML = `
         <div class="pergunta">
-          <label>1 — Este extintor é um ${info.tipo} ${info.kg}Kg?</label>
+          <label>1 — Este extintor é um ${classificacao}?</label>
           <div>
             <input type="radio" name="p1" value="Sim" onchange="mostrarTipoKg(this.value)" required> Sim
             <input type="radio" name="p1" value="Não" onchange="mostrarTipoKg(this.value)" required> Não
@@ -1417,16 +1385,13 @@
           <select name="p1_1">
             <option value="">-- Selecione --</option>
             <option>PQS ABC</option><option>PQS BC</option><option>CO²</option>
-            <option>Água</option><option>Espuma</option><option>Classe K</option>
+            <option>Água Pressurizada</option><option>Espuma Mecânica</option><option>Classe K</option>
           </select>
         </div>
 
         <div class="pergunta" id="p1_2" style="display:none;">
-          <label>1.2 — Capacidade (Kg):<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
-          <select name="p1_2">
-            <option value="">-- Selecione --</option>
-            <option>4</option><option>6</option><option>10</option>
-          </select>
+          <label>1.2 — Carga nominal encontrada:<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
+          <input type="text" name="p1_2" placeholder="Ex: 6kg, 10L, 40B:C">
         </div>
 
         <div class="pergunta">
@@ -1486,9 +1451,9 @@
       document.getElementById('p1_1').style.display = show ? 'block' : 'none';
       document.getElementById('p1_2').style.display = show ? 'block' : 'none';
       const sel1 = document.querySelector("[name='p1_1']");
-      const sel2 = document.querySelector("[name='p1_2']");
+      const inp2 = document.querySelector("[name='p1_2']");
       if (sel1) sel1.required = show;
-      if (sel2) sel2.required = show;
+      if (inp2) inp2.required = show;
     }
 
     function mostrarNaoConforme(valor) {
@@ -1499,13 +1464,16 @@
       const form = document.getElementById('formInspecao');
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
+      const info = extintoresInfo[edificacaoAtual][numeroAtual];
+      const classificacao = formatarExtintor(info);
+
       const dados = {
         numero: numeroAtual,
         usuario: document.getElementById('nomeUsuario').value,
         edificacao: edificacaoAtual,
-        descricao: extintoresInfo[edificacaoAtual][numeroAtual].descricao,
-        tipo: extintoresInfo[edificacaoAtual][numeroAtual].tipo,
-        kg: extintoresInfo[edificacaoAtual][numeroAtual].kg,
+        descricao: info.descricao,
+        classificacao: classificacao, // ✅ NOVO
+        tipo: info.tipo,
         pergunta1: form.p1.value,
         pergunta1_1: form.p1_1 ? (form.p1_1.value || '-') : '-',
         pergunta1_2: form.p1_2 ? (form.p1_2.value || '-') : '-',
@@ -1520,7 +1488,6 @@
         pergunta6: form.p6.value
       };
 
-      // Save to Firebase
       db.ref(`extintores/${edificacaoAtual}/${numeroAtual}`).update({
         vistoriado: true,
         por: dados.usuario,
@@ -1528,7 +1495,6 @@
         respostas: dados
       });
 
-      // Send to Google Sheets
       fetch("https://script.google.com/macros/s/AKfycbzBoQ_sx5EMrIK-FECB5S2-Oq_Ysr1TBC-T0nXGEVlCe8EeY1aYXyVP06_sXM1GD3E_/exec", {
         method: "POST",
         mode: "no-cors",
@@ -1539,9 +1505,6 @@
       fecharModal();
     }
 
-    // ──────────────────────────────────────────
-    //  Reset
-    // ──────────────────────────────────────────
     function resetarTodos() {
       const overlay = document.getElementById('confirmResetOverlay');
       overlay.style.display = 'flex';
@@ -1565,9 +1528,6 @@
       });
     }
 
-    // ──────────────────────────────────────────
-    //  Nome — localStorage fallback & save
-    // ──────────────────────────────────────────
     document.getElementById('nomeUsuario').addEventListener('input', e => {
       localStorage.setItem('nomeUsuario', e.target.value);
     });
@@ -1588,22 +1548,14 @@
       const input = document.getElementById('nomeUsuario');
       if (saved && input && !input.value) input.value = saved;
     });
-
-    // ──────────────────────────────────────────
-    //  Seed (commented out)
-    // ──────────────────────────────────────────
-    // function seedExtintores() { ... }
   </script>
 
-  <!-- PWA Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => { });
     }
   </script>
   <script src="../pwa/app.js"></script>
-  
-  <!-- Service Layer Extintores -->
   <script src="./extintor-service.js"></script>
 </body>
 
