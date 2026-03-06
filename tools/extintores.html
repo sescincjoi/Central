@@ -596,6 +596,7 @@
     .pergunta select,
     .pergunta input[type="month"],
     .pergunta input[type="number"],
+    .pergunta input[type="text"],
     .pergunta textarea {
       width: calc(100% - 28px);
       margin: 0 14px 12px;
@@ -925,6 +926,7 @@
 
     <!-- Extintor list -->
     <div id="ext-list">
+      <!-- Estado de carregamento -->
       <div id="loading-extintores" class="card p-5" style="text-align:center;">
         <div style="font-size:48px; margin-bottom:12px;">📥</div>
         <div style="font-size:16px; font-weight:600; color:#1d1d1f; margin-bottom:4px;">
@@ -996,7 +998,6 @@
             document.documentElement.style.display = '';
             document.body.classList.add('auth-ready');
             
-            // Auto-fill nome
             const displayName = e.detail.user.displayName;
             if (displayName) {
               const input = document.getElementById('nomeUsuario');
@@ -1036,9 +1037,6 @@
   </script>
 
   <script>
-    // ──────────────────────────────────────────
-    //  Firebase config
-    // ──────────────────────────────────────────
     const firebaseConfig = {
       apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
       authDomain: "ronda-extintores.firebaseapp.com",
@@ -1053,28 +1051,15 @@
     const db = firebase.database();
 
     // ══════════════════════════════════════════════════════════
-    //  STATE
+    //  VARIÁVEIS DINÂMICAS
     // ══════════════════════════════════════════════════════════
     let edificacoesDescr = {};
     let extintoresInfo = {};
     let edificacoesArray = [];
-    let modoClassificacao = 'tipo_carga_nominal'; // ← modo ativo carregado do Firestore
     let sistemaCarregado = false;
-
+    let modoClassificacao = 'tipo_carga_nominal'; // ✅ NOVO
     let extintorService;
     
-    // ──────────────────────────────────────────
-    //  App state
-    // ──────────────────────────────────────────
-    let globalData = {};
-    let currentBuilding = '';
-    let searchQuery = '';
-    let numeroAtual = null;
-    let edificacaoAtual = null;
-
-    // ══════════════════════════════════════════════════════════
-    //  INICIALIZAR SERVICE
-    // ══════════════════════════════════════════════════════════
     function inicializarExtintorService() {
       if (!extintorService) {
         try {
@@ -1088,9 +1073,6 @@
       return extintorService;
     }
 
-    // ══════════════════════════════════════════════════════════
-    //  CARREGAR EXTINTORES DO FIRESTORE
-    // ══════════════════════════════════════════════════════════
     async function carregarExtintoresDoFirestore() {
       const loadingEl = document.getElementById('loading-extintores');
       const extList = document.getElementById('ext-list');
@@ -1114,14 +1096,18 @@
         }
         
         const service = inicializarExtintorService();
+        
+        // ✅ NOVO: Carregar modo
+        modoClassificacao = await service.getModoClassificacao();
+        console.log(`✅ Modo: ${modoClassificacao}`);
+        
         const dados = await service.getExtintoresFormatoAntigo();
         
         edificacoesDescr = dados.edificacoesDescr;
-        extintoresInfo   = dados.extintoresInfo;
+        extintoresInfo = dados.extintoresInfo;
         edificacoesArray = dados.edificacoesArray;
-        modoClassificacao = dados.modo || 'tipo_carga_nominal'; // ← captura o modo configurado
         
-        console.log(`✅ Carregados: ${edificacoesArray.length} edificações | Modo: ${modoClassificacao}`);
+        console.log(`✅ Carregados: ${edificacoesArray.length} edificações`);
         
         popularSelectEdificacoes();
         sistemaCarregado = true;
@@ -1159,20 +1145,16 @@
           updateSelectProgress();
           renderList();
         } else {
-          console.warn('⚠️ Aguardando carregamento dos extintores do Firestore...');
+          console.warn('⚠️ Aguardando carregamento...');
         }
       });
     }
 
-    // ──────────────────────────────────────────
-    //  Firebase global listener (fallback inicial)
-    // ──────────────────────────────────────────
-    db.ref('extintores').on('value', snapshot => {
-      globalData = snapshot.val() || {};
-      updateGlobalCounter();
-      updateSelectProgress();
-      renderList();
-    });
+    let globalData = {};
+    let currentBuilding = '';
+    let searchQuery = '';
+    let numeroAtual = null;
+    let edificacaoAtual = null;
 
     function updateGlobalCounter() {
       let total = 0, done = 0;
@@ -1187,16 +1169,16 @@
       
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
     
-      const elDone    = document.getElementById('global-done');
-      const elTotal   = document.getElementById('global-total');
+      const elDone = document.getElementById('global-done');
+      const elTotal = document.getElementById('global-total');
       const elPending = document.getElementById('global-pending');
-      const elPct     = document.getElementById('global-pct');
-      const fill      = document.getElementById('global-fill');
+      const elPct = document.getElementById('global-pct');
+      const fill = document.getElementById('global-fill');
     
-      if (elDone)    elDone.textContent    = done;
-      if (elTotal)   elTotal.textContent   = total;
+      if (elDone) elDone.textContent = done;
+      if (elTotal) elTotal.textContent = total;
       if (elPending) elPending.textContent = total - done;
-      if (elPct)     elPct.textContent     = pct + '%';
+      if (elPct) elPct.textContent = pct + '%';
     
       if (fill) {
         fill.style.width = pct + '%';
@@ -1211,17 +1193,14 @@
       opts.forEach(opt => {
         const ed = opt.value;
         if (!ed) return;
-        const bldg  = globalData[ed] || {};
-        const keys  = Object.keys(extintoresInfo[ed] || {});
+        const bldg = globalData[ed] || {};
+        const keys = Object.keys(extintoresInfo[ed] || {});
         const total = keys.length;
-        const done  = keys.filter(k => bldg[k] && bldg[k].vistoriado).length;
+        const done = keys.filter(k => bldg[k] && bldg[k].vistoriado).length;
         opt.textContent = total > 0 ? `${ed}  (${done}/${total})` : ed;
       });
     }
 
-    // ──────────────────────────────────────────
-    //  Event handlers
-    // ──────────────────────────────────────────
     function onBuildingChange(val) {
       currentBuilding = val;
       renderList();
@@ -1232,12 +1211,15 @@
       renderList();
     }
 
-    // ──────────────────────────────────────────
-    //  Render list
-    // ──────────────────────────────────────────
+    // ✅ NOVO: Formatação adaptativa
+    function formatarExtintor(extintor) {
+      if (!extintor || !extintorService) return 'N/D';
+      return extintorService.formatarExtintor(extintor);
+    }
+
     function renderList() {
       const container = document.getElementById('ext-list');
-      const loading   = document.getElementById('loading-extintores');
+      const loading = document.getElementById('loading-extintores');
       
       if (loading) loading.style.display = 'none';
 
@@ -1245,56 +1227,49 @@
       const buildingsToShow = currentBuilding ? [currentBuilding] : edificacoesArray;
 
       buildingsToShow.forEach(ed => {
-        const fbBldg     = globalData[ed] || {};
+        const fbBldg = globalData[ed] || {};
         const staticBldg = extintoresInfo[ed] || {};
         Object.keys(staticBldg).forEach(num => {
           const fb = fbBldg[num] || {};
           items.push({
-            numero:        parseInt(num),
-            numeroStr:     num,
-            edificacao:    ed,
-            tipo:          staticBldg[num].tipo,
-            kg:            staticBldg[num].kg,
-            classificacao: staticBldg[num].classificacao || staticBldg[num].tipo, // ← classificação conforme modo
-            descricao:     staticBldg[num].descricao,
-            vistoriado:    !!fb.vistoriado,
-            por:           fb.por || ''
+            numero: parseInt(num),
+            numeroStr: num,
+            edificacao: ed,
+            ...staticBldg[num], // ✅ Todos dados do extintor
+            vistoriado: !!fb.vistoriado,
+            por: fb.por || ''
           });
         });
       });
 
-      // Apply search
       if (searchQuery) {
         items = items.filter(item =>
           item.numeroStr.includes(searchQuery) ||
-          item.tipo.toLowerCase().includes(searchQuery) ||
-          item.descricao.toLowerCase().includes(searchQuery) ||
-          item.edificacao.toLowerCase().includes(searchQuery) ||
-          item.classificacao.toLowerCase().includes(searchQuery)
+          (item.tipo && item.tipo.toLowerCase().includes(searchQuery)) ||
+          (item.descricao && item.descricao.toLowerCase().includes(searchQuery)) ||
+          item.edificacao.toLowerCase().includes(searchQuery)
         );
       }
 
-      // Sort: pending first (numeric), then done (numeric)
       items.sort((a, b) => {
         if (a.vistoriado !== b.vistoriado) return a.vistoriado ? 1 : -1;
         return a.numero - b.numero;
       });
 
       const pending = items.filter(i => !i.vistoriado);
-      const done    = items.filter(i =>  i.vistoriado);
+      const done = items.filter(i => i.vistoriado);
 
-      // Update building info card
       if (currentBuilding) {
         const allForBldg = Object.keys(extintoresInfo[currentBuilding] || {});
-        const bldgTotal  = allForBldg.length;
-        const bldgDone   = allForBldg.filter(k => globalData[currentBuilding]?.[k]?.vistoriado).length;
-        const bldgPct    = bldgTotal > 0 ? Math.round((bldgDone / bldgTotal) * 100) : 0;
+        const bldgTotal = allForBldg.length;
+        const bldgDone = allForBldg.filter(k => globalData[currentBuilding]?.[k]?.vistoriado).length;
+        const bldgPct = bldgTotal > 0 ? Math.round((bldgDone / bldgTotal) * 100) : 0;
 
-        document.getElementById('bldg-name').textContent  = currentBuilding;
-        document.getElementById('bldg-desc').textContent  = edificacoesDescr[currentBuilding] || '';
-        document.getElementById('bldg-done').textContent  = bldgDone;
+        document.getElementById('bldg-name').textContent = currentBuilding;
+        document.getElementById('bldg-desc').textContent = edificacoesDescr[currentBuilding] || '';
+        document.getElementById('bldg-done').textContent = bldgDone;
         document.getElementById('bldg-total').textContent = bldgTotal;
-        document.getElementById('bldg-pct').textContent   = bldgPct + '%';
+        document.getElementById('bldg-pct').textContent = bldgPct + '%';
         const bldgFill = document.getElementById('bldg-fill');
         bldgFill.style.width = bldgPct + '%';
         bldgFill.className = 'progress-fill' + (bldgPct < 30 ? ' danger' : bldgPct < 70 ? ' warn' : '');
@@ -1340,11 +1315,13 @@
       div.className = 'ext-row ' + (item.vistoriado ? 'inspected' : 'pending');
       div.onclick = () => abrirModal(item.edificacao, item.numeroStr);
 
-      // Cor do badge baseada no tipo
-      const typeColor = item.tipo.includes('CO') ? '#5856D6' :
-        item.tipo.includes('ABC') ? '#007AFF' : '#FF9500';
-      const typeBg = item.tipo.includes('CO') ? 'rgba(88,86,214,0.1)' :
-        item.tipo.includes('ABC') ? 'rgba(0,122,255,0.1)' : 'rgba(255,149,0,0.1)';
+      // ✅ NOVO: Formatação adaptativa
+      const classificacao = formatarExtintor(item);
+
+      const typeColor = item.tipo && item.tipo.includes('CO') ? '#5856D6' :
+        item.tipo && item.tipo.includes('ABC') ? '#007AFF' : '#FF9500';
+      const typeBg = item.tipo && item.tipo.includes('CO') ? 'rgba(88,86,214,0.1)' :
+        item.tipo && item.tipo.includes('ABC') ? 'rgba(0,122,255,0.1)' : 'rgba(255,149,0,0.1)';
 
       div.innerHTML = `
         <div class="status-dot ${item.vistoriado ? 'done' : 'pending'}">
@@ -1353,10 +1330,10 @@
         <div style="flex:1; min-width:0;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px;">
             <span style="font-size:16px; font-weight:800; color:#1d1d1f; flex-shrink:0;">Nº ${item.numero}</span>
-            <span style="font-size:11px; font-weight:700; color:${typeColor}; background:${typeBg}; padding:2px 7px; border-radius:7px; flex-shrink:0;">${item.classificacao}</span>
+            <span style="font-size:11px; font-weight:700; color:${typeColor}; background:${typeBg}; padding:2px 7px; border-radius:7px; flex-shrink:0;">${classificacao}</span>
             ${!currentBuilding ? `<span style="font-size:10px; font-weight:600; color:#86868b; background:#f5f5f7; padding:2px 6px; border-radius:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${item.edificacao}</span>` : ''}
           </div>
-          <div style="font-size:13px; color:#86868b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 4px);">${item.descricao}</div>
+          <div style="font-size:13px; color:#86868b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 4px);">${item.descricao || 'Sem descrição'}</div>
           ${item.vistoriado && item.por ? `
             <div style="margin-top:4px; display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#34C759; background:rgba(52,199,89,0.1); padding:2px 8px; border-radius:6px;">
               <svg viewBox="0 0 24 24" width="10" height="10" fill="#34C759"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
@@ -1370,9 +1347,6 @@
       return div;
     }
 
-    // ──────────────────────────────────────────
-    //  Modal
-    // ──────────────────────────────────────────
     function abrirModal(edificacao, numero) {
       const nomeUsuario = document.getElementById('nomeUsuario').value.trim();
       if (!nomeUsuario) {
@@ -1381,29 +1355,41 @@
         return;
       }
 
-      numeroAtual    = numero;
+      numeroAtual = numero;
       edificacaoAtual = edificacao;
 
-      const info = extintoresInfo[edificacao]?.[numero] || {
-        descricao:     'Descrição não cadastrada',
-        tipo:          'N/D',
-        classificacao: 'N/D'
+      const info = extintoresInfo[edificacao]?.[numero] || { 
+        descricao: 'Descrição não cadastrada', 
+        tipo: 'N/D'
       };
 
-      // Usar classificacao conforme modo configurado
-      const classificacaoExibida = info.classificacao || info.tipo;
+      // ✅ NOVO: Formatação adaptativa no modal
+      const classificacao = formatarExtintor(info);
 
-      document.getElementById('modalTitulo').textContent  = `Extintor ${numero}`;
-      document.getElementById('modalTipo').textContent    = `Tipo: ${classificacaoExibida}`;
+      // ═══ NOVO: Enunciado adaptativo da pergunta 1 ═══
+      let pergunta1Texto;
+      if (modoClassificacao === 'tipo_capacidade') {
+        // Modo capacidade: pergunta mais clara
+        // Extrair apenas a capacidade (ex: "40B:C" de "PQS BC 40B:C")
+        const partes = classificacao.split(' ');
+        const capacidade = partes[partes.length - 1]; // Última parte = capacidade
+        pergunta1Texto = `Este extintor possui Capacidade Extintora de ${capacidade} ou superior?`;
+      } else {
+        // Modo carga nominal: pergunta direta
+        pergunta1Texto = `Este extintor é um ${classificacao}?`;
+      }
+
+      document.getElementById('modalTitulo').textContent = `Extintor ${numero}`;
+      document.getElementById('modalTipo').textContent = `Tipo: ${classificacao}`;
       document.getElementById('modalDescricao').textContent = info.descricao;
 
       const form = document.getElementById('formInspecao');
       form.innerHTML = `
         <div class="pergunta">
-          <label>1 — Este extintor é um ${classificacaoExibida}?</label>
+          <label>1 — ${pergunta1Texto}</label>
           <div>
-            <input type="radio" name="p1" value="Sim" onchange="mostrarTipoAlternativo(this.value)" required> Sim
-            <input type="radio" name="p1" value="Não" onchange="mostrarTipoAlternativo(this.value)" required> Não
+            <input type="radio" name="p1" value="Sim" onchange="mostrarTipoKg(this.value)" required> Sim
+            <input type="radio" name="p1" value="Não" onchange="mostrarTipoKg(this.value)" required> Não
           </div>
         </div>
 
@@ -1412,19 +1398,13 @@
           <select name="p1_1">
             <option value="">-- Selecione --</option>
             <option>PQS ABC</option><option>PQS BC</option><option>CO²</option>
-            <option>Água</option><option>Espuma</option><option>Classe K</option>
+            <option>Água Pressurizada</option><option>Espuma Mecânica</option><option>Classe K</option>
           </select>
         </div>
 
         <div class="pergunta" id="p1_2" style="display:none;">
-          <label>1.2 — ${modoClassificacao === 'tipo_capacidade' ? 'Capacidade extintora encontrada:' : 'Capacidade (Kg):'}<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
-          <select name="p1_2">
-            <option value="">-- Selecione --</option>
-            ${modoClassificacao === 'tipo_capacidade'
-              ? '<option>1A</option><option>2A</option><option>3A</option><option>4A</option><option>10B:C</option><option>20B:C</option><option>40B:C</option><option>80B:C</option><option>2A:10B:C</option><option>2A:20B:C</option><option>3A:40B:C</option><option>5B:C</option>'
-              : '<option>4</option><option>6</option><option>10</option>'
-            }
-          </select>
+          <label>1.2 — Carga nominal encontrada:<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
+          <input type="text" name="p1_2" placeholder="Ex: 6kg, 10L, 40B:C">
         </div>
 
         <div class="pergunta">
@@ -1448,9 +1428,9 @@
         <div class="pergunta" id="p4_1" style="display:none;">
           <label>4.1 — Não conformidade(s):</label>
           ${[
-            'Despressurização', 'Lacre Rompido', 'Vencido', 'Sinalização',
-            'Integridade', 'Capacidade Extintora reduzida', 'Etiqueta ilegível ou ausente', 'Outros'
-          ].map(nc => `
+          'Despressurização', 'Lacre Rompido', 'Vencido', 'Sinalização',
+          'Integridade', 'Capacidade Extintora reduzida', 'Etiqueta ilegível ou ausente', 'Outros'
+        ].map(nc => `
             <label class="custom-checkbox opcoes-nc" style="padding:6px 14px;">
               <input type="checkbox" name="p4_1" value="${nc}">
               <span></span>
@@ -1479,14 +1459,14 @@
       document.getElementById('modal').style.display = 'none';
     }
 
-    function mostrarTipoAlternativo(valor) {
+    function mostrarTipoKg(valor) {
       const show = valor === 'Não';
       document.getElementById('p1_1').style.display = show ? 'block' : 'none';
       document.getElementById('p1_2').style.display = show ? 'block' : 'none';
       const sel1 = document.querySelector("[name='p1_1']");
-      const sel2 = document.querySelector("[name='p1_2']");
+      const inp2 = document.querySelector("[name='p1_2']");
       if (sel1) sel1.required = show;
-      if (sel2) sel2.required = show;
+      if (inp2) inp2.required = show;
     }
 
     function mostrarNaoConforme(valor) {
@@ -1497,23 +1477,22 @@
       const form = document.getElementById('formInspecao');
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
-      const info = extintoresInfo[edificacaoAtual]?.[numeroAtual] || {};
+      const info = extintoresInfo[edificacaoAtual][numeroAtual];
+      const classificacao = formatarExtintor(info);
 
       const dados = {
-        numero:        numeroAtual,
-        usuario:       document.getElementById('nomeUsuario').value,
-        edificacao:    edificacaoAtual,
-        descricao:     info.descricao || '-',
-        tipo:          info.tipo      || '-',
-        classificacao: info.classificacao || info.tipo || '-',
-        // mantido para compatibilidade com planilha legada
-        kg:            info.kg        || '-',
-        pergunta1:     form.p1.value,
-        pergunta1_1:   form.p1_1 ? (form.p1_1.value || '-') : '-',
-        pergunta1_2:   form.p1_2 ? (form.p1_2.value || '-') : '-',
-        pergunta2:     form.p2.value || '-',
-        pergunta3:     form.p3.value || '-',
-        pergunta4:     form.p4.value,
+        numero: numeroAtual,
+        usuario: document.getElementById('nomeUsuario').value,
+        edificacao: edificacaoAtual,
+        descricao: info.descricao,
+        classificacao: classificacao, // ✅ NOVO
+        tipo: info.tipo,
+        pergunta1: form.p1.value,
+        pergunta1_1: form.p1_1 ? (form.p1_1.value || '-') : '-',
+        pergunta1_2: form.p1_2 ? (form.p1_2.value || '-') : '-',
+        pergunta2: form.p2.value || '-',
+        pergunta3: form.p3.value || '-',
+        pergunta4: form.p4.value,
         pergunta4_1: (() => {
           const checked = Array.from(document.querySelectorAll('input[name="p4_1"]:checked')).map(cb => cb.value);
           return checked.length > 0 ? checked.join(', ') : '-';
@@ -1522,30 +1501,26 @@
         pergunta6: form.p6.value
       };
 
-      // Save to Firebase Realtime DB
       db.ref(`extintores/${edificacaoAtual}/${numeroAtual}`).update({
         vistoriado: true,
-        por:        dados.usuario,
-        dataHora:   new Date().toISOString(),
-        respostas:  dados
+        por: dados.usuario,
+        dataHora: new Date().toISOString(),
+        respostas: dados
       });
 
-      // Send to Google Sheets
       fetch("https://script.google.com/macros/s/AKfycbzBoQ_sx5EMrIK-FECB5S2-Oq_Ysr1TBC-T0nXGEVlCe8EeY1aYXyVP06_sXM1GD3E_/exec", {
-        method:  "POST",
-        mode:    "no-cors",
+        method: "POST",
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(dados)
+        body: JSON.stringify(dados)
       });
 
       fecharModal();
     }
 
-    // ──────────────────────────────────────────
-    //  Reset
-    // ──────────────────────────────────────────
     function resetarTodos() {
-      document.getElementById('confirmResetOverlay').style.display = 'flex';
+      const overlay = document.getElementById('confirmResetOverlay');
+      overlay.style.display = 'flex';
     }
 
     function handleOverlayClick(e) {
@@ -1566,16 +1541,13 @@
       });
     }
 
-    // ──────────────────────────────────────────
-    //  Nome — localStorage fallback & save
-    // ──────────────────────────────────────────
     document.getElementById('nomeUsuario').addEventListener('input', e => {
       localStorage.setItem('nomeUsuario', e.target.value);
     });
 
     window.addEventListener('auth-initialized', () => {
       if (window.authCore?.currentUser?.displayName) {
-        const nome  = window.authCore.currentUser.displayName;
+        const nome = window.authCore.currentUser.displayName;
         const input = document.getElementById('nomeUsuario');
         if (input) {
           input.value = nome;
@@ -1591,15 +1563,12 @@
     });
   </script>
 
-  <!-- PWA Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => { });
     }
   </script>
   <script src="../pwa/app.js"></script>
-  
-  <!-- Service Layer Extintores -->
   <script src="./extintor-service.js"></script>
 </body>
 
