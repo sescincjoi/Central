@@ -1443,12 +1443,9 @@
         console.log('🔍 Buscando base ativa no Firestore...');
         
         const snapshot = await firestore.collection('bases')
-          .where('ativa', '==', true)
+          .where('ativo', '==', true)  // ✅ CORRIGIDO
           .limit(1)
           .get();
-        
-        console.log('📊 Snapshot vazio?', snapshot.empty);
-        console.log('📊 Quantidade de docs:', snapshot.size);
         
         if (snapshot.empty) {
           console.warn('⚠️ Nenhuma base ativa encontrada');
@@ -1457,16 +1454,12 @@
         
         const baseData = snapshot.docs[0].data();
         
-        console.log('📦 BASE COMPLETA:', baseData);
-        
         const opcoesCapacidadeRaw = baseData.opcoes_capacidade || {};
         const opcoesCargaNominalRaw = baseData.opcoes_carga_nominal || {};
         const modoAtivo = baseData.modo_classificacao || 'tipo_carga_nominal';
         
-        console.log('📦 opcoes_capacidade (raw):', opcoesCapacidadeRaw);
-        console.log('📦 Chaves opcoes_capacidade:', Object.keys(opcoesCapacidadeRaw));
-        console.log('📦 opcoes_carga_nominal (raw):', opcoesCargaNominalRaw);
-        console.log('📦 Chaves opcoes_carga_nominal:', Object.keys(opcoesCargaNominalRaw));
+        console.log('📦 opcoes_capacidade:', Object.keys(opcoesCapacidadeRaw));
+        console.log('📦 opcoes_carga_nominal:', Object.keys(opcoesCargaNominalRaw));
         console.log('🎯 Modo ativo:', modoAtivo);
         
         opcoesCapacidade = {};
@@ -1484,17 +1477,14 @@
               unidade: unidade,
               valores: config.valores.map(v => `${v}${unidade}`)
             };
-            console.log(`  ➕ Adicionado ${tipo} (carga nominal):`, opcoesCapacidade[tipo]);
           });
           
-          // 2º - Processar CAPACIDADE EXTINTORA
+          // 2º - Processar CAPACIDADE EXTINTORA (sobrescreve)
           Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
-            console.log(`  🔄 Processando ${tipo} (capacidade)...`);
             opcoesCapacidade[tipo] = {
               modo: 'tipo_capacidade',
               valores: opcoesCapacidadeRaw[tipo]
             };
-            console.log(`  ✅ ${tipo} agora é:`, opcoesCapacidade[tipo]);
           });
           
         } else {
@@ -1506,25 +1496,21 @@
               modo: 'tipo_capacidade',
               valores: opcoesCapacidadeRaw[tipo]
             };
-            console.log(`  ➕ Adicionado ${tipo} (capacidade):`, opcoesCapacidade[tipo]);
           });
           
-          // 2º - Processar CARGA NOMINAL
+          // 2º - Processar CARGA NOMINAL (sobrescreve)
           Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
             const config = opcoesCargaNominalRaw[tipo];
             const unidade = config.unidade || 'kg';
             
-            console.log(`  🔄 Processando ${tipo} (carga nominal)...`);
             opcoesCapacidade[tipo] = {
               modo: 'tipo_carga_nominal',
               unidade: unidade,
               valores: config.valores.map(v => `${v}${unidade}`)
             };
-            console.log(`  ✅ ${tipo} agora é:`, opcoesCapacidade[tipo]);
           });
         }
         
-        console.log('✅ RESULTADO FINAL opcoesCapacidade:', opcoesCapacidade);
         console.log('✅ Tipos disponíveis:', Object.keys(opcoesCapacidade));
         
       } catch (error) {
