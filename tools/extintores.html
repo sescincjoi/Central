@@ -1378,18 +1378,24 @@
     function atualizarOpcoes12(tipoSelecionado) {
       if (!tipoSelecionado) return;
       
-      // Buscar configuração do tipo no Firestore
+      console.log('🔍 Tipo selecionado:', tipoSelecionado);
+      
+      // Buscar configuração do tipo
       const config = opcoesCapacidade[tipoSelecionado];
       
       if (!config) {
         console.warn(`⚠️ Tipo "${tipoSelecionado}" não encontrado nas opções`);
+        console.warn('⚠️ Tipos disponíveis:', Object.keys(opcoesCapacidade));
         return;
       }
       
       const container12 = document.getElementById('p1_2');
-      if (!container12) return;
+      if (!container12) {
+        console.error('❌ Container p1_2 não encontrado!');
+        return;
+      }
       
-      // Determinar label baseado no modo do tipo
+      // Determinar label baseado no modo
       const labelTexto = config.modo === 'tipo_capacidade' 
         ? 'Capacidade Extintora:' 
         : 'Carga Nominal:';
@@ -1400,14 +1406,13 @@
         label.innerHTML = `1.2 — ${labelTexto}<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p>`;
       }
       
-      // Atualizar select com valores do Firestore
+      // Atualizar select com valores processados
       const select = container12.querySelector('select[name="p1_2"]');
       if (select) {
         select.innerHTML = '<option value="">-- Selecione --</option>' +
           config.valores.map(v => `<option>${v}</option>`).join('');
+        console.log('✅ Select atualizado com', config.valores.length, 'opções:', config.valores);
       }
-      
-      console.log(`✅ Opções atualizadas para ${tipoSelecionado}:`, config.valores);
     }
     
     // ══════════════════════════════════════════════════════════
