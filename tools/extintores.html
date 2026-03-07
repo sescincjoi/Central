@@ -1443,7 +1443,7 @@
         console.log('🔍 Buscando base ativa no Firestore...');
         
         const snapshot = await firestore.collection('bases')
-          .where('ativo', '==', true)  // ✅ CORRIGIDO
+          .where('ativo', '==', true)
           .limit(1)
           .get();
         
@@ -1513,9 +1513,26 @@
         
         console.log('✅ Tipos disponíveis:', Object.keys(opcoesCapacidade));
         
+        // ═══ NOVO: Preencher select de tipos ═══
+        preencherSelectTipos();
+        
       } catch (error) {
         console.error('❌ Erro ao carregar opções de capacidade:', error);
       }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  PREENCHER SELECT DE TIPOS DINAMICAMENTE
+    // ══════════════════════════════════════════════════════════
+    function preencherSelectTipos() {
+      // Obter todos os tipos únicos (união de capacidade + carga nominal)
+      const tiposDisponiveis = Object.keys(opcoesCapacidade).sort();
+      
+      console.log('📋 Tipos disponíveis para select:', tiposDisponiveis);
+      
+      // Atualizar select da pergunta 1.1 (dentro do modal que será aberto)
+      // Esta função será chamada quando o modal abrir
+      window.tiposDisponiveis = tiposDisponiveis;
     }
     
     // ──────────────────────────────────────────
@@ -1569,10 +1586,8 @@
 
         <div class="pergunta" id="p1_1" style="display:none;">
           <label>1.1 — Tipo do extintor encontrado:<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p></label>
-          <select name="p1_1" onchange="atualizarOpcoes12(this.value)">
+          <select name="p1_1" onchange="atualizarOpcoes12(this.value)" id="selectTipo11">
             <option value="">-- Selecione --</option>
-            <option>PQS ABC</option><option>PQS BC</option><option>CO²</option>
-            <option>Água</option><option>Espuma</option><option>Classe K</option>
           </select>
         </div>
 
@@ -1627,6 +1642,14 @@
           </select>
         </div>`;
 
+      // ═══ PREENCHER SELECT DE TIPOS DINAMICAMENTE ═══
+      const selectTipo = document.getElementById('selectTipo11');
+      if (selectTipo && window.tiposDisponiveis) {
+        selectTipo.innerHTML = '<option value="">-- Selecione --</option>' +
+          window.tiposDisponiveis.map(tipo => `<option>${tipo}</option>`).join('');
+        console.log('✅ Select de tipos preenchido com:', window.tiposDisponiveis);
+      }
+      
       document.getElementById('modal').style.display = 'flex';
       document.getElementById('modalContent').scrollTop = 0;
     }
