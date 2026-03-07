@@ -1417,11 +1417,15 @@
       try {
         const firestore = firebase.firestore();
         
-        // Buscar base ativa
+        console.log('🔍 Buscando base ativa no Firestore...');
+        
         const snapshot = await firestore.collection('bases')
           .where('ativa', '==', true)
           .limit(1)
           .get();
+        
+        console.log('📊 Snapshot vazio?', snapshot.empty);
+        console.log('📊 Quantidade de docs:', snapshot.size);
         
         if (snapshot.empty) {
           console.warn('⚠️ Nenhuma base ativa encontrada');
@@ -1429,9 +1433,13 @@
         }
         
         const baseData = snapshot.docs[0].data();
+        console.log('📦 Dados da base completa:', baseData);
+        console.log('📦 opcoes_capacidade:', baseData.opcoes_capacidade);
+        
         opcoesCapacidade = baseData.opcoes_capacidade || {};
         
-        console.log('✅ Opções de capacidade carregadas do Firestore:', opcoesCapacidade);
+        console.log('✅ opcoesCapacidade armazenado:', opcoesCapacidade);
+        console.log('✅ Chaves disponíveis:', Object.keys(opcoesCapacidade));
         
       } catch (error) {
         console.error('❌ Erro ao carregar opções de capacidade:', error);
