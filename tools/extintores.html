@@ -1436,35 +1436,65 @@
         
         const baseData = snapshot.docs[0].data();
         
-        // ═══ ADAPTAR ESTRUTURA DO FIRESTORE ═══
+        // ═══ CAPTURAR ESTRUTURAS E MODO ATIVO ═══
         const opcoesCapacidadeRaw = baseData.opcoes_capacidade || {};
         const opcoesCargaNominalRaw = baseData.opcoes_carga_nominal || {};
+        const modoAtivo = baseData.modo_classificacao || 'tipo_carga_nominal';
         
         console.log('📦 opcoes_capacidade (raw):', opcoesCapacidadeRaw);
         console.log('📦 opcoes_carga_nominal (raw):', opcoesCargaNominalRaw);
+        console.log('🎯 Modo ativo:', modoAtivo);
         
-        // Transformar para formato unificado
+        // ═══ TRANSFORMAR PARA FORMATO UNIFICADO ═══
         opcoesCapacidade = {};
         
-        // Processar tipos com CAPACIDADE EXTINTORA (arrays simples)
-        Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
-          opcoesCapacidade[tipo] = {
-            modo: 'tipo_capacidade',
-            valores: opcoesCapacidadeRaw[tipo] // já é array de strings
-          };
-        });
-        
-        // Processar tipos com CARGA NOMINAL (objeto com unidade + valores)
-        Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
-          const config = opcoesCargaNominalRaw[tipo];
-          const unidade = config.unidade || 'kg';
+        // ═══ PRIORIZAR CONFORME MODO ATIVO ═══
+        if (modoAtivo === 'tipo_capacidade') {
+          console.log('✅ Priorizando CAPACIDADE EXTINTORA');
           
-          opcoesCapacidade[tipo] = {
-            modo: 'tipo_carga_nominal',
-            unidade: unidade,
-            valores: config.valores.map(v => `${v}${unidade}`) // adicionar unidade
-          };
-        });
+          // 1º - Processar CARGA NOMINAL (será sobrescrito se houver conflito)
+          Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
+            const config = opcoesCargaNominalRaw[tipo];
+            const unidade = config.unidade || 'kg';
+            
+            opcoesCapacidade[tipo] = {
+              modo: 'tipo_carga_nominal',
+              unidade: unidade,
+              valores: config.valores.map(v => `${v}${unidade}`)
+            };
+          });
+          
+          // 2º - Processar CAPACIDADE EXTINTORA (sobrescreve tipos duplicados)
+          Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
+            opcoesCapacidade[tipo] = {
+              modo: 'tipo_capacidade',
+              valores: opcoesCapacidadeRaw[tipo]
+            };
+          });
+          
+        } else {
+          console.log('✅ Priorizando CARGA NOMINAL');
+          
+          // 1º - Processar CAPACIDADE EXTINTORA (será sobrescrito se houver conflito)
+          Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
+            opcoesCapacidade[tipo] = {
+              modo: 'tipo_capacidade',
+              valores: opcoesCapacidadeRaw[tipo]
+            };
+          });
+          
+          // 2º - Processar CARGA NOMINAL (sobrescreve tipos duplicados)
+          Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
+            const config = opcoesCargaNominalRaw[tipo];
+            const unidade = config.unidade || 'kg';
+            
+            opcoesCapacidade[tipo] = {
+              modo: 'tipo_carga_nominal',
+              unidade: unidade,
+              valores: config.valores.map(v => `${v}${unidade}`)
+            };
+          });
+        }
         
         console.log('✅ opcoesCapacidade processado:', opcoesCapacidade);
         console.log('✅ Tipos disponíveis:', Object.keys(opcoesCapacidade));
