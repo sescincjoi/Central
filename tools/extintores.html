@@ -1376,16 +1376,35 @@
     //  ATUALIZAR OPÇÕES DA PERGUNTA 1.2 DINAMICAMENTE
     // ══════════════════════════════════════════════════════════
     function atualizarOpcoes12(tipoSelecionado) {
-      if (!tipoSelecionado) return;
-      
+      console.log('═══════════════════════════════════');
+      console.log('🔍 CHAMADA: atualizarOpcoes12');
       console.log('🔍 Tipo selecionado:', tipoSelecionado);
+      console.log('🔍 Tipo do valor:', typeof tipoSelecionado);
+      console.log('🔍 opcoesCapacidade global:', opcoesCapacidade);
+      console.log('🔍 Chaves disponíveis:', Object.keys(opcoesCapacidade));
+      
+      if (!tipoSelecionado) {
+        console.warn('⚠️ Tipo vazio!');
+        return;
+      }
       
       // Buscar configuração do tipo
       const config = opcoesCapacidade[tipoSelecionado];
       
+      console.log('🔍 Config encontrada para', tipoSelecionado, ':', config);
+      
       if (!config) {
         console.warn(`⚠️ Tipo "${tipoSelecionado}" não encontrado nas opções`);
         console.warn('⚠️ Tipos disponíveis:', Object.keys(opcoesCapacidade));
+        
+        // DEBUG: Tentar encontrar similar
+        Object.keys(opcoesCapacidade).forEach(chave => {
+          console.log(`  🔎 Comparando "${tipoSelecionado}" com "${chave}"`);
+          console.log(`     Iguais? ${tipoSelecionado === chave}`);
+          console.log(`     Char codes "${tipoSelecionado}":`, tipoSelecionado.split('').map(c => c.charCodeAt(0)));
+          console.log(`     Char codes "${chave}":`, chave.split('').map(c => c.charCodeAt(0)));
+        });
+        
         return;
       }
       
@@ -1395,24 +1414,23 @@
         return;
       }
       
-      // Determinar label baseado no modo
       const labelTexto = config.modo === 'tipo_capacidade' 
         ? 'Capacidade Extintora:' 
         : 'Carga Nominal:';
       
-      // Atualizar label
       const label = container12.querySelector('label');
       if (label) {
         label.innerHTML = `1.2 — ${labelTexto}<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p>`;
       }
       
-      // Atualizar select com valores processados
       const select = container12.querySelector('select[name="p1_2"]');
       if (select) {
         select.innerHTML = '<option value="">-- Selecione --</option>' +
           config.valores.map(v => `<option>${v}</option>`).join('');
         console.log('✅ Select atualizado com', config.valores.length, 'opções:', config.valores);
       }
+      
+      console.log('═══════════════════════════════════');
     }
     
     // ══════════════════════════════════════════════════════════
@@ -1429,6 +1447,9 @@
           .limit(1)
           .get();
         
+        console.log('📊 Snapshot vazio?', snapshot.empty);
+        console.log('📊 Quantidade de docs:', snapshot.size);
+        
         if (snapshot.empty) {
           console.warn('⚠️ Nenhuma base ativa encontrada');
           return;
@@ -1436,23 +1457,24 @@
         
         const baseData = snapshot.docs[0].data();
         
-        // ═══ CAPTURAR ESTRUTURAS E MODO ATIVO ═══
+        console.log('📦 BASE COMPLETA:', baseData);
+        
         const opcoesCapacidadeRaw = baseData.opcoes_capacidade || {};
         const opcoesCargaNominalRaw = baseData.opcoes_carga_nominal || {};
         const modoAtivo = baseData.modo_classificacao || 'tipo_carga_nominal';
         
         console.log('📦 opcoes_capacidade (raw):', opcoesCapacidadeRaw);
+        console.log('📦 Chaves opcoes_capacidade:', Object.keys(opcoesCapacidadeRaw));
         console.log('📦 opcoes_carga_nominal (raw):', opcoesCargaNominalRaw);
+        console.log('📦 Chaves opcoes_carga_nominal:', Object.keys(opcoesCargaNominalRaw));
         console.log('🎯 Modo ativo:', modoAtivo);
         
-        // ═══ TRANSFORMAR PARA FORMATO UNIFICADO ═══
         opcoesCapacidade = {};
         
-        // ═══ PRIORIZAR CONFORME MODO ATIVO ═══
         if (modoAtivo === 'tipo_capacidade') {
           console.log('✅ Priorizando CAPACIDADE EXTINTORA');
           
-          // 1º - Processar CARGA NOMINAL (será sobrescrito se houver conflito)
+          // 1º - Processar CARGA NOMINAL
           Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
             const config = opcoesCargaNominalRaw[tipo];
             const unidade = config.unidade || 'kg';
@@ -1462,41 +1484,47 @@
               unidade: unidade,
               valores: config.valores.map(v => `${v}${unidade}`)
             };
+            console.log(`  ➕ Adicionado ${tipo} (carga nominal):`, opcoesCapacidade[tipo]);
           });
           
-          // 2º - Processar CAPACIDADE EXTINTORA (sobrescreve tipos duplicados)
+          // 2º - Processar CAPACIDADE EXTINTORA
           Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
+            console.log(`  🔄 Processando ${tipo} (capacidade)...`);
             opcoesCapacidade[tipo] = {
               modo: 'tipo_capacidade',
               valores: opcoesCapacidadeRaw[tipo]
             };
+            console.log(`  ✅ ${tipo} agora é:`, opcoesCapacidade[tipo]);
           });
           
         } else {
           console.log('✅ Priorizando CARGA NOMINAL');
           
-          // 1º - Processar CAPACIDADE EXTINTORA (será sobrescrito se houver conflito)
+          // 1º - Processar CAPACIDADE EXTINTORA
           Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
             opcoesCapacidade[tipo] = {
               modo: 'tipo_capacidade',
               valores: opcoesCapacidadeRaw[tipo]
             };
+            console.log(`  ➕ Adicionado ${tipo} (capacidade):`, opcoesCapacidade[tipo]);
           });
           
-          // 2º - Processar CARGA NOMINAL (sobrescreve tipos duplicados)
+          // 2º - Processar CARGA NOMINAL
           Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
             const config = opcoesCargaNominalRaw[tipo];
             const unidade = config.unidade || 'kg';
             
+            console.log(`  🔄 Processando ${tipo} (carga nominal)...`);
             opcoesCapacidade[tipo] = {
               modo: 'tipo_carga_nominal',
               unidade: unidade,
               valores: config.valores.map(v => `${v}${unidade}`)
             };
+            console.log(`  ✅ ${tipo} agora é:`, opcoesCapacidade[tipo]);
           });
         }
         
-        console.log('✅ opcoesCapacidade processado:', opcoesCapacidade);
+        console.log('✅ RESULTADO FINAL opcoesCapacidade:', opcoesCapacidade);
         console.log('✅ Tipos disponíveis:', Object.keys(opcoesCapacidade));
         
       } catch (error) {
