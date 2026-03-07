@@ -1424,22 +1424,45 @@
           .limit(1)
           .get();
         
-        console.log('📊 Snapshot vazio?', snapshot.empty);
-        console.log('📊 Quantidade de docs:', snapshot.size);
-        
         if (snapshot.empty) {
           console.warn('⚠️ Nenhuma base ativa encontrada');
           return;
         }
         
         const baseData = snapshot.docs[0].data();
-        console.log('📦 Dados da base completa:', baseData);
-        console.log('📦 opcoes_capacidade:', baseData.opcoes_capacidade);
         
-        opcoesCapacidade = baseData.opcoes_capacidade || {};
+        // ═══ ADAPTAR ESTRUTURA DO FIRESTORE ═══
+        const opcoesCapacidadeRaw = baseData.opcoes_capacidade || {};
+        const opcoesCargaNominalRaw = baseData.opcoes_carga_nominal || {};
         
-        console.log('✅ opcoesCapacidade armazenado:', opcoesCapacidade);
-        console.log('✅ Chaves disponíveis:', Object.keys(opcoesCapacidade));
+        console.log('📦 opcoes_capacidade (raw):', opcoesCapacidadeRaw);
+        console.log('📦 opcoes_carga_nominal (raw):', opcoesCargaNominalRaw);
+        
+        // Transformar para formato unificado
+        opcoesCapacidade = {};
+        
+        // Processar tipos com CAPACIDADE EXTINTORA (arrays simples)
+        Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
+          opcoesCapacidade[tipo] = {
+            modo: 'tipo_capacidade',
+            valores: opcoesCapacidadeRaw[tipo] // já é array de strings
+          };
+        });
+        
+        // Processar tipos com CARGA NOMINAL (objeto com unidade + valores)
+        Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
+          const config = opcoesCargaNominalRaw[tipo];
+          const unidade = config.unidade || 'kg';
+          
+          opcoesCapacidade[tipo] = {
+            modo: 'tipo_carga_nominal',
+            unidade: unidade,
+            valores: config.valores.map(v => `${v}${unidade}`) // adicionar unidade
+          };
+        });
+        
+        console.log('✅ opcoesCapacidade processado:', opcoesCapacidade);
+        console.log('✅ Tipos disponíveis:', Object.keys(opcoesCapacidade));
         
       } catch (error) {
         console.error('❌ Erro ao carregar opções de capacidade:', error);
