@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migração - Reestruturar Firestore</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .warning strong {
+      color: #856404;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .info {
+      background: #d1ecf1;
+      border-left: 4px solid #0c5460;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .steps {
+      margin: 20px 0;
+    }
+
+    .step {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .step-number {
+      background: #667eea;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #1a1a1a;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #log {
+      background: #1a1a1a;
+      color: #0f0;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+      display: none;
+      line-height: 1.6;
+    }
+
+    #log.show {
+      display: block;
+    }
+
+    .log-line {
+      margin-bottom: 5px;
+    }
+
+    .log-success { color: #0f0; }
+    .log-error { color: #f00; }
+    .log-warning { color: #ff0; }
+    .log-info { color: #0ff; }
+
+    .progress {
+      background: #e0e0e0;
+      height: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress.show {
+      display: block;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .success-message {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .success-message h3 {
+      color: #155724;
+      margin-bottom: 10px;
+    }
+
+    .success-message ul {
+      margin-left: 20px;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>
+    <span style="font-size: 32px;">🔄</span>
+    Migração - Reestruturar Firestore
+  </h1>
+  <p class="subtitle">Reorganiza as coleções para estrutura hierárquica</p>
+
+  <div class="warning">
+    <strong>⚠️ ATENÇÃO - LEIA ANTES DE EXECUTAR!</strong>
+    Este script vai reorganizar completamente a estrutura do Firestore. Um backup será criado automaticamente.
+  </div>
+
+  <div class="info">
+    <strong>📋 O que será feito:</strong><br>
+    • Move <code>extintores_instalados/*</code> → <code>bases/{id}/extintores/*</code><br>
+    • Move <code>edificacoes/lista</code> → <code>bases/{id}</code> (campo edificacoes)<br>
+    • Move <code>dashboard_cache/atual</code> → <code>bases/{id}/dashboard_cache/atual</code><br>
+    • Deleta <code>configuracao</code> (redundante - dados já em bases)<br>
+    • Cria coleção <code>backup_migracao</code> com snapshot completo
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <div class="step-title">Criar backup completo</div>
+        <div class="step-desc">Salva estado atual em backup_migracao</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <div class="step-title">Mover extintores instalados</div>
+        <div class="step-desc">90 documentos para subcoleção bases/{id}/extintores</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <div class="step-title">Mover edificações</div>
+        <div class="step-desc">17 edificações para campo bases/{id}.edificacoes</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <div class="step-title">Mover dashboard cache</div>
+        <div class="step-desc">Stats para bases/{id}/dashboard_cache/atual</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">5</div>
+      <div class="step-content">
+        <div class="step-title">Limpar coleções antigas</div>
+        <div class="step-desc">Remove configuracao, extintores_instalados, edificacoes, dashboard_cache</div>
+      </div>
+    </div>
+  </div>
+
+  <button id="btnMigrar" class="button" onclick="iniciarMigracao()">
+    🚀 Iniciar Migração
+  </button>
+
+  <div class="progress" id="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div id="log"></div>
+
+  <div class="success-message" id="successMessage">
+    <h3>✅ Migração Concluída com Sucesso!</h3>
+    <p>Próximos passos:</p>
+    <ul>
+      <li>Atualizar extintor-service.js (Etapa 2)</li>
+      <li>Testar todas as páginas (Etapa 3)</li>
+      <li>Atualizar regras do Firestore (Etapa 5)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  // ══════════════════════════════════════════════════════════
+  //  FIREBASE CONFIG
+  // ══════════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+    authDomain: "ronda-extintores.firebaseapp.com",
+    projectId: "ronda-extintores",
+    storageBucket: "ronda-extintores.firebasestorage.app",
+    messagingSenderId: "712050420595",
+    appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // ══════════════════════════════════════════════════════════
+  //  LOGGING
+  // ══════════════════════════════════════════════════════════
+  const logEl = document.getElementById('log');
+  const progressEl = document.getElementById('progress');
+  const progressBar = document.getElementById('progressBar');
+  const btnMigrar = document.getElementById('btnMigrar');
+  const successMsg = document.getElementById('successMessage');
+
+  function log(message, type = 'info') {
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    logEl.classList.add('show');
+    console.log(message);
+  }
+
+  function setProgress(percent) {
+    progressEl.classList.add('show');
+    progressBar.style.width = percent + '%';
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  MIGRAÇÃO
+  // ══════════════════════════════════════════════════════════
+  async function iniciarMigracao() {
+    if (!confirm('⚠️ Tem certeza? Esta operação vai reorganizar todo o Firestore!\n\nUm backup será criado automaticamente.')) {
+      return;
+    }
+
+    btnMigrar.disabled = true;
+    btnMigrar.textContent = '⏳ Migrando...';
+    logEl.innerHTML = '';
+    
+    try {
+      log('🚀 Iniciando migração...', 'info');
+      setProgress(5);
+
+      // ═══ ETAPA 1: BACKUP ═══
+      log('📦 Etapa 1: Criando backup...', 'info');
+      await criarBackup();
+      setProgress(15);
+
+      // ═══ ETAPA 2: MOVER EXTINTORES ═══
+      log('🔄 Etapa 2: Movendo extintores instalados...', 'info');
+      await moverExtintores();
+      setProgress(40);
+
+      // ═══ ETAPA 3: MOVER EDIFICAÇÕES ═══
+      log('🏢 Etapa 3: Movendo edificações...', 'info');
+      await moverEdificacoes();
+      setProgress(60);
+
+      // ═══ ETAPA 4: MOVER DASHBOARD CACHE ═══
+      log('📊 Etapa 4: Movendo dashboard cache...', 'info');
+      await moverDashboardCache();
+      setProgress(75);
+
+      // ═══ ETAPA 5: LIMPAR COLEÇÕES ANTIGAS ═══
+      log('🗑️ Etapa 5: Limpando coleções antigas...', 'info');
+      await limparColecoesAntigas();
+      setProgress(100);
+
+      log('✅ MIGRAÇÃO CONCLUÍDA COM SUCESSO!', 'success');
+      successMsg.classList.add('show');
+      btnMigrar.textContent = '✅ Migração Concluída';
+
+    } catch (error) {
+      log(`❌ ERRO: ${error.message}`, 'error');
+      log('💡 Restaure o backup se necessário!', 'warning');
+      btnMigrar.disabled = false;
+      btnMigrar.textContent = '🔄 Tentar Novamente';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  ETAPA 1: BACKUP
+  // ══════════════════════════════════════════════════════════
+  async function criarBackup() {
+    const timestamp = new Date().toISOString();
+    const backupId = `backup_${timestamp}`;
+
+    // Backup de extintores_instalados
+    const extintoresSnap = await db.collection('extintores_instalados').get();
+    const extintores = {};
+    extintoresSnap.forEach(doc => {
+      extintores[doc.id] = doc.data();
+    });
+
+    // Backup de edificacoes
+    const edificacoesSnap = await db.collection('edificacoes').get();
+    const edificacoes = {};
+    edificacoesSnap.forEach(doc => {
+      edificacoes[doc.id] = doc.data();
+    });
+
+    // Backup de dashboard_cache
+    const dashboardSnap = await db.collection('dashboard_cache').get();
+    const dashboard = {};
+    dashboardSnap.forEach(doc => {
+      dashboard[doc.id] = doc.data();
+    });
+
+    // Backup de configuracao
+    const configSnap = await db.collection('configuracao').get();
+    const config = {};
+    configSnap.forEach(doc => {
+      config[doc.id] = doc.data();
+    });
+
+    // Salvar backup
+    await db.collection('backup_migracao').doc(backupId).set({
+      timestamp,
+      extintores_instalados: extintores,
+      edificacoes: edificacoes,
+      dashboard_cache: dashboard,
+      configuracao: config
+    });
+
+    log(`✅ Backup criado: ${backupId}`, 'success');
+    log(`   • ${Object.keys(extintores).length} extintores`, 'info');
+    log(`   • ${Object.keys(edificacoes).length} edificações`, 'info');
+    log(`   • ${Object.keys(dashboard).length} dashboard docs`, 'info');
+    log(`   • ${Object.keys(config).length} config docs`, 'info');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  ETAPA 2: MOVER EXTINTORES
+  // ══════════════════════════════════════════════════════════
+  async function moverExtintores() {
+    const baseId = 'aeroporto-joinville';
+    const extintoresSnap = await db.collection('extintores_instalados').get();
+    
+    log(`   Movendo ${extintoresSnap.size} extintores...`, 'info');
+    
+    let count = 0;
+    const batch = db.batch();
+    
+    for (const doc of extintoresSnap.docs) {
+      const novaRef = db.collection('bases').doc(baseId).collection('extintores').doc(doc.id);
+      batch.set(novaRef, doc.data());
+      count++;
+      
+      if (count % 10 === 0) {
+        log(`   Processados: ${count}/${extintoresSnap.size}`, 'info');
+      }
+    }
+    
+    await batch.commit();
+    log(`✅ ${count} extintores movidos para bases/${baseId}/extintores`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  ETAPA 3: MOVER EDIFICAÇÕES
+  // ══════════════════════════════════════════════════════════
+  async function moverEdificacoes() {
+    const baseId = 'aeroporto-joinville';
+    const edificacoesDoc = await db.collection('edificacoes').doc('lista').get();
+    
+    if (!edificacoesDoc.exists) {
+      log('⚠️ Documento edificacoes/lista não encontrado', 'warning');
+      return;
+    }
+    
+    const edificacoes = edificacoesDoc.data();
+    const totalEdificacoes = Object.keys(edificacoes).length;
+    
+    // Adicionar campo edificacoes ao documento da base
+    await db.collection('bases').doc(baseId).update({
+      edificacoes: edificacoes,
+      atualizado_em: new Date().toISOString()
+    });
+    
+    log(`✅ ${totalEdificacoes} edificações movidas para bases/${baseId}.edificacoes`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  ETAPA 4: MOVER DASHBOARD CACHE
+  // ══════════════════════════════════════════════════════════
+  async function moverDashboardCache() {
+    const baseId = 'aeroporto-joinville';
+    const dashboardDoc = await db.collection('dashboard_cache').doc('atual').get();
+    
+    if (!dashboardDoc.exists) {
+      log('⚠️ Documento dashboard_cache/atual não encontrado', 'warning');
+      return;
+    }
+    
+    // Mover para subcoleção da base
+    await db.collection('bases').doc(baseId).collection('dashboard_cache').doc('atual').set(dashboardDoc.data());
+    
+    log(`✅ Dashboard cache movido para bases/${baseId}/dashboard_cache/atual`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  ETAPA 5: LIMPAR COLEÇÕES ANTIGAS
+  // ══════════════════════════════════════════════════════════
+  async function limparColecoesAntigas() {
+    // Deletar configuracao (redundante)
+    const configSnap = await db.collection('configuracao').get();
+    const batch1 = db.batch();
+    configSnap.forEach(doc => batch1.delete(doc.ref));
+    await batch1.commit();
+    log('✅ Coleção "configuracao" deletada', 'success');
+
+    // Deletar extintores_instalados (movidos)
+    const extintoresSnap = await db.collection('extintores_instalados').get();
+    let count = 0;
+    for (const doc of extintoresSnap.docs) {
+      await doc.ref.delete();
+      count++;
+      if (count % 20 === 0) {
+        log(`   Deletados: ${count}/${extintoresSnap.size}`, 'info');
+      }
+    }
+    log('✅ Coleção "extintores_instalados" deletada', 'success');
+
+    // Deletar edificacoes (movidas)
+    const edificacoesSnap = await db.collection('edificacoes').get();
+    const batch2 = db.batch();
+    edificacoesSnap.forEach(doc => batch2.delete(doc.ref));
+    await batch2.commit();
+    log('✅ Coleção "edificacoes" deletada', 'success');
+
+    // Deletar dashboard_cache (movido)
+    const dashboardSnap = await db.collection('dashboard_cache').get();
+    const batch3 = db.batch();
+    dashboardSnap.forEach(doc => batch3.delete(doc.ref));
+    await batch3.commit();
+    log('✅ Coleção "dashboard_cache" deletada', 'success');
+  }
+</script>
+
+</body>
+</html>
