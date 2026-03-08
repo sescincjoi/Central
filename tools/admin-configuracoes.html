@@ -66,6 +66,7 @@
     }
     .badge-purple { background: rgba(118, 75, 162, 0.1); color: #764ba2; }
     .badge-orange { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+    .badge-green { background: rgba(52, 199, 89, 0.1); color: #34c759; }
     .alert {
       background: #fff3cd;
       border: 2px solid #ffc107;
@@ -81,6 +82,41 @@
     .alert ul {
       color: #856404;
       margin-left: 20px;
+    }
+    
+    /* Seletor de Base */
+    .base-selector {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 24px;
+      color: white;
+      margin-bottom: 24px;
+    }
+    .base-option {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(10px);
+    }
+    .base-option:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.4);
+      transform: translateY(-2px);
+    }
+    .base-option.active {
+      background: white;
+      border-color: white;
+      color: #667eea;
+    }
+    .base-option.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .base-option.disabled:hover {
+      transform: none;
     }
   </style>
 </head>
@@ -99,18 +135,39 @@
     </div>
   </div>
 
+  <!-- Seletor de Base (Super-Admin) -->
+  <div class="max-w-4xl mx-auto" id="seletor-base-container" style="display:none;">
+    <div class="base-selector">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-xl font-bold">🌐 Selecionar Base</h2>
+          <p class="text-sm opacity-90 mt-1">Escolha qual base deseja gerenciar</p>
+        </div>
+        <span class="badge badge-green" id="role-badge">SUPER-ADMIN</span>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="bases-grid">
+        <!-- Preenchido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
   <!-- Informações da Base -->
   <div class="max-w-4xl mx-auto mb-6">
     <div class="card">
-      <h2 class="text-xl font-bold mb-4">🏢 Informações da Base</h2>
-      <div class="grid grid-cols-2 gap-4">
+      <h2 class="text-xl font-bold mb-4">🏢 Informações da Base Atual</h2>
+      <div class="grid grid-cols-3 gap-4">
         <div>
           <div class="text-sm text-gray-500">Nome</div>
           <div class="font-semibold" id="base-nome">-</div>
         </div>
         <div>
-          <div class="text-sm text-gray-500">Código</div>
+          <div class="text-sm text-gray-500">Código ICAO</div>
           <div class="font-semibold" id="base-codigo">-</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-500">Código IATA</div>
+          <div class="font-semibold" id="base-iata">-</div>
         </div>
       </div>
     </div>
@@ -198,53 +255,37 @@
         </div>
       </div>
 
-      <!-- Botões -->
-      <div class="flex gap-3 mt-6">
-        <button onclick="window.location.href='./admin-panel.html'" class="btn-secondary flex-1">
-          Cancelar
-        </button>
-        <button id="btn-salvar" onclick="salvarConfiguracao()" class="btn-primary flex-1">
-          Salvar Configuração
-        </button>
-      </div>
+      <button id="btn-salvar" class="btn-primary w-full mt-6" onclick="salvarConfiguracao()">
+        Salvar Configuração
+      </button>
     </div>
   </div>
 
   <!-- Histórico de Mudanças -->
-  <div class="max-w-4xl mx-auto">
+  <div class="max-w-4xl mx-auto mb-6">
     <div class="card">
       <h2 class="text-xl font-bold mb-4">📜 Histórico de Mudanças</h2>
       <div id="historico-lista">
-        <div class="text-gray-500 text-center py-4">Nenhuma mudança registrada</div>
+        <p class="text-gray-500 text-sm">Nenhuma mudança registrada</p>
       </div>
     </div>
   </div>
 
   <!-- Auth System -->
-  <script type="module">
-    import authCore from '../js/auth/auth-core.js';
-    import authUI from '../js/auth/auth-ui.js';
-    import authGuard from '../js/auth/auth-guard.js';
-
-    window.authCore = authCore;
-    window.authUI = authUI;
-    window.authGuard = authGuard;
-
-    function initAuth() {
-      if (window.authUI && window.authUI.openModal && window.authGuard) {
-        window.addEventListener('auth-state-changed', (e) => {
-          if (e.detail && e.detail.user) {
-            if (window.initPage) window.initPage();
-          }
-        });
-
-        if (authCore.initialized && authCore.isAuthenticated()) {
-          if (window.initPage) window.initPage();
+  <script>
+    const initAuth = () => {
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+          window.location.href = './login.html';
+          return;
         }
-      } else {
-        setTimeout(initAuth, 50);
-      }
-    }
+        
+        // Carregar perfil e inicializar
+        if (window.initPage) {
+          await window.initPage();
+        }
+      });
+    };
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initAuth);
@@ -278,6 +319,7 @@
     let modoAtual;
     let modoSelecionado;
     let baseAtual;
+    let userProfile;
 
     // ══════════════════════════════════════════════════════════
     //  INIT
@@ -286,6 +328,13 @@
       try {
         extintorService = new ExtintorService().init();
         
+        // Carregar perfil do usuário
+        userProfile = await extintorService.getUserProfile();
+        
+        // Carregar seletor de bases (se super-admin)
+        await carregarSeletorBases();
+        
+        // Carregar dados da base atual
         await carregarDados();
         await carregarHistorico();
         await verificarPendentes();
@@ -298,6 +347,63 @@
 
     window.initPage = init;
 
+    // ══════════════════════════════════════════════════════════
+    //  SELETOR DE BASES
+    // ══════════════════════════════════════════════════════════
+    async function carregarSeletorBases() {
+      // Mostrar seletor apenas para super-admin
+      if (userProfile.role !== 'super-admin') {
+        return;
+      }
+      
+      document.getElementById('seletor-base-container').style.display = 'block';
+      
+      // Buscar bases permitidas
+      const bases = await extintorService.getBasesPermitidas();
+      const baseSelecionada = await extintorService.getBaseSelecionadaPeloUsuario();
+      
+      const grid = document.getElementById('bases-grid');
+      grid.innerHTML = '';
+      
+      bases.forEach(base => {
+        const isActive = base.id === baseSelecionada;
+        
+        const card = document.createElement('div');
+        card.className = `base-option ${isActive ? 'active' : ''}`;
+        card.onclick = () => trocarBase(base.id, base.nome);
+        
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-bold text-base">${base.nome}</div>
+              <div class="text-xs opacity-75 mt-1">
+                ${base.codigo} • ${base.base}
+              </div>
+            </div>
+            ${isActive ? '<div class="text-2xl">✓</div>' : ''}
+          </div>
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    async function trocarBase(baseId, nomeBase) {
+      if (!confirm(`Trocar para base "${nomeBase}"?\n\nA página será recarregada.`)) {
+        return;
+      }
+      
+      try {
+        await extintorService.selecionarBase(baseId);
+        location.reload();
+      } catch (error) {
+        alert(`❌ Erro ao trocar base: ${error.message}`);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  CARREGAR DADOS
+    // ══════════════════════════════════════════════════════════
     async function carregarDados() {
       baseAtual = await extintorService.getBaseAtual();
       modoAtual = baseAtual.modo_classificacao;
@@ -306,6 +412,7 @@
       // Atualizar interface
       document.getElementById('base-nome').textContent = baseAtual.nome;
       document.getElementById('base-codigo').textContent = baseAtual.codigo;
+      document.getElementById('base-iata').textContent = baseAtual.base;
 
       // Marcar modo atual
       const radioCarga = document.querySelector('input[value="tipo_carga_nominal"]');
