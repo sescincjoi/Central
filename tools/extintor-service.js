@@ -1,20 +1,24 @@
 // ══════════════════════════════════════════════════════════
-//  EXTINTOR SERVICE - Gerenciamento de Extintores
+//  EXTINTOR SERVICE v2 - Estrutura Hierárquica
+//  Atualizado para: bases/{baseId}/extintores/
 // ══════════════════════════════════════════════════════════
 
 class ExtintorService {
   constructor() {
-    // NÃO inicializar Firebase aqui - será feito no init()
     this.db = null;
+    this.baseId = 'aeroporto-joinville'; // ID da base ativa
     this.cache = {
       extintores: null,
       edificacoes: null,
-      config: null,
+      base: null,
       lastUpdate: null
     };
   }
 
-  // Inicializar após Firebase estar pronto
+  // ══════════════════════════════════════════════════════════
+  //  INICIALIZAÇÃO
+  // ══════════════════════════════════════════════════════════
+  
   init() {
     if (!this.db) {
       if (typeof firebase === 'undefined') {
@@ -24,32 +28,44 @@ class ExtintorService {
         throw new Error('Firestore não está disponível. Verifique se o script do Firestore foi carregado.');
       }
       this.db = firebase.firestore();
-      console.log('✅ ExtintorService inicializado');
+      console.log('✅ ExtintorService v2 inicializado (estrutura hierárquica)');
     }
     return this;
   }
 
-  // Garantir que está inicializado antes de usar
   _ensureInit() {
     if (!this.db) {
       this.init();
     }
   }
 
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   //  BASES E CONFIGURAÇÃO
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   
   async getBaseAtual() {
     this._ensureInit();
     
-    const doc = await this.db.collection('bases').doc('aeroporto-joinville').get();
+    // Cache por 30 segundos
+    if (this.cache.base && this.cache.lastUpdate) {
+      const diff = Date.now() - this.cache.lastUpdate;
+      if (diff < 30000) {
+        return this.cache.base;
+      }
+    }
+    
+    const doc = await this.db.collection('bases').doc(this.baseId).get();
     
     if (!doc.exists) {
       throw new Error('Base não encontrada. Execute o script de migração primeiro.');
     }
     
-    return { id: doc.id, ...doc.data() };
+    const base = { id: doc.id, ...doc.data() };
+    
+    this.cache.base = base;
+    this.cache.lastUpdate = Date.now();
+    
+    return base;
   }
 
   async getModoClassificacao() {
@@ -81,27 +97,26 @@ class ExtintorService {
       throw new Error('Este modo já está ativo');
     }
 
-    // Registrar mudança no histórico
     const mudanca = {
       data: new Date().toISOString(),
       de: modoAntigo,
       para: novoModo,
       motivo: motivo,
-      por: 'admin' // TODO: pegar do auth
+      por: 'admin'
     };
 
-    // Atualizar base
-    await this.db.collection('bases').doc('aeroporto-joinville').update({
+    // ═══ ATUALIZADO: bases/{baseId} ═══
+    await this.db.collection('bases').doc(this.baseId).update({
       modo_classificacao: novoModo,
       historico_mudancas: firebase.firestore.FieldValue.arrayUnion(mudanca),
       atualizado_em: new Date().toISOString()
     });
 
-    // Marcar todos extintores para revisão (sem limpar dados!)
-    await this.marcarTodosParaRevisaoSemLimpar(novoModo);
+    // Invalidar cache
+    this.cache.base = null;
 
-    // Resetar vistorias
-    await this.resetarTodasVistorias();
+    // Marcar todos extintores para revisão
+    await this.marcarTodosParaRevisaoSemLimpar(novoModo);
 
     return {
       sucesso: true,
@@ -114,13 +129,17 @@ class ExtintorService {
   async marcarTodosParaRevisaoSemLimpar(novoModo) {
     this._ensureInit();
     
-    const snapshot = await this.db.collection('extintores_instalados').get();
+    // ═══ ATUALIZADO: bases/{baseId}/extintores ═══
+    const snapshot = await this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
+      .get();
+    
     const batch = this.db.batch();
     let count = 0;
 
     snapshot.forEach(doc => {
-      // IMPORTANTE: Apenas atualizar modo_atual e requer_revisao
-      // NÃO limpar carga_nominal_valor, carga_nominal_unidade, capacidade_extintora
       batch.update(doc.ref, {
         modo_atual: novoModo,
         requer_revisao: true,
@@ -134,14 +153,11 @@ class ExtintorService {
     return count;
   }
 
-  // Manter função antiga para compatibilidade (deprecated)
   async marcarTodosParaRevisao(novoModo) {
     return this.marcarTodosParaRevisaoSemLimpar(novoModo);
   }
 
   async resetarTodasVistorias() {
-    // TODO: Implementar reset no Realtime Database
-    // Por enquanto apenas log
     console.log('⚠️ Vistorias devem ser resetadas manualmente no Realtime Database');
     return true;
   }
@@ -149,8 +165,11 @@ class ExtintorService {
   async getExtintoresPendentesRevisao() {
     this._ensureInit();
     
+    // ═══ ATUALIZADO: bases/{baseId}/extintores ═══
     const snapshot = await this.db
-      .collection('extintores_instalados')
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
       .where('requer_revisao', '==', true)
       .get();
 
@@ -165,77 +184,30 @@ class ExtintorService {
   async marcarExtintorRevisado(extintorId) {
     this._ensureInit();
     
-    await this.db.collection('extintores_instalados').doc(extintorId).update({
-      requer_revisao: false,
-      revisado_em: new Date().toISOString(),
-      revisado_por: 'admin', // TODO: pegar do auth
-      atualizado_em: new Date().toISOString()
-    });
+    // ═══ ATUALIZADO: bases/{baseId}/extintores/{id} ═══
+    await this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
+      .doc(extintorId)
+      .update({
+        requer_revisao: false,
+        revisado_em: new Date().toISOString(),
+        revisado_por: 'admin',
+        atualizado_em: new Date().toISOString()
+      });
 
     return { sucesso: true };
   }
 
-  // ─────────────────────────────────────────────────────────
-  //  CONFIGURAÇÃO
-  // ─────────────────────────────────────────────────────────
-  
-  async getConfiguracao() {
-    this._ensureInit();
-    
-    // DEPRECATED: buscar da coleção antiga configuracao
-    // Mantido para compatibilidade
-    if (this.cache.config) return this.cache.config;
-    
-    const doc = await this.db.collection('configuracao').doc('base_atual').get();
-    
-    if (!doc.exists) {
-      console.warn('⚠️ Configuração antiga não encontrada');
-      return null;
-    }
-    
-    this.cache.config = doc.data();
-    return this.cache.config;
-  }
-
-  async getModoClassificacao() {
-    // NOVO: Buscar da coleção bases
-    try {
-      const base = await this.getBaseAtual();
-      return base.modo_classificacao || 'tipo_carga_nominal';
-    } catch (error) {
-      console.error('❌ Erro ao buscar modo da base:', error);
-      // Fallback: tentar configuração antiga
-      const config = await this.getConfiguracao();
-      return config?.modo_classificacao || 'tipo_carga_nominal';
-    }
-  }
-
-  async setModoClassificacao(novoModo) {
-    this._ensureInit();
-    
-    if (!['tipo_kg', 'tipo_capacidade'].includes(novoModo)) {
-      throw new Error('Modo inválido. Use "tipo_kg" ou "tipo_capacidade"');
-    }
-
-    await this.db.collection('configuracao').doc('base_atual').update({
-      modo_classificacao: novoModo,
-      atualizado_em: new Date().toISOString()
-    });
-
-    // Limpar cache
-    this.cache.config = null;
-    
-    return { sucesso: true, modo: novoModo };
-  }
-
-  // ─────────────────────────────────────────────────────────
-  //  EXTINTORES INSTALADOS
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
+  //  EXTINTORES - CRUD
+  // ══════════════════════════════════════════════════════════
   
   async listarExtintores(forcarRecarregar = false) {
     this._ensureInit();
     
-    // Usar cache se disponível e recente (< 5 min)
+    // Cache por 5 minutos
     if (
       !forcarRecarregar && 
       this.cache.extintores && 
@@ -247,8 +219,11 @@ class ExtintorService {
 
     console.log('📥 Carregando extintores do Firestore...');
     
+    // ═══ ATUALIZADO: bases/{baseId}/extintores ═══
     const snapshot = await this.db
-      .collection('extintores_instalados')
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
       .where('ativo', '==', true)
       .get();
 
@@ -260,7 +235,6 @@ class ExtintorService {
       });
     });
 
-    // Atualizar cache
     this.cache.extintores = extintores;
     this.cache.lastUpdate = Date.now();
 
@@ -271,8 +245,11 @@ class ExtintorService {
   async getExtintor(id) {
     this._ensureInit();
     
+    // ═══ ATUALIZADO: bases/{baseId}/extintores/{id} ═══
     const doc = await this.db
-      .collection('extintores_instalados')
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
       .doc(id)
       .get();
 
@@ -288,15 +265,23 @@ class ExtintorService {
     
     const id = `${dados.edificacao}_${dados.numero}`;
     
-    // ═══ VALIDAÇÃO 1: Verificar se já existe nesta edificação ═══
-    const existeNaEdificacao = await this.db.collection('extintores_instalados').doc(id).get();
+    // ═══ VALIDAÇÃO 1: Verificar se já existe ═══
+    const existeNaEdificacao = await this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
+      .doc(id)
+      .get();
+    
     if (existeNaEdificacao.exists) {
       throw new Error(`Extintor ${dados.numero} já existe na edificação ${dados.edificacao}`);
     }
 
-    // ═══ VALIDAÇÃO 2: Verificar se número já existe em QUALQUER edificação ═══
+    // ═══ VALIDAÇÃO 2: Número único ═══
     const snapshot = await this.db
-      .collection('extintores_instalados')
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
       .where('numero', '==', dados.numero)
       .where('ativo', '==', true)
       .get();
@@ -312,7 +297,6 @@ class ExtintorService {
       );
     }
 
-    // Obter modo atual
     const modo = await this.getModoClassificacao();
 
     const extintor = {
@@ -322,14 +306,14 @@ class ExtintorService {
       descricao: dados.descricao,
       tipo: dados.tipo,
       
-      // ═══ CARGA NOMINAL ═══
+      // Carga nominal
       carga_nominal_valor: dados.carga_nominal_valor || null,
       carga_nominal_unidade: dados.carga_nominal_unidade || "",
       
-      // ═══ CAPACIDADE EXTINTORA ═══
+      // Capacidade extintora
       capacidade_extintora: dados.capacidade_extintora || "",
       
-      // ═══ CONTROLE ═══
+      // Controle
       modo_atual: modo,
       requer_revisao: false,
       
@@ -345,9 +329,14 @@ class ExtintorService {
       atualizado_por: dados.criado_por || "admin"
     };
 
-    await this.db.collection('extintores_instalados').doc(id).set(extintor);
+    // ═══ ATUALIZADO: bases/{baseId}/extintores/{id} ═══
+    await this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
+      .doc(id)
+      .set(extintor);
 
-    // Limpar cache
     this.cache.extintores = null;
 
     return { sucesso: true, id: id, extintor: extintor };
@@ -356,7 +345,13 @@ class ExtintorService {
   async atualizarExtintor(id, dados) {
     this._ensureInit();
     
-    const doc = await this.db.collection('extintores_instalados').doc(id).get();
+    // ═══ ATUALIZADO: bases/{baseId}/extintores/{id} ═══
+    const doc = await this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
+      .doc(id)
+      .get();
     
     if (!doc.exists) {
       throw new Error(`Extintor ${id} não encontrado`);
@@ -368,14 +363,17 @@ class ExtintorService {
       atualizado_por: dados.atualizado_por || "admin"
     };
 
-    // Remover campos que não devem ser atualizados
     delete atualizacao.id;
     delete atualizacao.criado_em;
     delete atualizacao.criado_por;
 
-    await this.db.collection('extintores_instalados').doc(id).update(atualizacao);
+    await this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
+      .doc(id)
+      .update(atualizacao);
 
-    // Limpar cache
     this.cache.extintores = null;
 
     return { sucesso: true, id: id };
@@ -384,36 +382,42 @@ class ExtintorService {
   async desativarExtintor(id, motivo) {
     this._ensureInit();
     
-    await this.db.collection('extintores_instalados').doc(id).update({
-      ativo: false,
-      status: "desativado",
-      motivo_desativacao: motivo || "",
-      desativado_em: new Date().toISOString(),
-      atualizado_em: new Date().toISOString()
-    });
+    // ═══ ATUALIZADO: bases/{baseId}/extintores/{id} ═══
+    await this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores')
+      .doc(id)
+      .update({
+        ativo: false,
+        status: "desativado",
+        motivo_desativacao: motivo || "",
+        desativado_em: new Date().toISOString(),
+        atualizado_em: new Date().toISOString()
+      });
 
-    // Limpar cache
     this.cache.extintores = null;
 
     return { sucesso: true, id: id };
   }
 
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   //  EDIFICAÇÕES
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   
   async listarEdificacoes() {
     this._ensureInit();
     
     if (this.cache.edificacoes) return this.cache.edificacoes;
 
-    const doc = await this.db.collection('edificacoes').doc('lista').get();
+    // ═══ ATUALIZADO: campo edificacoes em bases/{baseId} ═══
+    const base = await this.getBaseAtual();
     
-    if (!doc.exists) {
+    if (!base.edificacoes) {
       throw new Error('Edificações não encontradas. Execute a migração primeiro.');
     }
 
-    this.cache.edificacoes = doc.data();
+    this.cache.edificacoes = base.edificacoes;
     return this.cache.edificacoes;
   }
 
@@ -422,69 +426,72 @@ class ExtintorService {
     return edificacoes[nome] || null;
   }
 
-  // ─────────────────────────────────────────────────────────
-  //  FORMATAÇÃO PARA COMPATIBILIDADE COM CÓDIGO ANTIGO
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
+  //  FORMATO LEGADO (compatibilidade)
+  // ══════════════════════════════════════════════════════════
   
   async getExtintoresFormatoAntigo() {
-  const extintores = await this.listarExtintores();
-  const edificacoes = await this.listarEdificacoes();
-  const modo = await this.getModoClassificacao();
+    const extintores = await this.listarExtintores();
+    const edificacoes = await this.listarEdificacoes();
+    const modo = await this.getModoClassificacao();
 
-  const extintoresInfo = {};
-  const edificacoesDescr = {};
-  const edificacoesArray = [];
+    const extintoresInfo = {};
+    const edificacoesDescr = {};
+    const edificacoesArray = [];
 
-  Object.entries(edificacoes).forEach(([nome, dados]) => {
-    edificacoesDescr[nome] = dados.descricao;
-    edificacoesArray.push(nome);
-    extintoresInfo[nome] = {};
-  });
+    Object.entries(edificacoes).forEach(([nome, dados]) => {
+      edificacoesDescr[nome] = dados.descricao;
+      edificacoesArray.push(nome);
+      extintoresInfo[nome] = {};
+    });
 
-  extintores.forEach(ext => {
-    if (!extintoresInfo[ext.edificacao]) {
-      extintoresInfo[ext.edificacao] = {};
-    }
+    extintores.forEach(ext => {
+      if (!extintoresInfo[ext.edificacao]) {
+        extintoresInfo[ext.edificacao] = {};
+      }
 
-    // Calcular classificação conforme o modo configurado
-    let classificacao;
-    if (modo === 'tipo_capacidade') {
-      classificacao = ext.capacidade_extintora
-        ? `${ext.tipo} ${ext.capacidade_extintora}`
-        : ext.tipo;
-    } else {
-      classificacao = ext.carga_nominal_valor
-        ? `${ext.tipo} ${ext.carga_nominal_valor}${ext.carga_nominal_unidade}`
-        : ext.tipo;
-    }
+      let classificacao;
+      if (modo === 'tipo_capacidade') {
+        classificacao = ext.capacidade_extintora
+          ? `${ext.tipo} ${ext.capacidade_extintora}`
+          : ext.tipo;
+      } else {
+        classificacao = ext.carga_nominal_valor
+          ? `${ext.tipo} ${ext.carga_nominal_valor}${ext.carga_nominal_unidade}`
+          : ext.tipo;
+      }
 
-    extintoresInfo[ext.edificacao][ext.numero] = {
-      descricao: ext.descricao,
-      tipo: ext.tipo,
-      kg: ext.kg, // mantido por compatibilidade legada
-      carga_nominal_valor: ext.carga_nominal_valor,
-      carga_nominal_unidade: ext.carga_nominal_unidade,
-      capacidade_extintora: ext.capacidade_extintora,
-      classificacao: classificacao
+      extintoresInfo[ext.edificacao][ext.numero] = {
+        descricao: ext.descricao,
+        tipo: ext.tipo,
+        kg: ext.kg, // legado
+        carga_nominal_valor: ext.carga_nominal_valor,
+        carga_nominal_unidade: ext.carga_nominal_unidade,
+        capacidade_extintora: ext.capacidade_extintora,
+        classificacao: classificacao
+      };
+    });
+
+    return {
+      extintoresInfo,
+      edificacoesDescr,
+      edificacoesArray,
+      modo
     };
-  });
+  }
 
-  return {
-    extintoresInfo,
-    edificacoesDescr,
-    edificacoesArray,
-    modo // expõe o modo para a página usar
-  };
-}
-
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   //  BUSCA E FILTROS
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   
   async buscarExtintores(filtros = {}) {
     this._ensureInit();
     
-    let query = this.db.collection('extintores_instalados');
+    // ═══ ATUALIZADO: bases/{baseId}/extintores ═══
+    let query = this.db
+      .collection('bases')
+      .doc(this.baseId)
+      .collection('extintores');
 
     if (filtros.ativo !== undefined) {
       query = query.where('ativo', '==', filtros.ativo);
@@ -512,9 +519,9 @@ class ExtintorService {
     return extintores;
   }
 
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   //  ESTATÍSTICAS
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   
   async getEstatisticas() {
     const extintores = await this.listarExtintores();
@@ -537,25 +544,15 @@ class ExtintorService {
     const em90dias = new Date(hoje.getTime() + 90 * 24 * 60 * 60 * 1000);
 
     extintores.forEach(ext => {
-      // Por tipo
-      if (!stats.por_tipo[ext.tipo]) {
-        stats.por_tipo[ext.tipo] = 0;
-      }
+      if (!stats.por_tipo[ext.tipo]) stats.por_tipo[ext.tipo] = 0;
       stats.por_tipo[ext.tipo]++;
 
-      // Por edificação
-      if (!stats.por_edificacao[ext.edificacao]) {
-        stats.por_edificacao[ext.edificacao] = 0;
-      }
+      if (!stats.por_edificacao[ext.edificacao]) stats.por_edificacao[ext.edificacao] = 0;
       stats.por_edificacao[ext.edificacao]++;
 
-      // Por status
-      if (!stats.por_status[ext.status]) {
-        stats.por_status[ext.status] = 0;
-      }
+      if (!stats.por_status[ext.status]) stats.por_status[ext.status] = 0;
       stats.por_status[ext.status]++;
 
-      // Vencimentos
       if (ext.vencimento_nivel2) {
         const vencN2 = new Date(ext.vencimento_nivel2 + '-01');
         if (vencN2 < hoje) {
@@ -578,16 +575,14 @@ class ExtintorService {
     return stats;
   }
 
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   //  HELPERS
-  // ─────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
   
   formatarCargaNominal(extintor) {
     const { tipo, carga_nominal_valor, carga_nominal_unidade } = extintor;
     
-    if (!carga_nominal_valor) {
-      return tipo;
-    }
+    if (!carga_nominal_valor) return tipo;
     
     return `${tipo} ${carga_nominal_valor}${carga_nominal_unidade}`;
   }
@@ -595,9 +590,7 @@ class ExtintorService {
   formatarCapacidadeExtintora(extintor) {
     const { tipo, capacidade_extintora } = extintor;
     
-    if (!capacidade_extintora) {
-      return tipo;
-    }
+    if (!capacidade_extintora) return tipo;
     
     return `${tipo} ${capacidade_extintora}`;
   }
@@ -612,24 +605,18 @@ class ExtintorService {
     }
   }
 
-  // ─────────────────────────────────────────────────────────
-  //  LIMPAR CACHE
-  // ─────────────────────────────────────────────────────────
-  
   limparCache() {
     this.cache = {
       extintores: null,
       edificacoes: null,
-      config: null,
+      base: null,
       lastUpdate: null
     };
     console.log('🔄 Cache limpo');
   }
 }
 
-// Exportar classe (não instanciar automaticamente)
-// O HTML deve chamar: const extintorService = new ExtintorService().init();
-// ou simplesmente usar: new ExtintorService().init().listarExtintores()
+// Exportar classe
 if (typeof window !== 'undefined') {
   window.ExtintorService = ExtintorService;
 }
