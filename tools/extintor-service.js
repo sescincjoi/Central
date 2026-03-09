@@ -29,8 +29,14 @@ class ExtintorService {
         throw new Error('Firestore não está disponível. Verifique se o script do Firestore foi carregado.');
       }
       this.db = firebase.firestore();
-      this.auth = firebase.auth();
-      console.log('✅ ExtintorService v3 inicializado (multi-base com permissões)');
+      
+      // Auth é opcional (nem todas as páginas usam)
+      if (firebase.auth) {
+        this.auth = firebase.auth();
+        console.log('✅ ExtintorService v3 inicializado (multi-base com permissões)');
+      } else {
+        console.log('✅ ExtintorService v3 inicializado (sem auth)');
+      }
     }
     return this;
   }
@@ -48,7 +54,18 @@ class ExtintorService {
   async getUserProfile() {
     this._ensureInit();
     
-    const user = this.auth.currentUser;
+    if (!this.auth) {
+      throw new Error('Firebase Auth não está disponível. Adicione o script do Firebase Auth.');
+    }
+    
+    // Aguardar usuário estar autenticado
+    const user = await new Promise((resolve) => {
+      const unsubscribe = this.auth.onAuthStateChanged((user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+    
     if (!user) {
       throw new Error('Usuário não autenticado');
     }
@@ -67,12 +84,7 @@ class ExtintorService {
   async getBaseSelecionadaPeloUsuario() {
     this._ensureInit();
     
-    // Verificar se usuário está autenticado
-    if (!this.auth.currentUser) {
-      throw new Error('Usuário não autenticado');
-    }
-    
-    // Buscar base selecionada no localStorage
+    // ═══ PRIORIDADE 1: localStorage ═══
     const baseSelecionada = localStorage.getItem('baseSelecionada');
     
     if (baseSelecionada) {
@@ -80,8 +92,53 @@ class ExtintorService {
       return baseSelecionada;
     }
     
-    // Se não tiver no localStorage, pegar do perfil do usuário
+    // ═══ PRIORIDADE 2: Perfil do usuário (REQUER AUTH) ═══
+    if (!this.auth) {
+      throw new Error(
+        '❌ Base não definida!\n\n' +
+        'Não há base selecionada no sistema.\n\n' +
+        'SOLUÇÃO:\n' +
+        '1. Faça login no sistema\n' +
+        '2. O sistema configurará automaticamente sua base\n' +
+        '3. Depois você poderá usar todas as páginas'
+      );
+    }
+    
+    // Aguardar usuário estar autenticado
+    const user = await new Promise((resolve, reject) => {
+      const unsubscribe = this.auth.onAuthStateChanged((user) => {
+        unsubscribe();
+        resolve(user);
+      });
+      
+      // Timeout de 5 segundos
+      setTimeout(() => {
+        unsubscribe();
+        reject(new Error('Timeout aguardando autenticação'));
+      }, 5000);
+    });
+    
+    if (!user) {
+      throw new Error(
+        '❌ Usuário não autenticado!\n\n' +
+        'Você precisa fazer login para usar o sistema.\n\n' +
+        'SOLUÇÃO:\n' +
+        '1. Faça login em /login.html\n' +
+        '2. Sua base será configurada automaticamente'
+      );
+    }
+    
+    // Pegar do perfil do usuário
     const perfil = await this.getUserProfile();
+    
+    if (!perfil.base) {
+      throw new Error(
+        '❌ Perfil sem base definida!\n\n' +
+        'Seu perfil não tem uma base configurada.\n\n' +
+        'Entre em contato com o administrador.'
+      );
+    }
+    
     const baseIATA = perfil.base; // Ex: "JOI"
     
     // Buscar base pelo código IATA
@@ -91,15 +148,21 @@ class ExtintorService {
       .get();
     
     if (snapshot.empty) {
-      throw new Error(`Base com código IATA "${baseIATA}" não encontrada`);
+      throw new Error(
+        `❌ Base "${baseIATA}" não encontrada!\n\n` +
+        `Seu perfil está configurado para a base "${baseIATA}",\n` +
+        `mas ela não existe no sistema.\n\n` +
+        `Entre em contato com o administrador.`
+      );
     }
     
     const baseId = snapshot.docs[0].id;
+    const baseNome = snapshot.docs[0].data().nome;
     
     // Salvar no localStorage
     localStorage.setItem('baseSelecionada', baseId);
     
-    console.log(`📍 Base do perfil: ${baseIATA} → ${baseId}`);
+    console.log(`✅ Base configurada: ${baseNome} (${baseIATA})`);
     return baseId;
   }
 
@@ -772,6 +835,12 @@ class ExtintorService {
       lastUpdate: null
     };
     console.log('🔄 Cache limpo');
+  }
+
+  limparBaseSelecionada() {
+    localStorage.removeItem('baseSelecionada');
+    this.cache.base = null;
+    console.log('🔄 Base selecionada removida (use no logout)');
   }
 }
 
