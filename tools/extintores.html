@@ -1130,6 +1130,8 @@
         if (loadingEl) loadingEl.style.display = 'none';
         
         iniciarListenerVistorias();
+
+         renderList();
         
       } catch (error) {
         console.error('❌ Erro:', error);
@@ -1677,6 +1679,14 @@
 
       const info = extintoresInfo[edificacaoAtual]?.[numeroAtual] || {};
 
+       // ═══ ADICIONAR ESTES LOGS ═══
+      console.log('🔍 DEBUG SALVAR:');
+      console.log('   edificacaoAtual:', edificacaoAtual);
+      console.log('   numeroAtual:', numeroAtual);
+      console.log('   Path completo:', `extintores/${edificacaoAtual}/${numeroAtual}`);
+      console.log('   extintoresInfo[edificacaoAtual]:', extintoresInfo[edificacaoAtual]);
+      // ═══ FIM DEBUG ═══
+      
       const dados = {
         numero:        numeroAtual,
         usuario:       document.getElementById('nomeUsuario').value,
