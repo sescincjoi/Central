@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ETAPA 1: Exportar Dados</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .warning strong {
+      color: #856404;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .info {
+      background: #d1ecf1;
+      border-left: 4px solid #0c5460;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .steps {
+      margin: 20px 0;
+    }
+
+    .step {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .step-number {
+      background: #667eea;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #1a1a1a;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #log {
+      background: #1a1a1a;
+      color: #0f0;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+      display: none;
+      line-height: 1.6;
+    }
+
+    #log.show {
+      display: block;
+    }
+
+    .log-success { color: #0f0; }
+    .log-error { color: #f00; }
+    .log-warning { color: #ff0; }
+    .log-info { color: #0ff; }
+
+    .progress {
+      background: #e0e0e0;
+      height: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress.show {
+      display: block;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .download-section {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .download-section.show {
+      display: block;
+    }
+
+    .download-section h3 {
+      color: #155724;
+      margin-bottom: 10px;
+    }
+
+    .download-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    code {
+      background: rgba(0,0,0,0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>
+    <span style="font-size: 32px;">📤</span>
+    ETAPA 1: Exportar Dados
+  </h1>
+  <p class="subtitle">Projeto: ronda-extintores → backup completo</p>
+
+  <div class="warning">
+    <strong>⚠️ IMPORTANTE - Leia antes de executar!</strong>
+    Este script vai exportar TODOS os dados do projeto ronda-extintores para arquivos JSON.
+    Os dados originais NÃO serão deletados.
+  </div>
+
+  <div class="info">
+    <strong>📋 O que será exportado:</strong><br>
+    • <strong>Firestore:</strong> bases, extintores, edificações<br>
+    • <strong>Realtime Database:</strong> inspeções, vistorias<br>
+    • <strong>Total estimado:</strong> ~100 documentos + inspeções
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <div class="step-title">Exportar Firestore</div>
+        <div class="step-desc">bases + extintores (90 docs)</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <div class="step-title">Exportar Realtime Database</div>
+        <div class="step-desc">extintores/edificacoes/vistorias</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <div class="step-title">Gerar arquivo JSON</div>
+        <div class="step-desc">backup-completo.json para download</div>
+      </div>
+    </div>
+  </div>
+
+  <button id="btnExportar" class="button" onclick="iniciarExportacao()">
+    📤 Iniciar Exportação
+  </button>
+
+  <div class="progress" id="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div id="log"></div>
+
+  <div class="download-section" id="downloadSection">
+    <h3>✅ Exportação Concluída!</h3>
+    <p>Clique no botão abaixo para baixar o backup:</p>
+    <button class="download-btn" id="btnDownload">
+      💾 Download backup-completo.json
+    </button>
+    <p style="margin-top: 15px; font-size: 12px; color: #155724;">
+      <strong>Próximo passo:</strong> Execute a ETAPA 2 (Importar) usando este arquivo.
+    </p>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+  // ══════════════════════════════════════════════════════════
+  //  FIREBASE CONFIG - PROJETO ORIGEM (ronda-extintores)
+  // ══════════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyC7lypBBMv9RJ7ta3uaXTiU4txg8x91TWI",
+    authDomain: "ronda-extintores.firebaseapp.com",
+    databaseURL: "https://ronda-extintores-default-rtdb.firebaseio.com",
+    projectId: "ronda-extintores",
+    storageBucket: "ronda-extintores.firebasestorage.app",
+    messagingSenderId: "712050420595",
+    appId: "1:712050420595:web:96ce82f25307c7aba4f306"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const rtdb = firebase.database();
+
+  // ══════════════════════════════════════════════════════════
+  //  LOGGING
+  // ══════════════════════════════════════════════════════════
+  const logEl = document.getElementById('log');
+  const progressEl = document.getElementById('progress');
+  const progressBar = document.getElementById('progressBar');
+  const btnExportar = document.getElementById('btnExportar');
+  const downloadSection = document.getElementById('downloadSection');
+
+  let backupData = {};
+
+  function log(message, type = 'info') {
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    logEl.classList.add('show');
+    console.log(message);
+  }
+
+  function setProgress(percent) {
+    progressEl.classList.add('show');
+    progressBar.style.width = percent + '%';
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  EXPORTAÇÃO
+  // ══════════════════════════════════════════════════════════
+  async function iniciarExportacao() {
+    if (!confirm('⚠️ Iniciar exportação?\n\nIsso pode levar alguns minutos.')) {
+      return;
+    }
+
+    btnExportar.disabled = true;
+    btnExportar.textContent = '⏳ Exportando...';
+    logEl.innerHTML = '';
+    
+    try {
+      log('🚀 Iniciando exportação...', 'info');
+      setProgress(5);
+
+      // ═══ ETAPA 1: FIRESTORE ═══
+      log('📦 Exportando Firestore...', 'info');
+      await exportarFirestore();
+      setProgress(50);
+
+      // ═══ ETAPA 2: REALTIME DATABASE ═══
+      log('📦 Exportando Realtime Database...', 'info');
+      await exportarRealtimeDatabase();
+      setProgress(90);
+
+      // ═══ ETAPA 3: FINALIZAR ═══
+      log('📝 Preparando arquivo para download...', 'info');
+      prepararDownload();
+      setProgress(100);
+
+      log('✅ EXPORTAÇÃO CONCLUÍDA!', 'success');
+      downloadSection.classList.add('show');
+      btnExportar.textContent = '✅ Exportação Concluída';
+
+    } catch (error) {
+      log(`❌ ERRO: ${error.message}`, 'error');
+      btnExportar.disabled = false;
+      btnExportar.textContent = '🔄 Tentar Novamente';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  EXPORTAR FIRESTORE
+  // ══════════════════════════════════════════════════════════
+  async function exportarFirestore() {
+    backupData.firestore = {};
+
+    // Bases
+    log('   → Exportando bases...', 'info');
+    const basesSnap = await db.collection('bases').get();
+    backupData.firestore.bases = {};
+    
+    for (const doc of basesSnap.docs) {
+      backupData.firestore.bases[doc.id] = doc.data();
+      
+      // Extintores de cada base
+      log(`   → Exportando extintores de ${doc.id}...`, 'info');
+      const extintoresSnap = await db.collection('bases').doc(doc.id).collection('extintores').get();
+      
+      if (!backupData.firestore.bases[doc.id].extintores) {
+        backupData.firestore.bases[doc.id].extintores = {};
+      }
+      
+      extintoresSnap.forEach(extDoc => {
+        backupData.firestore.bases[doc.id].extintores[extDoc.id] = extDoc.data();
+      });
+      
+      log(`   ✓ ${extintoresSnap.size} extintores exportados`, 'success');
+    }
+    
+    log(`✅ ${basesSnap.size} bases exportadas`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  EXPORTAR REALTIME DATABASE
+  // ══════════════════════════════════════════════════════════
+  async function exportarRealtimeDatabase() {
+    log('   → Exportando extintores (Realtime)...', 'info');
+    
+    const snapshot = await rtdb.ref('extintores').once('value');
+    backupData.realtimeDatabase = {
+      extintores: snapshot.val() || {}
+    };
+    
+    const totalEdificacoes = Object.keys(backupData.realtimeDatabase.extintores).length;
+    log(`✅ ${totalEdificacoes} edificações exportadas (Realtime)`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  PREPARAR DOWNLOAD
+  // ══════════════════════════════════════════════════════════
+  function prepararDownload() {
+    const dataStr = JSON.stringify(backupData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const btnDownload = document.getElementById('btnDownload');
+    btnDownload.onclick = () => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-ronda-extintores-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    };
+    
+    log(`📊 Tamanho do backup: ${(dataStr.length / 1024).toFixed(2)} KB`, 'info');
+  }
+</script>
+
+</body>
+</html>
