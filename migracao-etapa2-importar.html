@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ETAPA 2: Importar Dados</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .warning strong {
+      color: #856404;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .info {
+      background: #d1ecf1;
+      border-left: 4px solid #0c5460;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .file-upload {
+      background: #f8f9fa;
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .file-upload:hover {
+      border-color: #34C759;
+      background: #f0f9f4;
+    }
+
+    .file-upload.loaded {
+      border-color: #34C759;
+      background: #d4edda;
+    }
+
+    .file-upload input {
+      display: none;
+    }
+
+    .button {
+      background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(52, 199, 89, 0.4);
+    }
+
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #log {
+      background: #1a1a1a;
+      color: #0f0;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+      display: none;
+      line-height: 1.6;
+    }
+
+    #log.show {
+      display: block;
+    }
+
+    .log-success { color: #0f0; }
+    .log-error { color: #f00; }
+    .log-warning { color: #ff0; }
+    .log-info { color: #0ff; }
+
+    .progress {
+      background: #e0e0e0;
+      height: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress.show {
+      display: block;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #34C759, #30D158);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .success-message {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .success-message h3 {
+      color: #155724;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>
+    <span style="font-size: 32px;">📥</span>
+    ETAPA 2: Importar Dados
+  </h1>
+  <p class="subtitle">Projeto: central-sci-joinville ← backup</p>
+
+  <div class="warning">
+    <strong>⚠️ ATENÇÃO - Certifique-se de:</strong>
+    1. Ter criado o Realtime Database em central-sci-joinville<br>
+    2. Ter o arquivo backup-completo.json da Etapa 1<br>
+    3. Fazer backup do projeto antes de importar
+  </div>
+
+  <div class="info">
+    <strong>📋 O que será importado:</strong><br>
+    • <strong>Firestore:</strong> bases + extintores<br>
+    • <strong>Realtime Database:</strong> inspeções + vistorias<br>
+    • <strong>Ação:</strong> CREATE (não sobrescreve dados existentes)
+  </div>
+
+  <div class="file-upload" id="fileUpload" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept=".json" onchange="carregarArquivo(event)">
+    <div id="uploadText">
+      <div style="font-size: 48px; margin-bottom: 10px;">📁</div>
+      <div style="font-weight: 600; margin-bottom: 5px;">Clique para selecionar arquivo</div>
+      <div style="font-size: 12px; color: #666;">backup-completo.json da Etapa 1</div>
+    </div>
+    <div id="loadedText" style="display: none;">
+      <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+      <div style="font-weight: 600; color: #155724;" id="fileName"></div>
+      <div style="font-size: 12px; color: #155724;">Arquivo carregado - pronto para importar</div>
+    </div>
+  </div>
+
+  <button id="btnImportar" class="button" onclick="iniciarImportacao()" disabled>
+    📥 Iniciar Importação
+  </button>
+
+  <div class="progress" id="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div id="log"></div>
+
+  <div class="success-message" id="successMessage">
+    <h3>✅ Importação Concluída com Sucesso!</h3>
+    <p>Próximos passos:</p>
+    <ul style="margin-left: 20px; color: #155724;">
+      <li>Execute a ETAPA 3 (Atualizar Páginas)</li>
+      <li>Teste o sistema completo</li>
+      <li>Verifique se todos os dados foram importados</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+  // ══════════════════════════════════════════════════════════
+  //  FIREBASE CONFIG - PROJETO DESTINO (central-sci-joinville)
+  // ══════════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
+    authDomain: "central-sci-joinville.firebaseapp.com",
+    databaseURL: "https://central-sci-joinville-default-rtdb.firebaseio.com", // ← VOCÊ PRECISA CRIAR!
+    projectId: "central-sci-joinville",
+    storageBucket: "central-sci-joinville.firebasestorage.app",
+    messagingSenderId: "340864161035",
+    appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const rtdb = firebase.database();
+
+  // ══════════════════════════════════════════════════════════
+  //  STATE
+  // ══════════════════════════════════════════════════════════
+  const logEl = document.getElementById('log');
+  const progressEl = document.getElementById('progress');
+  const progressBar = document.getElementById('progressBar');
+  const btnImportar = document.getElementById('btnImportar');
+  const successMessage = document.getElementById('successMessage');
+  
+  let backupData = null;
+
+  function log(message, type = 'info') {
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    logEl.classList.add('show');
+    console.log(message);
+  }
+
+  function setProgress(percent) {
+    progressEl.classList.add('show');
+    progressBar.style.width = percent + '%';
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  CARREGAR ARQUIVO
+  // ══════════════════════════════════════════════════════════
+  function carregarArquivo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        backupData = JSON.parse(e.target.result);
+        
+        document.getElementById('uploadText').style.display = 'none';
+        document.getElementById('loadedText').style.display = 'block';
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileUpload').classList.add('loaded');
+        
+        btnImportar.disabled = false;
+        
+        console.log('✅ Arquivo carregado:', backupData);
+        
+      } catch (error) {
+        alert('❌ Erro ao ler arquivo: ' + error.message);
+      }
+    };
+    
+    reader.readAsText(file);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  IMPORTAÇÃO
+  // ══════════════════════════════════════════════════════════
+  async function iniciarImportacao() {
+    if (!backupData) {
+      alert('❌ Carregue o arquivo primeiro!');
+      return;
+    }
+
+    if (!confirm(
+      '⚠️ CONFIRMAR IMPORTAÇÃO?\n\n' +
+      'Isso vai importar todos os dados para central-sci-joinville.\n\n' +
+      'Tem certeza?'
+    )) {
+      return;
+    }
+
+    btnImportar.disabled = true;
+    btnImportar.textContent = '⏳ Importando...';
+    logEl.innerHTML = '';
+    
+    try {
+      log('🚀 Iniciando importação...', 'info');
+      setProgress(5);
+
+      // ═══ ETAPA 1: FIRESTORE ═══
+      log('📦 Importando Firestore...', 'info');
+      await importarFirestore();
+      setProgress(50);
+
+      // ═══ ETAPA 2: REALTIME DATABASE ═══
+      log('📦 Importando Realtime Database...', 'info');
+      await importarRealtimeDatabase();
+      setProgress(90);
+
+      setProgress(100);
+      log('✅ IMPORTAÇÃO CONCLUÍDA!', 'success');
+      successMessage.classList.add('show');
+      btnImportar.textContent = '✅ Importação Concluída';
+
+    } catch (error) {
+      log(`❌ ERRO: ${error.message}`, 'error');
+      btnImportar.disabled = false;
+      btnImportar.textContent = '🔄 Tentar Novamente';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  IMPORTAR FIRESTORE
+  // ══════════════════════════════════════════════════════════
+  async function importarFirestore() {
+    const bases = backupData.firestore.bases;
+    
+    for (const [baseId, baseData] of Object.entries(bases)) {
+      log(`   → Importando base: ${baseId}...`, 'info');
+      
+      // Separar extintores do resto dos dados da base
+      const { extintores, ...dadosBase } = baseData;
+      
+      // Criar/atualizar base
+      await db.collection('bases').doc(baseId).set(dadosBase);
+      log(`   ✓ Base ${baseId} criada`, 'success');
+      
+      // Importar extintores
+      if (extintores) {
+        log(`   → Importando ${Object.keys(extintores).length} extintores...`, 'info');
+        
+        let count = 0;
+        for (const [extintorId, extintorData] of Object.entries(extintores)) {
+          await db.collection('bases')
+            .doc(baseId)
+            .collection('extintores')
+            .doc(extintorId)
+            .set(extintorData);
+          
+          count++;
+          if (count % 10 === 0) {
+            log(`   → Processados: ${count}/${Object.keys(extintores).length}`, 'info');
+          }
+        }
+        
+        log(`   ✓ ${count} extintores importados`, 'success');
+      }
+    }
+    
+    log(`✅ ${Object.keys(bases).length} bases importadas`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  IMPORTAR REALTIME DATABASE
+  // ══════════════════════════════════════════════════════════
+  async function importarRealtimeDatabase() {
+    const extintores = backupData.realtimeDatabase.extintores;
+    
+    if (!extintores || Object.keys(extintores).length === 0) {
+      log('⚠️ Nenhum dado no Realtime Database', 'warning');
+      return;
+    }
+    
+    log(`   → Importando ${Object.keys(extintores).length} edificações...`, 'info');
+    
+    // Importar tudo de uma vez
+    await rtdb.ref('extintores').set(extintores);
+    
+    log(`✅ ${Object.keys(extintores).length} edificações importadas (Realtime)`, 'success');
+  }
+</script>
+
+</body>
+</html>
