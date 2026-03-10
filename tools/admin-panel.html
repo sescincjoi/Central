@@ -780,43 +780,53 @@
     // ══════════════════════════════════════════════════════════
     //  EXCLUIR EDIFICAÇÃO (GLOBAL)
     // ══════════════════════════════════════════════════════════
-    window.excluirEdificacao = async function(nome) {
+    window.excluirEdificacao = async function(nomeEdificacao) {
       // Verificar se tem extintores
-      const totalExt = todosExtintores.filter(e => e.edificacao === nome).length;
+      const extintoresDaEdificacao = todosExtintores.filter(e => e.edificacao === nomeEdificacao);
       
-      if (totalExt > 0) {
+      if (extintoresDaEdificacao.length > 0) {
         alert(
           `❌ Não é possível excluir!\n\n` +
-          `Esta edificação possui ${totalExt} extintor(es).\n\n` +
-          `Remova ou transfira os extintores antes de excluir a edificação.`
+          `Esta edificação tem ${extintoresDaEdificacao.length} extintor(es).\n\n` +
+          `Você deve:\n` +
+          `1. Deletar ou mover todos os extintores primeiro\n` +
+          `2. Depois excluir a edificação`
         );
         return;
       }
-
+    
       const confirmar = confirm(
-        `⚠️ Confirma exclusão da edificação?\n\n` +
-        `${nome}\n\n` +
-        `Esta ação não pode ser desfeita.`
+        `⚠️ Tem certeza que deseja excluir a edificação "${nomeEdificacao}"?\n\n` +
+        `Esta ação não pode ser desfeita!`
       );
-
+    
       if (!confirmar) return;
-
+    
       try {
         const db = firebase.firestore();
-        
-        await db.collection('edificacoes').doc('lista').update({
-          [nome]: firebase.firestore.FieldValue.delete()
+        const service = new ExtintorService().init();
+        const base = await service.getBaseAtual();
+        const baseId = base.id;
+    
+        // Criar cópia das edificações sem a que será excluída
+        const edificacoesAtualizadas = { ...edificacoes };
+        delete edificacoesAtualizadas[nomeEdificacao];
+    
+        // Atualizar documento da base
+        await db.collection('bases').doc(baseId).update({
+          edificacoes: edificacoesAtualizadas,
+          atualizado_em: new Date().toISOString()
         });
-
-        alert('✅ Edificação excluída!');
-
+    
+        alert('✅ Edificação excluída com sucesso!');
+        
         await carregarDados();
         popularSelectEdificacoes();
         renderizarEdificacoes();
-
+    
       } catch (error) {
-        console.error('❌ Erro:', error);
-        alert('❌ Erro ao excluir: ' + error.message);
+        console.error('❌ Erro ao excluir:', error);
+        alert('❌ Erro ao excluir edificação: ' + error.message);
       }
     };
   </script>
