@@ -1130,7 +1130,9 @@
         
         if (loadingEl) loadingEl.style.display = 'none';
         
-        iniciarListenerVistorias();
+        setTimeout(() => {
+          iniciarListenerVistorias();
+        }, 1000);
 
          renderList();
         
