@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migração Realtime → Multi-Base</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .warning strong {
+      color: #856404;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .info {
+      background: #d1ecf1;
+      border-left: 4px solid #0c5460;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .steps {
+      margin: 20px 0;
+    }
+
+    .step {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .step-number {
+      background: #667eea;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #1a1a1a;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #log {
+      background: #1a1a1a;
+      color: #0f0;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+      display: none;
+      line-height: 1.6;
+    }
+
+    #log.show {
+      display: block;
+    }
+
+    .log-success { color: #0f0; }
+    .log-error { color: #f00; }
+    .log-warning { color: #ff0; }
+    .log-info { color: #0ff; }
+
+    .progress {
+      background: #e0e0e0;
+      height: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress.show {
+      display: block;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .success-message {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .success-message h3 {
+      color: #155724;
+      margin-bottom: 10px;
+    }
+
+    code {
+      background: rgba(0,0,0,0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>
+    <span style="font-size: 32px;">🔄</span>
+    Migração Realtime Multi-Base
+  </h1>
+  <p class="subtitle">Reestruturar inspeções por base</p>
+
+  <div class="warning">
+    <strong>⚠️ IMPORTANTE - Leia antes de executar!</strong>
+    Este script vai mover os dados de inspeções para a estrutura multi-base.
+    Um backup será criado automaticamente.
+  </div>
+
+  <div class="info">
+    <strong>📋 O que será feito:</strong><br>
+    <strong>Estrutura ATUAL:</strong> <code>extintores/{edificacao}/{numero}</code><br>
+    <strong>Estrutura NOVA:</strong> <code>JOI/extintores/{edificacao}/{numero}</code><br><br>
+    Todos os dados serão movidos para dentro do nó <code>JOI</code> (base atual).
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <div class="step-title">Backup automático</div>
+        <div class="step-desc">Cria backup_realtime_{timestamp}</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <div class="step-title">Copiar dados</div>
+        <div class="step-desc">Copia extintores/ → JOI/extintores/</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <div class="step-title">Deletar estrutura antiga</div>
+        <div class="step-desc">Remove o nó extintores/ antigo</div>
+      </div>
+    </div>
+  </div>
+
+  <button id="btnMigrar" class="button" onclick="iniciarMigracao()">
+    🔄 Iniciar Migração
+  </button>
+
+  <div class="progress" id="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div id="log"></div>
+
+  <div class="success-message" id="successMessage">
+    <h3>✅ Migração Concluída!</h3>
+    <p>Próximos passos:</p>
+    <ul style="margin-left: 20px; color: #155724;">
+      <li>Atualize as regras do Realtime Database</li>
+      <li>Substitua a página de inspeção pela nova versão</li>
+      <li>Teste o sistema completo</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+  // ══════════════════════════════════════════════════════════
+  //  FIREBASE CONFIG
+  // ══════════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
+    authDomain: "central-sci-joinville.firebaseapp.com",
+    databaseURL: "https://central-sci-joinville-default-rtdb.firebaseio.com",
+    projectId: "central-sci-joinville",
+    storageBucket: "central-sci-joinville.firebasestorage.app",
+    messagingSenderId: "340864161035",
+    appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const rtdb = firebase.database();
+
+  // ══════════════════════════════════════════════════════════
+  //  STATE
+  // ══════════════════════════════════════════════════════════
+  const logEl = document.getElementById('log');
+  const progressEl = document.getElementById('progress');
+  const progressBar = document.getElementById('progressBar');
+  const btnMigrar = document.getElementById('btnMigrar');
+  const successMessage = document.getElementById('successMessage');
+
+  function log(message, type = 'info') {
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    logEl.classList.add('show');
+    console.log(message);
+  }
+
+  function setProgress(percent) {
+    progressEl.classList.add('show');
+    progressBar.style.width = percent + '%';
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  MIGRAÇÃO
+  // ══════════════════════════════════════════════════════════
+  async function iniciarMigracao() {
+    if (!confirm(
+      '⚠️ CONFIRMAR MIGRAÇÃO?\n\n' +
+      'Os dados serão movidos para a estrutura multi-base.\n' +
+      'Um backup será criado automaticamente.\n\n' +
+      'Continuar?'
+    )) {
+      return;
+    }
+
+    btnMigrar.disabled = true;
+    btnMigrar.textContent = '⏳ Migrando...';
+    logEl.innerHTML = '';
+    
+    try {
+      log('🚀 Iniciando migração...', 'info');
+      setProgress(5);
+
+      // ═══ ETAPA 1: BACKUP ═══
+      log('📦 Criando backup...', 'info');
+      await criarBackup();
+      setProgress(20);
+
+      // ═══ ETAPA 2: LER DADOS ATUAIS ═══
+      log('📥 Lendo dados atuais...', 'info');
+      const dadosAtuais = await lerDadosAtuais();
+      setProgress(40);
+
+      // ═══ ETAPA 3: COPIAR PARA NOVA ESTRUTURA ═══
+      log('📝 Copiando para nova estrutura (JOI)...', 'info');
+      await copiarParaNovaEstrutura(dadosAtuais);
+      setProgress(70);
+
+      // ═══ ETAPA 4: DELETAR ESTRUTURA ANTIGA ═══
+      log('🗑️ Deletando estrutura antiga...', 'info');
+      await deletarEstruturaAntiga();
+      setProgress(100);
+
+      log('✅ MIGRAÇÃO CONCLUÍDA!', 'success');
+      successMessage.classList.add('show');
+      btnMigrar.textContent = '✅ Migração Concluída';
+
+    } catch (error) {
+      log(`❌ ERRO: ${error.message}`, 'error');
+      btnMigrar.disabled = false;
+      btnMigrar.textContent = '🔄 Tentar Novamente';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  BACKUP
+  // ══════════════════════════════════════════════════════════
+  async function criarBackup() {
+    const snapshot = await rtdb.ref('extintores').once('value');
+    const dados = snapshot.val();
+    
+    if (!dados) {
+      log('⚠️ Nenhum dado para fazer backup', 'warning');
+      return;
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    await rtdb.ref(`backup_realtime/${timestamp}`).set(dados);
+    
+    log(`✅ Backup criado: backup_realtime/${timestamp}`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  LER DADOS ATUAIS
+  // ══════════════════════════════════════════════════════════
+  async function lerDadosAtuais() {
+    const snapshot = await rtdb.ref('extintores').once('value');
+    const dados = snapshot.val();
+    
+    if (!dados) {
+      throw new Error('Nenhum dado encontrado em extintores/');
+    }
+
+    const totalEdificacoes = Object.keys(dados).length;
+    let totalExtintores = 0;
+    
+    Object.values(dados).forEach(edificacao => {
+      totalExtintores += Object.keys(edificacao).length;
+    });
+
+    log(`📊 Encontrados: ${totalEdificacoes} edificações, ${totalExtintores} extintores`, 'info');
+    
+    return dados;
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  COPIAR PARA NOVA ESTRUTURA
+  // ══════════════════════════════════════════════════════════
+  async function copiarParaNovaEstrutura(dados) {
+    // Copiar tudo para JOI/extintores/
+    await rtdb.ref('JOI/extintores').set(dados);
+    
+    const totalEdificacoes = Object.keys(dados).length;
+    log(`✅ ${totalEdificacoes} edificações copiadas para JOI/extintores/`, 'success');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  DELETAR ESTRUTURA ANTIGA
+  // ══════════════════════════════════════════════════════════
+  async function deletarEstruturaAntiga() {
+    await rtdb.ref('extintores').remove();
+    log('✅ Estrutura antiga removida', 'success');
+  }
+</script>
+
+</body>
+</html>
