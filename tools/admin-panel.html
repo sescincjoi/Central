@@ -663,28 +663,31 @@
     // ══════════════════════════════════════════════════════════
     window.salvarEdificacao = async function(event) {
       event.preventDefault();
-
+    
       const nomeAntigo = document.getElementById('edificacao-id-antigo').value;
       const nomeNovo = document.getElementById('edificacao-nome').value.trim().toUpperCase();
       const descricao = document.getElementById('edificacao-descricao').value.trim();
-
+    
       if (!nomeNovo) {
         alert('⚠️ Nome é obrigatório!');
         return;
       }
-
+    
       try {
         const db = firebase.firestore();
-
+        const service = new ExtintorService().init();
+        const base = await service.getBaseAtual();
+        const baseId = base.id;
+    
         if (nomeAntigo && nomeAntigo !== nomeNovo) {
-          // RENOMEAR EDIFICAÇÃO
+          // ═══ RENOMEAR EDIFICAÇÃO ═══
           
           // Verificar se novo nome já existe
           if (edificacoes[nomeNovo]) {
             alert('❌ Já existe uma edificação com este nome!');
             return;
           }
-
+    
           // Verificar se tem extintores
           const extintoresDaEdificacao = todosExtintores.filter(e => e.edificacao === nomeAntigo);
           
@@ -695,16 +698,16 @@
               `Ao renomear, TODOS os extintores serão atualizados.\n\n` +
               `Deseja continuar?`
             );
-
+    
             if (!confirmar) return;
-
+    
             // Atualizar todos os extintores (batch)
             const batch = db.batch();
             
             extintoresDaEdificacao.forEach(ext => {
               const novoId = `${nomeNovo}_${ext.numero}`;
-              const refAntiga = db.collection('extintores_instalados').doc(ext.id);
-              const refNova = db.collection('extintores_instalados').doc(novoId);
+              const refAntiga = db.collection('bases').doc(baseId).collection('extintores').doc(ext.id);
+              const refNova = db.collection('bases').doc(baseId).collection('extintores').doc(novoId);
               
               // Copiar para novo ID
               batch.set(refNova, {
@@ -717,49 +720,57 @@
               // Deletar antigo
               batch.delete(refAntiga);
             });
-
+    
             await batch.commit();
             alert(`✅ Edificação renomeada!\n${extintoresDaEdificacao.length} extintores atualizados.`);
           }
-
-          // Atualizar edificação
-          await db.collection('edificacoes').doc('lista').update({
-            [nomeAntigo]: firebase.firestore.FieldValue.delete(),
-            [nomeNovo]: {
-              nome: nomeNovo,
-              descricao: descricao,
-              total_extintores: extintoresDaEdificacao.length,
-              atualizada_em: new Date().toISOString()
-            }
+    
+          // Atualizar edificações no documento da base
+          const edificacoesAtualizadas = { ...edificacoes };
+          delete edificacoesAtualizadas[nomeAntigo];
+          edificacoesAtualizadas[nomeNovo] = {
+            nome: nomeNovo,
+            descricao: descricao,
+            total_extintores: extintoresDaEdificacao.length,
+            atualizada_em: new Date().toISOString()
+          };
+    
+          await db.collection('bases').doc(baseId).update({
+            edificacoes: edificacoesAtualizadas,
+            atualizado_em: new Date().toISOString()
           });
-
+    
         } else {
-          // CRIAR ou EDITAR (sem renomear)
+          // ═══ CRIAR ou EDITAR (sem renomear) ═══
           
           if (!nomeAntigo && edificacoes[nomeNovo]) {
             alert('❌ Já existe uma edificação com este nome!');
             return;
           }
-
+    
           const totalExt = todosExtintores.filter(e => e.edificacao === nomeNovo).length;
-
-          await db.collection('edificacoes').doc('lista').update({
-            [nomeNovo]: {
-              nome: nomeNovo,
-              descricao: descricao,
-              total_extintores: totalExt,
-              ...(nomeAntigo ? { atualizada_em: new Date().toISOString() } : { criada_em: new Date().toISOString() })
-            }
+    
+          const edificacoesAtualizadas = { ...edificacoes };
+          edificacoesAtualizadas[nomeNovo] = {
+            nome: nomeNovo,
+            descricao: descricao,
+            total_extintores: totalExt,
+            ...(nomeAntigo ? { atualizada_em: new Date().toISOString() } : { criada_em: new Date().toISOString() })
+          };
+    
+          await db.collection('bases').doc(baseId).update({
+            edificacoes: edificacoesAtualizadas,
+            atualizado_em: new Date().toISOString()
           });
-
+    
           alert(nomeAntigo ? '✅ Edificação atualizada!' : '✅ Edificação criada!');
         }
-
+    
         fecharModalEdificacao();
         await carregarDados();
         popularSelectEdificacoes();
         renderizarEdificacoes();
-
+    
       } catch (error) {
         console.error('❌ Erro:', error);
         alert('❌ Erro ao salvar: ' + error.message);
