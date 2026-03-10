@@ -1119,8 +1119,8 @@
         edificacoesDescr = dados.edificacoesDescr;
         extintoresInfo   = dados.extintoresInfo;
         edificacoesArray = dados.edificacoesArray;
-        modoClassificacao = dados.modo || 'tipo_carga_nominal'; // ← captura o modo configurado
-
+        modoClassificacao = dados.modo || 'tipo_carga_nominal';
+    
         await carregarOpcoesCapacidade();
         
         console.log(`✅ Carregados: ${edificacoesArray.length} edificações | Modo: ${modoClassificacao}`);
@@ -1130,11 +1130,31 @@
         
         if (loadingEl) loadingEl.style.display = 'none';
         
-        setTimeout(() => {
+        // ═══ AGUARDAR AUTH ESTAR PRONTO ANTES DE INICIAR LISTENER ═══
+        console.log('🔍 Verificando auth antes de iniciar listener...');
+        
+        const user = firebase.auth().currentUser;
+        
+        if (user) {
+          console.log('✅ Usuário já autenticado:', user.uid);
           iniciarListenerVistorias();
-        }, 1000);
-
-         renderList();
+          renderList();
+        } else {
+          console.log('⏳ Aguardando autenticação completa...');
+          
+          const unsubscribe = firebase.auth().onAuthStateChanged((authUser) => {
+            if (authUser) {
+              console.log('✅ Autenticação confirmada:', authUser.uid);
+              unsubscribe(); // Parar de escutar
+              
+              // Aguardar mais 500ms para garantir que o token está disponível
+              setTimeout(() => {
+                iniciarListenerVistorias();
+                renderList();
+              }, 500);
+            }
+          });
+        }
         
       } catch (error) {
         console.error('❌ Erro:', error);
