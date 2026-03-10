@@ -940,7 +940,7 @@
 
   <!-- ── Fixed reset bar ── -->
   <div class="reset-bar">
-    <button class="reset-btn" onclick="resetarTodos()">🔄 Resetar TODOS os extintores</button>
+    <button class="reset-btn" onclick="resetarTodos()" id="btnReset">🔄 Resetar TODOS os extintores</button>
   </div>
 
   <!-- ── Confirm reset overlay ── -->
@@ -1073,6 +1073,31 @@
     let edificacaoAtual = null;
 
     // ══════════════════════════════════════════════════════════
+    //  OBTER CÓDIGO IATA DA BASE ATUAL
+    // ══════════════════════════════════════════════════════════
+    async function obterBaseIATAAtual() {
+      // Cache para evitar múltiplas buscas
+      if (window.baseIATACache) {
+        return window.baseIATACache;
+      }
+      
+      try {
+        const service = inicializarExtintorService();
+        const base = await service.getBaseAtual();
+        window.baseIATACache = base.base; // Ex: "JOI"
+        
+        console.log(`📍 Base IATA: ${window.baseIATACache}`);
+        return window.baseIATACache;
+        
+      } catch (error) {
+        console.error('❌ Erro ao obter base IATA:', error);
+        // Fallback para base padrão
+        window.baseIATACache = 'JOI';
+        return 'JOI';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
     //  INICIALIZAR SERVICE
     // ══════════════════════════════════════════════════════════
     function inicializarExtintorService() {
@@ -1155,6 +1180,12 @@
             }
           });
         }
+
+        // Atualizar texto do botão de reset
+        const btnReset = document.getElementById('btnReset');
+        if (btnReset && window.baseIATACache) {
+          btnReset.textContent = `🔄 Resetar vistorias da base ${window.baseIATACache}`;
+        }
         
       } catch (error) {
         console.error('❌ Erro:', error);
@@ -1176,8 +1207,14 @@
       });
     }
     
-    function iniciarListenerVistorias() {
-      db.ref('extintores').on('value', snapshot => {
+    async function iniciarListenerVistorias() {
+      // Obter base IATA
+      const baseIATA = await obterBaseIATAAtual();
+      
+      console.log(`🔍 Iniciando listener: ${baseIATA}/extintores`);
+      
+      // Listener na base específica
+      db.ref(`${baseIATA}/extintores`).on('value', snapshot => {
         globalData = snapshot.val() || {};
         
         if (Object.keys(extintoresInfo).length > 0) {
@@ -1696,7 +1733,7 @@
       document.getElementById('p4_1').style.display = valor === 'Não conforme' ? 'block' : 'none';
     }
 
-    function enviarFormulario() {
+    async function enviarFormulario() {
       const form = document.getElementById('formInspecao');
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
@@ -1734,7 +1771,11 @@
       };
 
       // Save to Firebase Realtime DB
-      db.ref(`extintores/${edificacaoAtual}/${numeroAtual}`).update({
+      // Obter base IATA
+      const baseIATA = await obterBaseIATAAtual();
+      
+      // Salvar na base específica
+      db.ref(`${baseIATA}/extintores/${edificacaoAtual}/${numeroAtual}`).update({
         vistoriado: true,
         por:        dados.usuario,
         dataHora:   new Date().toISOString(),
@@ -1763,18 +1804,36 @@
       if (e.target === document.getElementById('confirmResetOverlay')) confirmReset(false);
     }
 
-    function confirmReset(decisao) {
+    async function confirmReset(decisao) {
       document.getElementById('confirmResetOverlay').style.display = 'none';
       if (!decisao) return;
-      db.ref('extintores').once('value').then(snapshot => {
+      
+      try {
+        // Obter base IATA
+        const baseIATA = await obterBaseIATAAtual();
+        
+        console.log(`🔄 Resetando vistorias da base: ${baseIATA}`);
+        
+        const snapshot = await db.ref(`${baseIATA}/extintores`).once('value');
         const updates = {};
+        
         snapshot.forEach(ed => {
           ed.forEach(ext => {
-            updates[`extintores/${ed.key}/${ext.key}`] = { vistoriado: false, por: '' };
+            updates[`${baseIATA}/extintores/${ed.key}/${ext.key}`] = { 
+              vistoriado: false, 
+              por: '' 
+            };
           });
         });
-        db.ref().update(updates);
-      });
+        
+        await db.ref().update(updates);
+        
+        console.log('✅ Reset concluído!');
+        
+      } catch (error) {
+        console.error('❌ Erro ao resetar:', error);
+        alert('Erro ao resetar vistorias: ' + error.message);
+      }
     }
 
     // ──────────────────────────────────────────
