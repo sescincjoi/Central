@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Extrator de dados</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fbfbfb" id="themeColorMeta">
+
+    <link rel="icon" type="image/png" href="/logo.png">
+    <link rel="apple-touch-icon" href="/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #000;
+            height: 100vh;
+            overflow: hidden;
+            padding-top: env(safe-area-inset-top);
+        }
+
+        /* ── IFRAME — ocupa tudo ── */
+        iframe {
+            position: fixed;
+            top: env(safe-area-inset-top, 0px);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: calc(100% - env(safe-area-inset-top, 0px));
+            border: none;
+            display: block;
+        }
+
+        /* ── OVERLAY FIXO PARA PWA ── */
+        .pwa-footer-overlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            /* Cobre toda a área do rodapé */
+            display: flex;
+            justify-content: center;
+            z-index: 2000;
+            pointer-events: none;
+            /* Cliques passam para o iframe por padrão */
+        }
+
+        .pwa-footer-overlay-inner {
+            width: 100%;
+            max-width: 672px;
+            /* max-w-2xl no Tailwind */
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .btn-overlay-hit-area {
+            width: 170px;
+            /* Área generosa para o clique */
+            height: 60px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            pointer-events: all;
+            /* Captura o clique */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── LOADING ── */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #f5f5f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            z-index: 500;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loading-logo {
+            width: 68px;
+            height: 68px;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.13);
+        }
+
+        .loading-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 2.5px solid rgba(0, 122, 255, 0.15);
+            border-top-color: #007AFF;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 13px;
+            color: #86868b;
+            font-weight: 500;
+        }
+
+        /* ── ERRO ── */
+        .error-screen {
+            position: fixed;
+            inset: 0;
+            background: #f5f5f7;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            text-align: center;
+            z-index: 500;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .error-screen.show {
+            display: flex;
+        }
+
+        .error-icon {
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            background: #FFE5E3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+
+        .error-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+        }
+
+        .error-desc {
+            font-size: 14px;
+            color: #86868b;
+            line-height: 1.6;
+            max-width: 280px;
+            margin-bottom: 26px;
+        }
+
+        .btn-open-external {
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 13px 26px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .btn-open-external:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .btn-open-external:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Iframe principal -->
+    <iframe id="mainFrame" src="https://sescincjoi.vercel.app/" title="SCI JOI Sistema" allow="fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+
+    <!-- Overlay do botão Voltar — invisível para o usuário -->
+    <div class="pwa-footer-overlay">
+        <div class="pwa-footer-overlay-inner">
+            <button class="btn-overlay-hit-area" id="btnBack" title="Voltar" onclick="history.back()"></button>
+            <button class="btn-overlay-hit-area" id="btnData" title="Ver dados"
+                onclick="window.location.href='./dados_extrator.html'"></button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">
+            <img src="https://lh3.googleusercontent.com/u/0/d/1qRTQ2m7853VqWVPnms99f0cPBlQHahXq" alt="SCI"
+                onerror="this.src='https://via.placeholder.com/68x68?text=SCI'">
+        </div>
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Carregando sistema…</p>
+    </div>
+
+    <!-- Erro -->
+    <div class="error-screen" id="errorScreen">
+        <div class="error-icon">
+            <i data-lucide="shield-x" style="width:30px;height:30px;color:#FF3B30;"></i>
+        </div>
+        <p class="error-title">Conteúdo bloqueado</p>
+        <p class="error-desc">Este sistema não permite ser incorporado. Abra diretamente no navegador.</p>
+        <button class="btn-open-external" onclick="window.open('https://sescincjoi.vercel.app/','_blank')">
+            <i data-lucide="external-link" style="width:17px;height:17px;"></i>
+            Abrir no navegador
+        </button>
+    </div>
+
+    <script>
+        const frame = document.getElementById('mainFrame');
+        const loading = document.getElementById('loadingScreen');
+        const errorEl = document.getElementById('errorScreen');
+        const meta = document.getElementById('themeColorMeta');
+
+        // Tema do sistema → atualiza theme-color da PWA
+        const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+        const applyTheme = isDark =>
+            meta.setAttribute('content', isDark ? '#1c1c1e' : '#fbfbfb');
+
+        applyTheme(darkMQ.matches);
+        darkMQ.addEventListener('change', e => applyTheme(e.matches));
+
+        // Loading / erro
+        let loadTimeout = setTimeout(() => {
+            if (!loading.classList.contains('hidden')) showError();
+        }, 12000);
+
+        frame.addEventListener('load', () => {
+            clearTimeout(loadTimeout);
+            let blocked = false;
+            try {
+                const doc = frame.contentDocument || frame.contentWindow?.document;
+                if (!doc || doc.body.innerHTML.trim() === '') blocked = true;
+            } catch (e) { blocked = false; }
+
+            if (blocked) { showError(); return; }
+            loading.classList.add('hidden');
+        });
+
+        function showError() {
+            loading.classList.add('hidden');
+            errorEl.classList.add('show');
+        }
+
+        lucide.createIcons();
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('✅ SW registrado'))
+                .catch(err => console.log('❌ Erro SW', err));
+        }
+    </script>
+
+</body>
+
+</html>
