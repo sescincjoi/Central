@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Extrator de dados</title>
 
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="../pwa/manifest.json">
     <meta name="theme-color" content="#fbfbfb" id="themeColorMeta">
 
-    <link rel="icon" type="image/png" href="/logo.png">
-    <link rel="apple-touch-icon" href="/logo.png">
+    <link rel="icon" type="image/png" href="../pwa/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="../pwa/icons/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -209,6 +209,21 @@
             transform: scale(0.97);
         }
     </style>
+    <script type="module">
+        import authCore from '../js/auth/auth-core.js';
+        import authUI from '../js/auth/auth-ui.js';
+        import authLock from '../js/auth/auth-lock.js';
+        import authGuard from '../js/auth/auth-guard.js';
+        import matriculaHandler from '../js/auth/matricula-handler.js';
+
+        window.authCore = authCore;
+        window.authUI = authUI;
+        window.authGuard = authGuard;
+        window.matriculaHandler = matriculaHandler;
+        window.authLock = authLock;
+
+        console.log('✅ Módulos de autenticação carregados (Extrator)');
+    </script>
 </head>
 
 <body>
@@ -290,7 +305,7 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register('../sw.js')
                 .then(() => console.log('✅ SW registrado'))
                 .catch(err => console.log('❌ Erro SW', err));
         }

@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Dados do Extrator</title>
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="/logo.png">
+    <link rel="manifest" href="../pwa/manifest.json">
+    <link rel="icon" type="image/png" href="../pwa/icons/icon-192.png">
     <meta name="theme-color" content="#fbfbfb" id="themeColorMeta">
 
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -173,11 +173,11 @@
         }
     </style>
     <script type="module">
-        import authCore from '/Central/js/auth/auth-core.js';
-        import authUI from '/Central/js/auth/auth-ui.js';
-        import authLock from '/Central/js/auth/auth-lock.js';
-        import authGuard from '/Central/js/auth/auth-guard.js';
-        import matriculaHandler from '/Central/js/auth/matricula-handler.js';
+        import authCore from '../js/auth/auth-core.js';
+        import authUI from '../js/auth/auth-ui.js';
+        import authLock from '../js/auth/auth-lock.js';
+        import authGuard from '../js/auth/auth-guard.js';
+        import matriculaHandler from '../js/auth/matricula-handler.js';
 
         window.authCore = authCore;
         window.authUI = authUI;
@@ -621,6 +621,14 @@
         // Inicializar
         fetchData();
         lucide.createIcons();
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js')
+                .then(() => console.log('✅ SW registrado (Dados Extrator)'))
+                .catch(err => console.log('❌ Erro SW', err));
+        }
     </script>
 </body>
 
