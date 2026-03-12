@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Dados do Extrator</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="/logo.png">
+    <meta name="theme-color" content="#fbfbfb" id="themeColorMeta">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #FF9500;
+            --primary-foreground: #ffffff;
+            --background: #fbfbfb;
+            --foreground: #1d1d1f;
+            --card: #ffffff;
+            --card-foreground: #1d1d1f;
+            --border: #e5e5e7;
+            --muted: #f5f5f7;
+            --muted-foreground: #86868b;
+        }
+
+        .dark {
+            --primary: #FF9500;
+            --primary-foreground: #ffffff;
+            --background: #000000;
+            --foreground: #f5f5f7;
+            --card: #1c1c1e;
+            --card-foreground: #f5f5f7;
+            --border: #2c2c2e;
+            --muted: #2c2c2e;
+            --muted-foreground: #a1a1a6;
+        }
+
+        * {
+            -webkit-font-smoothing: antialiased;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        .gradient-orange {
+            background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
+        }
+
+        .glass-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .btn-premium {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-premium:active {
+            transform: scale(0.96);
+        }
+
+        /* Animações */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        /* Responsividade Tabela Mobile */
+        @media (max-width: 640px) {
+            .table-container {
+                margin: 0 -1rem;
+                width: calc(100% + 2rem);
+                border-radius: 0;
+            }
+
+            #dataTable {
+                width: auto;
+                /* Permite que a tabela cresça além da tela */
+                min-width: 800px;
+            }
+
+            #tableBody td {
+                max-height: 80px;
+                overflow-y: auto;
+                display: table-cell;
+                vertical-align: middle;
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: modalScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalScale {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+    <script type="module">
+        import authCore from '/Central/js/auth/auth-core.js';
+        import authUI from '/Central/js/auth/auth-ui.js';
+        import authLock from '/Central/js/auth/auth-lock.js';
+        import authGuard from '/Central/js/auth/auth-guard.js';
+        import matriculaHandler from '/Central/js/auth/matricula-handler.js';
+
+        window.authCore = authCore;
+        window.authUI = authUI;
+        window.authGuard = authGuard;
+        window.matriculaHandler = matriculaHandler;
+        window.authLock = authLock;
+
+        console.log('✅ Módulos de autenticação carregados (Dados Extrator)');
+    </script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="sticky top-0 z-30 w-full border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-md">
+        <div class="mx-auto flex max-w-[98%] items-center gap-4 px-4 py-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0 shadow-md gradient-orange">
+                <i data-lucide="database" class="h-6 w-6 text-white"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-sm font-extrabold uppercase tracking-tight leading-none truncate">
+                    Consultar Dados
+                </h1>
+                <p class="text-[10px] text-[var(--muted-foreground)] font-bold uppercase tracking-widest mt-1 truncate">
+                    Histórico de Relatórios
+                </p>
+            </div>
+            <button id="themeToggle"
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--muted)] border border-[var(--border)] text-[var(--foreground)] transition-all">
+                <i data-lucide="sun" id="sunIcon" class="hidden h-5 w-5"></i>
+                <i data-lucide="moon" id="moonIcon" class="h-5 w-5"></i>
+            </button>
+            <button id="infoToggle"
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--muted)] border border-[var(--border)] text-[var(--foreground)] transition-all">
+                <i data-lucide="info" class="h-5 w-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-[98%] px-4 py-6 space-y-6">
+        <!-- Filtros -->
+        <section class="glass-card p-5 animate-fade-in">
+            <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="filter" class="w-4 h-4 text-[var(--primary)]"></i>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Filtros de Busca
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Mês/Ano -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold uppercase ml-1 opacity-70">Mês / Ano</label>
+                    <input type="month" id="filterMonth"
+                        class="w-full bg-[var(--muted)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--primary)] transition-all">
+                </div>
+
+                <!-- Intervalo Relatório -->
+                <div class="md:col-span-2 space-y-1.5">
+                    <label class="text-[10px] font-bold uppercase ml-1 opacity-70">Intervalo de Relatório (Ex: 135-150
+                        ou 135+)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="filterRange" placeholder="Ex: 135-150"
+                            class="flex-1 bg-[var(--muted)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--primary)] transition-all">
+                        <button id="btnSearch"
+                            class="gradient-orange text-white px-5 py-2.5 rounded-xl font-bold text-sm btn-premium shadow-lg shadow-orange-500/20">
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ações e Status -->
+        <div class="flex items-center justify-between px-2">
+            <div id="statusCount"
+                class="text-[10px] font-bold uppercase text-[var(--muted-foreground)] tracking-widest">
+                Carregando dados...
+            </div>
+            <button id="btnCopy"
+                class="flex items-center gap-2 bg-[var(--card)] border border-[var(--border)] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-tight hover:bg-[var(--muted)] transition-all btn-premium">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                Copiar para Planilha
+            </button>
+        </div>
+
+        <!-- Tabela -->
+        <section class="glass-card overflow-hidden animate-fade-in table-container" style="animation-delay: 0.1s;">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table id="dataTable" class="w-full text-left border-collapse">
+                    <thead class="bg-[var(--muted)] border-b border-[var(--border)]">
+                        <tr id="tableHeader">
+                            <!-- Headers dinâmicos -->
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-[var(--border)] text-sm">
+                        <!-- Conteúdo dinâmico -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="noData" class="hidden flex-col items-center justify-center py-20 text-center space-y-3">
+                <div class="w-16 h-16 rounded-full bg-[var(--muted)] flex items-center justify-center">
+                    <i data-lucide="search-x" class="w-8 h-8 text-[var(--muted-foreground)]"></i>
+                </div>
+                <p class="text-sm font-medium text-[var(--muted-foreground)]">Nenhum resultado encontrado para os
+                    filtros aplicados.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Fixo (Estilo PWA) -->
+    <footer
+        class="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--card)] shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <div class="mx-auto flex max-w-2xl items-center justify-around px-4 py-3">
+            <!-- Botão Voltar -->
+            <button onclick="history.back()" class="flex items-center gap-2 group outline-none">
+                <div
+                    class="flex h-11 w-11 items-center justify-center rounded-xl bg-transparent transition-colors group-hover:bg-orange-500/10">
+                    <i data-lucide="arrow-left"
+                        class="h-6 w-6 text-[var(--foreground)] group-hover:text-orange-500 transition-colors"></i>
+                </div>
+                <span
+                    class="text-xs font-bold uppercase tracking-tight text-[var(--muted-foreground)] group-hover:text-[var(--foreground)] transition-colors">
+                    Voltar
+                </span>
+            </button>
+
+            <!-- Divisor -->
+            <div class="h-10 w-[1px] bg-[var(--border)] mx-2"></div>
+
+            <!-- Botão Extrator (Navegação) -->
+            <button onclick="window.location.href='extrator.html'" class="flex items-center gap-2 group outline-none">
+                <div
+                    class="flex h-11 w-11 items-center justify-center rounded-xl bg-transparent transition-colors group-hover:bg-orange-500/10">
+                    <i data-lucide="file-text"
+                        class="h-6 w-6 text-[var(--foreground)] group-hover:text-orange-500 transition-colors"></i>
+                </div>
+                <span
+                    class="text-xs font-bold uppercase tracking-tight text-[var(--muted-foreground)] group-hover:text-[var(--foreground)] transition-colors">
+                    Extrair
+                </span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modal de Instruções -->
+    <div id="instructionsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl gradient-orange flex items-center justify-center shadow-lg">
+                        <i data-lucide="database" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-tight">Consulta de Dados</h3>
+                        <p class="text-[10px] text-[var(--muted-foreground)] font-bold uppercase tracking-widest">Acesso
+                            ao Histórico</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <div class="flex gap-3">
+                        <div
+                            class="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                            <span class="text-[10px] font-bold text-orange-600">1</span>
+                        </div>
+                        <p class="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
+                            <strong class="text-[var(--foreground)] uppercase text-[9px] block mb-1">Filtragem</strong>
+                            Utilize os filtros de Mês/Ano ou o intervalo de números (ex: 135-150) para localizar
+                            rapidamente relatórios específicos.
+                        </p>
+                    </div>
+                    <div class="flex gap-3">
+                        <div
+                            class="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                            <span class="text-[10px] font-bold text-orange-600">2</span>
+                        </div>
+                        <p class="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
+                            <strong
+                                class="text-[var(--foreground)] uppercase text-[9px] block mb-1">Visualização</strong>
+                            Os dados são carregados em tempo real. Clique em "Buscar" sempre que alterar os filtros
+                            aplicados.
+                        </p>
+                    </div>
+                    <div class="flex gap-3">
+                        <div
+                            class="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                            <span class="text-[10px] font-bold text-orange-600">3</span>
+                        </div>
+                        <p class="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
+                            <strong class="text-[var(--foreground)] uppercase text-[9px] block mb-1">Exportação</strong>
+                            Use o botão "Copiar para Planilha" para copiar os dados filtrados e colar diretamente no
+                            Excel ou Google Sheets.
+                        </p>
+                    </div>
+
+                    <div class="bg-orange-500/5 border border-orange-500/10 rounded-xl p-3 flex gap-3 mt-4">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-[10px] text-orange-700 leading-normal italic">
+                            Esta ferramenta é melhor aproveitada em <strong>Computadores</strong> ou Tablets para uma
+                            visualização completa. No Celular, use o scroll lateral.
+                        </p>
+                    </div>
+                </div>
+
+                <button id="closeModal"
+                    class="w-full gradient-orange text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest btn-premium shadow-lg shadow-orange-500/20">
+                    Entendi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configurações
+        const SPREADSHEET_ID = '1VHcU-g2L_4hIg0zPHYP-iCg1_K2cEcpOiysyHwKagLk';
+        const GID = '1853202196';
+        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+
+        let allData = [];
+        let filteredData = [];
+
+        // Tema
+        const body = document.body;
+        const themeToggle = document.getElementById('themeToggle');
+        const themeColorMeta = document.getElementById('themeColorMeta');
+
+        function setTheme(isDark) {
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+
+            if (isDark) {
+                body.classList.add('dark');
+                if (sunIcon) sunIcon.classList.remove('hidden');
+                if (moonIcon) moonIcon.classList.add('hidden');
+                themeColorMeta.setAttribute('content', '#000000');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark');
+                if (sunIcon) sunIcon.classList.add('hidden');
+                if (moonIcon) moonIcon.classList.remove('hidden');
+                themeColorMeta.setAttribute('content', '#fbfbfb');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Inicializar tema
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+
+        themeToggle.addEventListener('click', () => {
+            setTheme(!body.classList.contains('dark'));
+        });
+
+        // Carregar Dados
+        async function fetchData() {
+            try {
+                const response = await fetch(JSON_URL);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47, text.length - 2));
+
+                const rows = json.table.rows;
+                const cols = json.table.cols;
+
+                allData = rows.map(row => {
+                    const item = {};
+                    row.c.forEach((cell, i) => {
+                        const colName = cols[i].label || `Col${i}`;
+                        item[colName] = cell ? (cell.f || cell.v) : '';
+                    });
+                    return item;
+                });
+
+                // Ordenar por Relatório Nº (Assumindo que a coluna existe e chama "Relatório Nº")
+                // Se não encontrar, tenta chaves comuns
+                const relKey = cols.find(c => c.label.includes('Relatório') || c.label.includes('Nº'))?.label || 'Relatório Nº';
+
+                allData.sort((a, b) => {
+                    const numA = parseInt(String(a[relKey]).replace(/\D/g, '')) || 0;
+                    const numB = parseInt(String(b[relKey]).replace(/\D/g, '')) || 0;
+                    return numA - numB; // Ordem crescente
+                });
+
+                renderTable(allData);
+                document.getElementById('statusCount').innerText = `${allData.length} Relatórios encontrados`;
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                document.getElementById('statusCount').innerText = 'Erro ao carregar dados';
+            }
+        }
+
+        function renderTable(data) {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            const noData = document.getElementById('noData');
+            const dataTable = document.getElementById('dataTable');
+
+            header.innerHTML = '';
+            body.innerHTML = '';
+
+            if (data.length === 0) {
+                noData.classList.remove('hidden');
+                dataTable.classList.add('hidden');
+                return;
+            }
+
+            noData.classList.add('hidden');
+            dataTable.classList.remove('hidden');
+
+            const keys = Object.keys(data[0]);
+
+            // Criar headers
+            keys.forEach(key => {
+                const th = document.createElement('th');
+                th.className = 'px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] bg-[var(--muted)]/50';
+                th.innerText = key;
+                header.appendChild(th);
+            });
+
+            // Criar linhas
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-[var(--muted)]/50 transition-colors group';
+                keys.forEach(key => {
+                    const td = document.createElement('td');
+                    td.className = 'px-4 py-3 font-medium min-w-[120px] text-[11px] leading-tight border-r border-[var(--border)] last:border-0';
+                    td.innerText = item[key] || '-';
+                    tr.appendChild(td);
+                });
+                body.appendChild(tr);
+            });
+
+            filteredData = data;
+        }
+
+        // Filtros
+        function applyFilters() {
+            const monthVal = document.getElementById('filterMonth').value; // YYYY-MM
+            const rangeVal = document.getElementById('filterRange').value.trim();
+
+            let results = allData;
+
+            // Filtro de Mês/Ano
+            if (monthVal) {
+                const [year, month] = monthVal.split('-');
+                results = results.filter(item => {
+                    // Tenta encontrar a coluna de Data
+                    const dateKey = Object.keys(item).find(k => k.toLowerCase().includes('data')) || 'Data';
+                    const dateStr = String(item[dateKey]);
+                    // Formatos comuns: DD/MM/YYYY ou YYYY-MM-DD
+                    return dateStr.includes(`/${month}/${year}`) || dateStr.includes(`${year}-${month}`);
+                });
+            }
+
+            // Filtro de Intervalo (Relatório Nº)
+            if (rangeVal) {
+                const relKey = Object.keys(allData[0]).find(k => k.includes('Relatório') || k.includes('Nº')) || 'Relatório Nº';
+
+                if (rangeVal.endsWith('+')) {
+                    const min = parseInt(rangeVal.replace('+', '')) || 0;
+                    results = results.filter(item => {
+                        const num = parseInt(String(item[relKey]).replace(/\D/g, '')) || 0;
+                        return num >= min;
+                    });
+                } else if (rangeVal.includes('-')) {
+                    const [min, max] = rangeVal.split('-').map(v => parseInt(v.trim()) || 0);
+                    results = results.filter(item => {
+                        const num = parseInt(String(item[relKey]).replace(/\D/g, '')) || 0;
+                        return num >= min && num <= max;
+                    });
+                } else {
+                    const target = parseInt(rangeVal) || 0;
+                    results = results.filter(item => {
+                        const num = parseInt(String(item[relKey]).replace(/\D/g, '')) || 0;
+                        return num === target;
+                    });
+                }
+            }
+
+            renderTable(results);
+            document.getElementById('statusCount').innerText = `${results.length} filtrados de ${allData.length}`;
+        }
+
+        document.getElementById('btnSearch').addEventListener('click', applyFilters);
+        document.getElementById('filterMonth').addEventListener('change', applyFilters);
+
+        // Copiar para Planilha
+        document.getElementById('btnCopy').addEventListener('click', () => {
+            if (filteredData.length === 0) return;
+
+            const keys = Object.keys(filteredData[0]);
+            let csv = keys.join('\t') + '\n';
+
+            filteredData.forEach(item => {
+                csv += keys.map(k => item[k] || '').join('\t') + '\n';
+            });
+
+            navigator.clipboard.writeText(csv).then(() => {
+                const btn = document.getElementById('btnCopy');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 mr-2"></i> COPIADO!';
+                btn.classList.replace('bg-[var(--card)]', 'bg-green-500');
+                btn.classList.add('text-white');
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-green-500', 'bg-[var(--card)]');
+                    btn.classList.remove('text-white');
+                    lucide.createIcons();
+                }, 2000);
+            });
+        });
+
+        // Modal de Instruções
+        const modal = document.getElementById('instructionsModal');
+        const closeModal = document.getElementById('closeModal');
+        const infoToggle = document.getElementById('infoToggle');
+
+        function toggleInstructions(show) {
+            if (show) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        }
+
+        closeModal.addEventListener('click', () => {
+            toggleInstructions(false);
+            localStorage.setItem('dados_extrator_instructions_seen', 'true');
+        });
+
+        infoToggle.addEventListener('click', () => toggleInstructions(true));
+
+        // Mostrar ao carregar se for a primeira vez
+        if (!localStorage.getItem('dados_extrator_instructions_seen')) {
+            setTimeout(() => toggleInstructions(true), 500);
+        }
+
+        // Inicializar
+        fetchData();
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
