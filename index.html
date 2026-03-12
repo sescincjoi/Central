@@ -584,6 +584,13 @@
             transform: scale(0.98);
         }
 
+        .tool-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
         .tool-icon {
             width: 44px;
             height: 44px;
@@ -1982,13 +1989,13 @@
             </button>
 
             <!-- Ocorrências Não Aeronáuticas -->
-            <button class="tool-button" onclick="window.location.href='tools/oc_n_aero.html'">
+            <button class="tool-button" disabled>
                 <div class="tool-icon" style="background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);">
                     <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
                 </div>
                 <div class="tool-info">
                     <h3>Ocorrências CNA</h3>
-                    <p>Relatórios não aeronáuticos</p>
+                    <p>Relatórios não aeronáuticos (Desabilitado)</p>
                 </div>
                 <i data-lucide="external-link" class="w-5 h-5 text-gray-400 ml-auto"></i>
             </button>
