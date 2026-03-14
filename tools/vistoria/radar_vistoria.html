@@ -455,25 +455,24 @@
     <script>
         // CONFIGURAÇÕES GERAIS (Joinville SBJV)
         const CONFIG = {
-            // URL do seu Google Apps Script (Proxy sem CORS)
-            API_URL: "https://script.google.com/macros/s/AKfycbxflH5CapSpyVacNTVXO7u4ibI-LOW5DH0Yd8g20fROq7PNPkLxWZxerMrj-zND5Kl8EQ/exec",
+            // URL Direta para o OpenSky ignorando o CORS via Proxy Público Libre
+            API_URL: "https://corsproxy.io/?url=https://opensky-network.org/api/states/all",
             LAT: -26.2245,
             LON: -48.7974,
-            UPDATE_INTERVAL: 15000,   // Varredura a cada 15 segundos
+            UPDATE_INTERVAL: 15000,
 
             // Regras Matemáticas:
-            AVG_APPROACH_SPEED: 400,  // km/h médio de aproximação TMA
-            TIME_WARNING: 30,         // Minutos antes para tela Amarela
-            TIME_DANGER: 20           // Minutos antes para tela Vermelha e Alarme
+            AVG_APPROACH_SPEED: 400,
+            TIME_WARNING: 30,
+            TIME_DANGER: 20
         };
 
-        // Bounding Box (Aprox. 100km ao redor de Joinville para filtrar a API do OpenSky)
-        // LAMIN, LOMIN, LAMAX, LOMAX
+        // Bounding Box (Aprox. 100km ao redor de Joinville)
         const BBOX = {
-            lamin: -27.2000, // Sul (abaixo de Floripa)
-            lomin: -49.5000, // Oeste (interior SC)
-            lamax: -25.2000, // Norte (abaixo de Curitiba)
-            lomax: -48.0000  // Leste (Mar)
+            lamin: -27.2000,
+            lomin: -49.5000,
+            lamax: -25.2000,
+            lomax: -48.0000
         };
 
         let isMonitoring = false;
@@ -482,51 +481,54 @@
         const flightsContainer = document.getElementById('flightsContainer');
         const connStatus = document.getElementById('connStatus');
 
-        // Memória de voos ativos para gerenciar o CSS e Alarme
+        // Memória de voos ativos
         let activeFlights = new Map();
 
         // 1. INICIALIZAÇÃO
         function initSystem() {
             document.getElementById('audioOverlay').style.display = 'none';
-            // Destrava o áudio no contexto do usuário (mesmo vazio, permite play depois)
             alarmAudio.play().then(() => { alarmAudio.pause(); }).catch(e => console.log(e));
 
             isMonitoring = true;
             connStatus.classList.add('scanning');
             connStatus.querySelector('span').innerText = 'Monitorando...';
 
-            // Faz a primeira busca e inicia o loop
             fetchRadarData();
             setInterval(fetchRadarData, CONFIG.UPDATE_INTERVAL);
-            setInterval(updateTimersDisplay, 1000); // Atualiza os relógios na tela a cada 1s
+            setInterval(updateTimersDisplay, 1000);
         }
 
-        // 2. BUSCA DE DADOS (Usando API do Google Apps Script)
+        // 2. BUSCA DE DADOS (Frontend Direto para OpenSky)
         async function fetchRadarData() {
             if (!isMonitoring) return;
 
             updateLastSweep();
 
             try {
-                // Chama o seu GAS. Ele não precisa de Auth aqui no Front, já faz sozinho lá no Back.
-                const url = CONFIG.API_URL;
+                // Passando Bounding Box direto na URL do OpenSky via proxy libre
+                const rawUrl = `https://opensky-network.org/api/states/all?lamin=${BBOX.lamin}&lomin=${BBOX.lomin}&lamax=${BBOX.lamax}&lomax=${BBOX.lomax}`;
+                const url = `https://corsproxy.io/?url=${encodeURIComponent(rawUrl)}`;
 
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('API Indisponível');
+                // Usando credenciais anonimas, a cota por IP é 400 por dia
+                // (O suficiente para radar de testes sem estourar 401 Unauthorized)
+                const options = { method: 'GET' };
+
+                const response = await fetch(url, options);
+
+                if (!response.ok) {
+                    if (response.status === 429) throw new Error('Limite de Banda Excedido (Rate Limit)');
+                    if (response.status === 401) throw new Error('Usuário sem Permissão no OpenSky');
+                    throw new Error(`Erro na API (${response.status})`);
+                }
 
                 const data = await response.json();
-
-                // O Motor GAS repassa erros do OpenSky no corpo JSON
-                if (data.error) throw new Error(data.message || 'Erro no Proxy');
-
                 processTraffic(data.states || []);
 
             } catch (error) {
-                console.error("Erro na busca do radar via Proxy:", error);
+                console.error("Erro na busca do radar OpenSky:", error);
                 connStatus.classList.remove('scanning');
                 connStatus.style.color = 'var(--danger-color)';
-                const spanStatus = connStatus.querySelector('span');
-                spanStatus.innerText = 'Erro na Conexão';
+                connStatus.querySelector('span').innerText = 'Falha (' + error.message + ')';
             }
         }
 
@@ -546,7 +548,6 @@
             /* O OpenSky retorna um array de arrays (sem chaves). Índices úteis:
                0: icao24 (hex)
                1: callsign
-               2: origin_country
                5: longitude
                6: latitude
                7: baro_altitude (metros)
@@ -565,22 +566,17 @@
                 const velocityMs = state[9];
                 const vRate = state[11] || 0;
 
-                // Proteções contra dados nulos
                 if (!callsignRaw || !lat || !lon || isGrounded) return;
 
-                // Conversões para o nosso padrão de Leitura
                 const callsign = callsignRaw.trim();
                 const altFeet = altMeters ? (altMeters * 3.28084) : 0;
                 const speedKmh = velocityMs ? (velocityMs * 3.6) : 0;
 
                 // === LÓGICA DE DETECÇÃO DE APROXIMAÇÃO ===
-                // Se está abaixo de 15.000 pés e com taxa vertical negativa (descendo)
                 if (altFeet < 15000 && vRate < 0) {
                     currentCallsigns.add(callsign);
 
                     const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, lat, lon);
-
-                    // Estimativa Grosseira de Tempo
                     let estMinutes = (distKm / speedKmh) * 60;
                     estMinutes += 5; // +5 min de penalidade TMA
 
@@ -601,7 +597,7 @@
 
             // Remove quem saiu do radar/pousou
             for (let [callsign, data] of activeFlights.entries()) {
-                if (!currentCallsigns.has(callsign) && !data.isMock) { // Protege os mocks de sumirem
+                if (!currentCallsigns.has(callsign) && !data.isMock) {
                     activeFlights.delete(callsign);
                 }
             }
@@ -725,12 +721,8 @@
             const R = 6371; // Raio da Terra em km
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
         // Mocks para o Desenvolvedor (Injetar voos falsos)
