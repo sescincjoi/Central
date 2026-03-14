@@ -456,7 +456,7 @@
         // CONFIGURAÇÕES GERAIS (Joinville SBJV)
         const CONFIG = {
             // URL do seu Google Apps Script (Proxy sem CORS)
-            API_URL: "https://script.google.com/macros/s/AKfycbzP56Gtp6K5PPAmCB6WcDkPpGyjESYoUjq7xWBnNcsMp58A9KrVZeKV14CEg9tf3lx69A/exec",
+            API_URL: "https://script.google.com/macros/s/AKfycbxflH5CapSpyVacNTVXO7u4ibI-LOW5DH0Yd8g20fROq7PNPkLxWZxerMrj-zND5Kl8EQ/exec",
             LAT: -26.2245,
             LON: -48.7974,
             UPDATE_INTERVAL: 15000,   // Varredura a cada 15 segundos
@@ -573,7 +573,7 @@
                 const altFeet = altMeters ? (altMeters * 3.28084) : 0;
                 const speedKmh = velocityMs ? (velocityMs * 3.6) : 0;
 
-                // === LÓGICA DE DETECÇÃO DE APROXIMAÇÃO (BETA) ===
+                // === LÓGICA DE DETECÇÃO DE APROXIMAÇÃO ===
                 // Se está abaixo de 15.000 pés e com taxa vertical negativa (descendo)
                 if (altFeet < 15000 && vRate < 0) {
                     currentCallsigns.add(callsign);
@@ -601,7 +601,7 @@
 
             // Remove quem saiu do radar/pousou
             for (let [callsign, data] of activeFlights.entries()) {
-                if (!currentCallsigns.has(callsign) && !data.isMock) { // Protege os mocks de sumirem na atualização real
+                if (!currentCallsigns.has(callsign) && !data.isMock) { // Protege os mocks de sumirem
                     activeFlights.delete(callsign);
                 }
             }

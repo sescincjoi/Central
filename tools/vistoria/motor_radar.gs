@@ -1,24 +1,23 @@
 /**
  * MOTOR BACKEND: RADAR DE VISTORIA (CENTRAL)
- * Usa a excelente API da comunidade ADSB.fi
+ * API: OpenSky Network (Plano com Autenticação)
  */
 
+const OPENSKY_CREDENTIALS = Utilities.base64Encode("mmocena:132435Os!");
 const CACHE_TIME_SECONDS = 15; 
 
-// Joinville (Ponto Central) e Raio em Milhas Náuticas (100NM = 185km)
-const CONFIG = {
-  lat: -26.2245,
-  lon: -48.7974,
-  raio: 100
+const BBOX = {
+  lamin: -27.2000, 
+  lomin: -49.5000, 
+  lamax: -25.2000, 
+  lomax: -48.0000  
 };
 
 function doGet(e) {
   try {
     const rawData = getRadarData();
-    
     return ContentService.createTextOutput(JSON.stringify(rawData))
       .setMimeType(ContentService.MimeType.JSON);
-      
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ error: true, message: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -30,14 +29,16 @@ function getRadarData() {
   const cached = cache.get("radar_data");
   
   if (cached) {
-    return JSON.parse(cached); // Cache hits são super rápidos
+    return JSON.parse(cached);
   }
 
-  // API ADSB.fi rodando livre via backend Google
-  const url = `https://api.adsb.fi/v2/lat/${CONFIG.lat}/lon/${CONFIG.lon}/dist/${CONFIG.raio}`;
+  const url = `https://opensky-network.org/api/states/all?lamin=${BBOX.lamin}&lomin=${BBOX.lomin}&lamax=${BBOX.lamax}&lomax=${BBOX.lomax}`;
   
   const options = {
     method: "get",
+    headers: {
+      "Authorization": "Basic " + OPENSKY_CREDENTIALS
+    },
     muteHttpExceptions: true
   };
 
@@ -46,7 +47,7 @@ function getRadarData() {
   const jsonString = response.getContentText();
   
   if (responseCode !== 200) {
-     return { error: true, code: responseCode, message: "ADSB.fi retornou erro", details: jsonString };
+     return { error: true, code: responseCode, message: "OpenSky Recusou (Limite excedido ou indisponível).", details: jsonString };
   }
   
   try {
@@ -54,6 +55,6 @@ function getRadarData() {
     cache.put("radar_data", jsonString, CACHE_TIME_SECONDS);
     return parsedData;
   } catch (parseErr) {
-    return { error: true, message: "Erro ao ler dados da ADSB.fi: " + parseErr.toString() };
+    return { error: true, message: "Erro ao ler lista do OpenSky: " + parseErr.toString() };
   }
 }
