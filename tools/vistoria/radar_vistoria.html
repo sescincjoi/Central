@@ -455,16 +455,24 @@
     <script>
         // CONFIGURAÇÕES GERAIS (Joinville SBJV)
         const CONFIG = {
-            API_URL: "https://api.adsb.fi/v2",
+            API_URL: "https://opensky-network.org/api/states/all",
             LAT: -26.2245,
             LON: -48.7974,
-            RADIUS_KM: 150,           // Raio de busca retangular
             UPDATE_INTERVAL: 15000,   // Varredura a cada 15 segundos
 
             // Regras Matemáticas:
             AVG_APPROACH_SPEED: 400,  // km/h médio de aproximação TMA
             TIME_WARNING: 30,         // Minutos antes para tela Amarela
             TIME_DANGER: 20           // Minutos antes para tela Vermelha e Alarme
+        };
+
+        // Bounding Box (Aprox. 100km ao redor de Joinville para filtrar a API do OpenSky)
+        // LAMIN, LOMIN, LAMAX, LOMAX
+        const BBOX = {
+            lamin: -27.2000, // Sul (abaixo de Floripa)
+            lomin: -49.5000, // Oeste (interior SC)
+            lamax: -25.2000, // Norte (abaixo de Curitiba)
+            lomax: -48.0000  // Leste (Mar)
         };
 
         let isMonitoring = false;
@@ -492,33 +500,40 @@
             setInterval(updateTimersDisplay, 1000); // Atualiza os relógios na tela a cada 1s
         }
 
-        // 2. BUSCA DE DADOS (A Mágica da API ADSB.fi)
+        // 2. BUSCA DE DADOS (Usando API do OpenSky)
         async function fetchRadarData() {
             if (!isMonitoring) return;
 
             updateLastSweep();
 
             try {
-                /*  
-                    Como a API do adsb.fi não tem filtro explícito de aeroporto de destino
-                    nessa rota básica (e a de rotas é complexa de mastigar livre),
-                    buscamos todos num raio ao redor do aeroporto.
-                    URL: /v2/lat/{LAT}/lon/{LON}/dist/{RADIUS} (distancia maxima aceita é 250NM = ~450km)
-                */
-                // A API original restringe o raio pelo /point/. O endpoint sugerido é lat/lon/dist
-                const url = `${CONFIG.API_URL}/lat/${CONFIG.LAT}/lon/${CONFIG.LON}/dist/100`; // Passando em milhas nauticas (100NM = 185km)
+                // Passando Bounding Box direto na URL do OpenSky para economizar banda
+                const url = `${CONFIG.API_URL}?lamin=${BBOX.lamin}&lomin=${BBOX.lomin}&lamax=${BBOX.lamax}&lomax=${BBOX.lomax}`;
 
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('API Indisponível');
+                // Usando a credencial do usuário em Base64 para bypassar o limite anônimo rígido
+                const options = {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa('mmocena:132435Os!')
+                    }
+                };
+
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error('API Indisponível ou Rate Limit');
 
                 const data = await response.json();
-                processTraffic(data.ac || []);
+                processTraffic(data.states || []);
 
             } catch (error) {
-                console.error("Erro na busca do radar:", error);
+                console.error("Erro na busca do radar OpenSky:", error);
                 connStatus.classList.remove('scanning');
                 connStatus.style.color = 'var(--danger-color)';
-                connStatus.querySelector('span').innerText = 'Erro Conexão';
+                const spanStatus = connStatus.querySelector('span');
+                if (error.message.includes("Rate Limit") || (error.status === 429)) {
+                    spanStatus.innerText = 'Limite Excedido';
+                } else {
+                    spanStatus.innerText = 'Erro na Conexão';
+                }
             }
         }
 
@@ -530,45 +545,56 @@
             connStatus.querySelector('span').innerText = 'Conectado';
         }
 
-        // 3. PROCESSAMENTO DO TRÁFEGO
-        function processTraffic(aircraftList) {
+        // 3. PROCESSAMENTO DO TRÁFEGO (OpenSky Array Format)
+        function processTraffic(statesArray) {
             let foundRelevant = false;
-
-            // Mapeia os novos dados
             const currentCallsigns = new Set();
 
-            aircraftList.forEach(ac => {
-                // Filtros Lógicos Mínimos:
-                // Tem callsign? Tem altitude? Está se movendo?
-                if (!ac.flight || !ac.alt_baro || ac.gs < 50) return;
+            /* O OpenSky retorna um array de arrays (sem chaves). Índices úteis:
+               0: icao24 (hex)
+               1: callsign
+               2: origin_country
+               5: longitude
+               6: latitude
+               7: baro_altitude (metros)
+               8: on_ground (boolean)
+               9: velocity (m/s)
+               11: vertical_rate (m/s)
+            */
 
-                const callsign = ac.flight.trim();
+            statesArray.forEach(state => {
+                const hex = state[0];
+                const callsignRaw = state[1];
+                const lon = state[5];
+                const lat = state[6];
+                const altMeters = state[7];
+                const isGrounded = state[8];
+                const velocityMs = state[9];
+                const vRate = state[11] || 0;
+
+                // Proteções contra dados nulos
+                if (!callsignRaw || !lat || !lon || isGrounded) return;
+
+                // Conversões para o nosso padrão de Leitura
+                const callsign = callsignRaw.trim();
+                const altFeet = altMeters ? (altMeters * 3.28084) : 0;
+                const speedKmh = velocityMs ? (velocityMs * 3.6) : 0;
 
                 // === LÓGICA DE DETECÇÃO DE APROXIMAÇÃO (BETA) ===
-                // Na vida real, precisaríamos de uma base de dados para saber "Ele está indo pra Joinville?"
-                // Como não temos a escala aqui, assumimos que:
-                // Se o jato está ABAIXO de 15.000 pés num raio de 100km, e em descida, 90% de chance de pousar aqui (ou Navegantes).
-
-                if (ac.alt_baro < 15000 && ac.baro_rate < 0) {
+                // Se está abaixo de 15.000 pés e com taxa vertical negativa (descendo)
+                if (altFeet < 15000 && vRate < 0) {
                     currentCallsigns.add(callsign);
 
-                    // Distância Real usando Haversine
-                    const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
+                    const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, lat, lon);
 
-                    // Estimativa Grosseira de Tempo (Distância / Velocidade Solo em Km/h)
-                    // GS da API vem em NÓS (1 nó = 1.852 km/h)
-                    const speedKmh = ac.gs * 1.852;
+                    // Estimativa Grosseira de Tempo
                     let estMinutes = (distKm / speedKmh) * 60;
+                    estMinutes += 5; // +5 min de penalidade TMA
 
-                    // Aviões em descida final reduzem pra ~250km/h. A matemática reta erra.
-                    // Adicionamos +5 minutos de penalidade para manobras da TMA
-                    estMinutes += 5;
-
-                    // Salva na Memória
                     activeFlights.set(callsign, {
-                        hex: ac.hex,
+                        hex: hex,
                         callsign: callsign,
-                        altFeet: ac.alt_baro,
+                        altFeet: Math.round(altFeet),
                         speedKmh: Math.round(speedKmh),
                         distKm: distKm.toFixed(1),
                         etaMinutes: estMinutes,
