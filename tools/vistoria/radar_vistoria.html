@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Radar de Vistoria - SBJV</title>
+    <!-- Fontes e ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0b1120;
+            /* Fundo escuro de radar */
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+
+            /* Cores de Alerta */
+            --safe-color: #10b981;
+            /* Verde (Voando longe) */
+            --warn-color: #eab308;
+            /* Amarelo (Preparar Vistoria - 30 min) */
+            --danger-color: #ef4444;
+            /* Vermelho (VISTORIA AGORA! - 20 min) */
+            --accent-color: #3b82f6;
+            /* Azul (Destaques da UI) */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title .material-icons {
+            color: var(--accent-color);
+            font-size: 28px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--safe-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-badge.scanning {
+            color: var(--accent-color);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: currentColor;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            padding: 0 4px;
+        }
+
+        .flight-card {
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flight-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: var(--safe-color);
+        }
+
+        /* Estágios de Alerta (Amarelo = 30 min, Vermelho = 20 min) */
+        .flight-card.warning {
+            border-color: rgba(234, 179, 8, 0.3);
+            background-color: rgba(234, 179, 8, 0.05);
+        }
+
+        .flight-card.warning::before {
+            background-color: var(--warn-color);
+        }
+
+        .flight-card.danger {
+            border-color: var(--danger-color);
+            background-color: rgba(239, 68, 68, 0.1);
+            animation: borderBlink 1.5s infinite alternate;
+        }
+
+        .flight-card.danger::before {
+            background-color: var(--danger-color);
+        }
+
+        .flight-main {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .flight-id {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .flight-id .material-icons {
+            font-size: 20px;
+            color: var(--text-muted);
+        }
+
+        .flight-tags {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tag {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .flight-telemetry {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .telemetry-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .telemetry-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .telemetry-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .flight-timer {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 12px 20px;
+            border-radius: 8px;
+            min-width: 140px;
+        }
+
+        .timer-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .timer-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--safe-color);
+        }
+
+        .flight-card.warning .timer-value {
+            color: var(--warn-color);
+        }
+
+        .flight-card.danger .timer-value {
+            color: var(--danger-color);
+        }
+
+        .timer-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .flight-card.danger .timer-subtitle {
+            color: var(--danger-color);
+            font-weight: 700;
+            animation: blink 1s infinite;
+        }
+
+        /* Modal/Overlay de Permissão de Áudio */
+        #audioOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(11, 17, 32, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .overlay-card {
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+        }
+
+        .overlay-card .material-icons {
+            font-size: 48px;
+            color: var(--accent-color);
+            margin-bottom: 16px;
+        }
+
+        .overlay-card h2 {
+            margin: 0 0 12px 0;
+        }
+
+        .overlay-card p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 auto;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 60px;
+        }
+
+        .empty-state .material-icons {
+            font-size: 64px;
+            opacity: 0.2;
+            margin-bottom: 16px;
+        }
+
+        /* Animações */
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes borderBlink {
+            0% {
+                border-color: rgba(239, 68, 68, 0.3);
+                box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                border-color: rgba(239, 68, 68, 1);
+                box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+            }
+        }
+
+        /* Controles de Teste (Escondidos na Produção) */
+        .debug-panel {
+            background: #000;
+            padding: 10px;
+            font-size: 12px;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 10px;
+        }
+
+        .debug-panel button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Overlay de Autorização Sonora (Navegadores bloqueiam áudio automático) -->
+    <div id="audioOverlay">
+        <div class="overlay-card">
+            <span class="material-icons">campaign</span>
+            <h2>Radar de Vistoria</h2>
+            <p>O painel precisa de permissão para tocar o alarme sonoro quando as aeronaves atingirem o marco de 20
+                minutos.</p>
+            <button class="btn-primary" onclick="initSystem()">
+                <span class="material-icons">play_arrow</span>
+                Iniciar Monitoramento
+            </button>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-title">
+            <span class="material-icons">radar</span>
+            <h1>Radar Pista <b>SBJV</b></h1>
+        </div>
+        <div class="status-badge" id="connStatus">
+            <div class="pulse-dot"></div>
+            <span>Aguardando...</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="info-bar">
+            <span id="lastUpdate">Última varredura: --:--</span>
+            <span>Raio de Busca: 150km</span>
+        </div>
+
+        <div id="flightsContainer">
+            <!-- Os cards dos voos serão injetados aqui via JS -->
+            <div class="empty-state">
+                <span class="material-icons">flight_takeoff</span>
+                <p>Nenhuma aeronave em aproximação detectada no raio atual.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Som do Alarme (Usando um bip base64 curtinho para não depender de arquivo externo) -->
+    <audio id="alarmSound" loop>
+        <source
+            src="data:audio/mp3;base64,//OExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/zhGQAAKwAEWgAAAACvAAEA/2H/wQEEAf/4gAAgAAIAAgAAAAD///+B/////////8H//////3/////////4H/////4////+A////+A/////"
+            type="audio/mpeg">
+    </audio>
+
+    <!-- Painel de Testes do Desenvolvedor -->
+    <div class="debug-panel">
+        <button onclick="injectMockFlight('safe')">Testar Longe</button>
+        <button onclick="injectMockFlight('warning')">Testar 30 Min</button>
+        <button onclick="injectMockFlight('danger')">Testar 20 Min (Alarme!)</button>
+        <button onclick="clearFlights()">Limpar Tela</button>
+    </div>
+
+    <script>
+        // CONFIGURAÇÕES GERAIS (Joinville SBJV)
+        const CONFIG = {
+            API_URL: "https://api.adsb.fi/v2",
+            LAT: -26.2245,
+            LON: -48.7974,
+            RADIUS_KM: 150,           // Raio de busca retangular
+            UPDATE_INTERVAL: 15000,   // Varredura a cada 15 segundos
+
+            // Regras Matemáticas:
+            AVG_APPROACH_SPEED: 400,  // km/h médio de aproximação TMA
+            TIME_WARNING: 30,         // Minutos antes para tela Amarela
+            TIME_DANGER: 20           // Minutos antes para tela Vermelha e Alarme
+        };
+
+        let isMonitoring = false;
+        let alarmTriggered = false;
+        const alarmAudio = document.getElementById('alarmSound');
+        const flightsContainer = document.getElementById('flightsContainer');
+        const connStatus = document.getElementById('connStatus');
+
+        // Memória de voos ativos para gerenciar o CSS e Alarme
+        let activeFlights = new Map();
+
+        // 1. INICIALIZAÇÃO
+        function initSystem() {
+            document.getElementById('audioOverlay').style.display = 'none';
+            // Destrava o áudio no contexto do usuário (mesmo vazio, permite play depois)
+            alarmAudio.play().then(() => { alarmAudio.pause(); }).catch(e => console.log(e));
+
+            isMonitoring = true;
+            connStatus.classList.add('scanning');
+            connStatus.querySelector('span').innerText = 'Monitorando...';
+
+            // Faz a primeira busca e inicia o loop
+            fetchRadarData();
+            setInterval(fetchRadarData, CONFIG.UPDATE_INTERVAL);
+            setInterval(updateTimersDisplay, 1000); // Atualiza os relógios na tela a cada 1s
+        }
+
+        // 2. BUSCA DE DADOS (A Mágica da API ADSB.fi)
+        async function fetchRadarData() {
+            if (!isMonitoring) return;
+
+            updateLastSweep();
+
+            try {
+                /*  
+                    Como a API do adsb.fi não tem filtro explícito de aeroporto de destino
+                    nessa rota básica (e a de rotas é complexa de mastigar livre),
+                    buscamos todos num raio ao redor do aeroporto.
+                    URL: /v2/lat/{LAT}/lon/{LON}/dist/{RADIUS} (distancia maxima aceita é 250NM = ~450km)
+                */
+                // A API original restringe o raio pelo /point/. O endpoint sugerido é lat/lon/dist
+                const url = `${CONFIG.API_URL}/lat/${CONFIG.LAT}/lon/${CONFIG.LON}/dist/100`; // Passando em milhas nauticas (100NM = 185km)
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('API Indisponível');
+
+                const data = await response.json();
+                processTraffic(data.ac || []);
+
+            } catch (error) {
+                console.error("Erro na busca do radar:", error);
+                connStatus.classList.remove('scanning');
+                connStatus.style.color = 'var(--danger-color)';
+                connStatus.querySelector('span').innerText = 'Erro Conexão';
+            }
+        }
+
+        function updateLastSweep() {
+            const now = new Date();
+            document.getElementById('lastUpdate').innerText = `Atualizado: ${now.toLocaleTimeString('pt-BR')}`;
+            connStatus.classList.add('scanning');
+            connStatus.style.color = 'var(--safe-color)';
+            connStatus.querySelector('span').innerText = 'Conectado';
+        }
+
+        // 3. PROCESSAMENTO DO TRÁFEGO
+        function processTraffic(aircraftList) {
+            let foundRelevant = false;
+
+            // Mapeia os novos dados
+            const currentCallsigns = new Set();
+
+            aircraftList.forEach(ac => {
+                // Filtros Lógicos Mínimos:
+                // Tem callsign? Tem altitude? Está se movendo?
+                if (!ac.flight || !ac.alt_baro || ac.gs < 50) return;
+
+                const callsign = ac.flight.trim();
+
+                // === LÓGICA DE DETECÇÃO DE APROXIMAÇÃO (BETA) ===
+                // Na vida real, precisaríamos de uma base de dados para saber "Ele está indo pra Joinville?"
+                // Como não temos a escala aqui, assumimos que:
+                // Se o jato está ABAIXO de 15.000 pés num raio de 100km, e em descida, 90% de chance de pousar aqui (ou Navegantes).
+
+                if (ac.alt_baro < 15000 && ac.baro_rate < 0) {
+                    currentCallsigns.add(callsign);
+
+                    // Distância Real usando Haversine
+                    const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
+
+                    // Estimativa Grosseira de Tempo (Distância / Velocidade Solo em Km/h)
+                    // GS da API vem em NÓS (1 nó = 1.852 km/h)
+                    const speedKmh = ac.gs * 1.852;
+                    let estMinutes = (distKm / speedKmh) * 60;
+
+                    // Aviões em descida final reduzem pra ~250km/h. A matemática reta erra.
+                    // Adicionamos +5 minutos de penalidade para manobras da TMA
+                    estMinutes += 5;
+
+                    // Salva na Memória
+                    activeFlights.set(callsign, {
+                        hex: ac.hex,
+                        callsign: callsign,
+                        altFeet: ac.alt_baro,
+                        speedKmh: Math.round(speedKmh),
+                        distKm: distKm.toFixed(1),
+                        etaMinutes: estMinutes,
+                        targetTime: new Date(Date.now() + (estMinutes * 60000)),
+                        type: 'Aproximação'
+                    });
+
+                    foundRelevant = true;
+                }
+            });
+
+            // Remove quem saiu do radar/pousou
+            for (let [callsign, data] of activeFlights.entries()) {
+                if (!currentCallsigns.has(callsign) && !data.isMock) { // Protege os mocks de sumirem na atualização real
+                    activeFlights.delete(callsign);
+                }
+            }
+
+            renderInterface();
+            checkAlarms();
+        }
+
+        // 4. ATUALIZAÇÃO DA TELA
+        function renderInterface() {
+            if (activeFlights.size === 0) {
+                flightsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons">radar</span>
+                        <p>Nenhuma aproximação detectada no espaço aéreo local.</p>
+                    </div>`;
+                return;
+            }
+
+            flightsContainer.innerHTML = '';
+
+            // Ordena do mais próximo pro mais longe
+            const sortedFlights = Array.from(activeFlights.values()).sort((a, b) => a.etaMinutes - b.etaMinutes);
+
+            sortedFlights.forEach(flight => {
+                // Calcula os minutos e segundos restantes até o pouso simulado
+                const tRemainingMs = flight.targetTime - new Date();
+                const m = Math.max(0, Math.floor(tRemainingMs / 60000));
+                const s = Math.max(0, Math.floor((tRemainingMs % 60000) / 1000));
+                const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+                let cardClass = '';
+                let timerLabel = 'RESTANTE MÁX';
+                let timerSubtitle = 'VOANDO';
+
+                if (m <= CONFIG.TIME_WARNING && m > CONFIG.TIME_DANGER) {
+                    cardClass = 'warning';
+                    timerSubtitle = '1ª CHAMADA';
+                } else if (m <= CONFIG.TIME_DANGER) {
+                    cardClass = 'danger';
+                    timerLabel = 'VISTORIA!';
+                    timerSubtitle = 'VÁ PARA PISTA';
+                }
+
+                const cardHtml = `
+                    <div class="flight-card ${cardClass}" id="card-${flight.callsign}">
+                        <div class="flight-main">
+                            <div class="flight-id">
+                                <span class="material-icons">flight_land</span>
+                                ${flight.callsign}
+                            </div>
+                            <div class="flight-tags">
+                                <span class="tag">${flight.type}</span>
+                                <span class="tag">HEX: ${flight.hex}</span>
+                            </div>
+                            
+                            <div class="flight-telemetry">
+                                <div class="telemetry-item">
+                                    <span class="telemetry-label">Distância</span>
+                                    <span class="telemetry-value">${flight.distKm} km</span>
+                                </div>
+                                <div class="telemetry-item">
+                                    <span class="telemetry-label">Altitude</span>
+                                    <span class="telemetry-value">${flight.altFeet} ft</span>
+                                </div>
+                                <div class="telemetry-item">
+                                    <span class="telemetry-label">Velocidade</span>
+                                    <span class="telemetry-value">${flight.speedKmh} km/h</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flight-timer">
+                            <span class="timer-label">${timerLabel}</span>
+                            <span class="timer-value">${timeStr}</span>
+                            <span class="timer-subtitle">${timerSubtitle}</span>
+                        </div>
+                    </div>
+                `;
+                flightsContainer.innerHTML += cardHtml;
+            });
+        }
+
+        // Relógio regressivo secundário (não bate na API, só reduz os segundos na tela)
+        function updateTimersDisplay() {
+            if (activeFlights.size === 0) return;
+            renderInterface(); // Rerender rápido
+            checkAlarms();
+        }
+
+        // 5. SISTEMA DE ALARME (Grito de 20 minutos)
+        function checkAlarms() {
+            let shouldRing = false;
+
+            for (let [callsign, flight] of activeFlights.entries()) {
+                const tRemainingMs = flight.targetTime - new Date();
+                const minutesLeft = Math.floor(tRemainingMs / 60000);
+
+                if (minutesLeft <= CONFIG.TIME_DANGER && minutesLeft > 0) {
+                    shouldRing = true;
+                    break;
+                }
+            }
+
+            if (shouldRing && !alarmTriggered) {
+                alarmAudio.play().catch(e => console.log('Audio mixado pelo navegador.'));
+                alarmTriggered = true;
+            } else if (!shouldRing && alarmTriggered) {
+                alarmAudio.pause();
+                alarmAudio.currentTime = 0;
+                alarmTriggered = false;
+            }
+        }
+
+        // ==========================================
+        // FUNÇÕES MATEMÁTICAS E DE DESENVOLVEDOR
+        // ==========================================
+
+        // Fórmula de Haversine para Distância em Km entre duas Coordenadas
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Raio da Terra em km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // Mocks para o Desenvolvedor (Injetar voos falsos)
+        function injectMockFlight(level) {
+            let min = 40;
+            if (level === 'warning') min = 28;
+            if (level === 'danger') min = 15;
+
+            const mockCallsign = 'LA' + Math.floor(Math.random() * 9000);
+
+            activeFlights.set(mockCallsign, {
+                hex: 'MOCK',
+                callsign: mockCallsign,
+                altFeet: 12500,
+                speedKmh: 420,
+                distKm: (min * 7).toFixed(1),
+                etaMinutes: min,
+                targetTime: new Date(Date.now() + (min * 60000)),
+                type: 'Aproximação',
+                isMock: true
+            });
+            renderInterface();
+            checkAlarms();
+        }
+
+        function clearFlights() {
+            activeFlights.clear();
+            renderInterface();
+            checkAlarms();
+        }
+
+    </script>
+</body>
+
+</html>
