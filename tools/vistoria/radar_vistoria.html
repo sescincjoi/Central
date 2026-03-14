@@ -455,7 +455,8 @@
     <script>
         // CONFIGURAÇÕES GERAIS (Joinville SBJV)
         const CONFIG = {
-            API_URL: "https://opensky-network.org/api/states/all",
+            // URL do seu Google Apps Script (Proxy sem CORS)
+            API_URL: "https://script.google.com/macros/s/AKfycbx7XODhcMWGw7YT_RufLl463XE22S_DiS0yr8mwCL_goq5bIGNl4hC9uF5dyHgAWzJNNw/exec",
             LAT: -26.2245,
             LON: -48.7974,
             UPDATE_INTERVAL: 15000,   // Varredura a cada 15 segundos
@@ -500,40 +501,32 @@
             setInterval(updateTimersDisplay, 1000); // Atualiza os relógios na tela a cada 1s
         }
 
-        // 2. BUSCA DE DADOS (Usando API do OpenSky)
+        // 2. BUSCA DE DADOS (Usando API do Google Apps Script)
         async function fetchRadarData() {
             if (!isMonitoring) return;
 
             updateLastSweep();
 
             try {
-                // Passando Bounding Box direto na URL do OpenSky para economizar banda
-                const url = `${CONFIG.API_URL}?lamin=${BBOX.lamin}&lomin=${BBOX.lomin}&lamax=${BBOX.lamax}&lomax=${BBOX.lomax}`;
+                // Chama o seu GAS. Ele não precisa de Auth aqui no Front, já faz sozinho lá no Back.
+                const url = CONFIG.API_URL;
 
-                // Usando a credencial do usuário em Base64 para bypassar o limite anônimo rígido
-                const options = {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Basic ' + btoa('mmocena:132435Os!')
-                    }
-                };
-
-                const response = await fetch(url, options);
-                if (!response.ok) throw new Error('API Indisponível ou Rate Limit');
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('API Indisponível');
 
                 const data = await response.json();
+
+                // O Motor GAS repassa erros do OpenSky no corpo JSON
+                if (data.error) throw new Error(data.message || 'Erro no Proxy');
+
                 processTraffic(data.states || []);
 
             } catch (error) {
-                console.error("Erro na busca do radar OpenSky:", error);
+                console.error("Erro na busca do radar via Proxy:", error);
                 connStatus.classList.remove('scanning');
                 connStatus.style.color = 'var(--danger-color)';
                 const spanStatus = connStatus.querySelector('span');
-                if (error.message.includes("Rate Limit") || (error.status === 429)) {
-                    spanStatus.innerText = 'Limite Excedido';
-                } else {
-                    spanStatus.innerText = 'Erro na Conexão';
-                }
+                spanStatus.innerText = 'Erro na Conexão';
             }
         }
 
