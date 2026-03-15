@@ -455,8 +455,8 @@
     <script>
         // CONFIGURAÇÕES GERAIS (Joinville SBJV)
         const CONFIG = {
-            // URL Direta para o OpenSky ignorando o CORS via Proxy Público Libre
-            API_URL: "https://corsproxy.io/?url=https://opensky-network.org/api/states/all",
+            // URL do seu Google Apps Script (Proxy Oficial)
+            API_URL: "https://script.google.com/macros/s/AKfycbzaa3EI_-VcfhQ2ZBHCSCkS1fhC3CI4PE5RrO0lmVwLy61Y2H_6XwI7j6PuyrIECQED7g/exec",
             LAT: -26.2245,
             LON: -48.7974,
             UPDATE_INTERVAL: 15000,
@@ -498,34 +498,27 @@
             setInterval(updateTimersDisplay, 1000);
         }
 
-        // 2. BUSCA DE DADOS (Frontend Direto para OpenSky)
+        // 2. BUSCA DE DADOS (Via Proxy GAS com OAuth2)
         async function fetchRadarData() {
             if (!isMonitoring) return;
 
             updateLastSweep();
 
             try {
-                // Passando Bounding Box direto na URL do OpenSky via proxy libre
-                const rawUrl = `https://opensky-network.org/api/states/all?lamin=${BBOX.lamin}&lomin=${BBOX.lomin}&lamax=${BBOX.lamax}&lomax=${BBOX.lomax}`;
-                const url = `https://corsproxy.io/?url=${encodeURIComponent(rawUrl)}`;
+                // O Proxy GAS já cuida do Bbox e do Token OAuth2
+                const response = await fetch(CONFIG.API_URL);
 
-                // Usando credenciais anonimas, a cota por IP é 400 por dia
-                // (O suficiente para radar de testes sem estourar 401 Unauthorized)
-                const options = { method: 'GET' };
-
-                const response = await fetch(url, options);
-
-                if (!response.ok) {
-                    if (response.status === 429) throw new Error('Limite de Banda Excedido (Rate Limit)');
-                    if (response.status === 401) throw new Error('Usuário sem Permissão no OpenSky');
-                    throw new Error(`Erro na API (${response.status})`);
-                }
+                if (!response.ok) throw new Error(`Erro na API (${response.status})`);
 
                 const data = await response.json();
+
+                // O motor GAS repassa erros no campo 'error'
+                if (data.error) throw new Error(data.message || 'Erro no Proxy');
+
                 processTraffic(data.states || []);
 
             } catch (error) {
-                console.error("Erro na busca do radar OpenSky:", error);
+                console.error("Erro na busca do radar via Proxy:", error);
                 connStatus.classList.remove('scanning');
                 connStatus.style.color = 'var(--danger-color)';
                 connStatus.querySelector('span').innerText = 'Falha (' + error.message + ')';
