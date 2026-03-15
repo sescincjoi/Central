@@ -533,28 +533,48 @@
             connStatus.querySelector('span').innerText = 'Conectado';
         }
 
-        // 3. PROCESSAMENTO DO TRÁFEGO (ADSB.lol JSON Format)
+        // 3. PROCESSAMENTO DO TRÁFEGO (ADSB.lol JSON Format + Lógica de Rumo/Heading)
         function processTraffic(aircraftList) {
             let foundRelevant = false;
             const currentCallsigns = new Set();
 
             aircraftList.forEach(ac => {
-                // Filtros Mínimos: (Tem flight? Tem altitude? Tem velocidade?)
-                if (!ac.flight || ac.alt_baro === undefined || ac.gs === undefined) return;
+                // Filtros Mínimos: (Tem flight? Tem altitude? Tem velocidade? Tem rumo?)
+                if (!ac.flight || ac.alt_baro === undefined || ac.gs === undefined || ac.track === undefined) return;
 
                 const callsign = ac.flight.trim();
                 const altFeet = ac.alt_baro;
                 const speedKmh = ac.gs * 1.852; // Knots -> Km/h
+                const track = ac.track; // Rumo (0-359)
 
-                // === LÓGICA DE DETECÇÃO DE APROXIMAÇÃO ===
-                // Altura menor que 15.000ft E taxa de descida (se disponível) ou apenas altitude na região
+                // Distância Calculada (Haversine)
+                const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
+
+                // === LÓGICA DE FILTRAGEM INTELIGENTE (FUNIL SBJV) ===
+
+                // 1. Filtro de Rumo (O avião está apontado para Joinville?)
+                // Calculamos qual o rumo ideal para chegar no aeroporto a partir da posição atual do avião
+                const bearingToAirport = calculateBearing(ac.lat, ac.lon, CONFIG.LAT, CONFIG.LON);
+
+                // Diferença entre o rumo do avião e o rumo do aeroporto (tolerância de 35 graus)
+                let diffHeading = Math.abs(track - bearingToAirport);
+                if (diffHeading > 180) diffHeading = 360 - diffHeading;
+
+                const isPointingToAirport = diffHeading < 35; // Cone de 70 graus de abertura
+
+                // 2. Filtro de Altitude Dinâmica (Proporcional à distância)
+                // Se ele está a 100km, pode estar a 15k ft. Se está a 30km, não pode estar acima de 6k ft.
+                const maxAltAllowed = Math.min(15000, 3000 + (distKm * 150)); // Base 3000ft + 150ft por km
+
+                // 3. Filtro de Taxa de Descida (Vertical Rate)
                 const vRate = ac.baro_rate || ac.geom_rate || 0;
 
-                if (altFeet < 15000 && vRate <= 0) {
+                // DECISÃO DE EXIBIÇÃO:
+                // - Deve estar descendo ou nivelado
+                // - Deve estar apontando para o aeroporto (ou ser um Mock)
+                // - Deve estar abaixo da altitude dinâmica máxima
+                if (vRate <= 0 && (isPointingToAirport || ac.isMock) && altFeet < maxAltAllowed) {
                     currentCallsigns.add(callsign);
-
-                    // Distância Calculada (Haversine)
-                    const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
 
                     // Estimativa de Tempo
                     let estMinutes = (distKm / speedKmh) * 60;
@@ -584,6 +604,17 @@
 
             renderInterface();
             checkAlarms();
+        }
+
+        // Função para calcular o rumo (bearing) entre dois pontos
+        function calculateBearing(lat1, lon1, lat2, lon2) {
+            const l1 = lat1 * Math.PI / 180;
+            const l2 = lat2 * Math.PI / 180;
+            const dl = (lon2 - lon1) * Math.PI / 180;
+            const y = Math.sin(dl) * Math.cos(l2);
+            const x = Math.cos(l1) * Math.sin(l2) - Math.sin(l1) * Math.cos(l2) * Math.cos(dl);
+            let brng = Math.atan2(y, x);
+            return (brng * 180 / Math.PI + 360) % 360;
         }
 
         // 4. ATUALIZAÇÃO DA TELA
