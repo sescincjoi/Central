@@ -456,10 +456,10 @@
         // CONFIGURAÇÕES GERAIS (Joinville SBJV)
         const CONFIG = {
             // URL do seu Google Apps Script (Proxy Oficial ADSB.lol)
-            API_URL: "https://script.google.com/macros/s/AKfycbw6D0lcCZxXO1lstsyyFObHGiNv-maRrDZok3jg8LhCCp0UKj2svGH6vrXDX0aHGzEVRQ/exec",
+            API_URL: "https://script.google.com/macros/s/AKfycbzB2UuSa5aX-C3t2pxfxHyAl88yCzZ0zpB0b-GdXHCzLco2tBmti1l1vUeeejIy6ReXuQ/exec",
             LAT: -26.2245,
             LON: -48.7974,
-            UPDATE_INTERVAL: 15000,
+            UPDATE_INTERVAL: 10000,
 
             // Regras Matemáticas:
             AVG_APPROACH_SPEED: 400,
@@ -467,12 +467,12 @@
             TIME_DANGER: 20
         };
 
-        // Bounding Box (Aprox. 100km ao redor de Joinville)
+        // Bounding Box Visual (Aprox. 80km ao redor de Joinville)
         const BBOX = {
-            lamin: -27.2000,
-            lomin: -49.5000,
-            lamax: -25.2000,
-            lomax: -48.0000
+            lamin: -27.0000,
+            lomin: -49.3000,
+            lamax: -25.5000,
+            lomax: -48.2000
         };
 
         let isMonitoring = false;
@@ -556,11 +556,11 @@
                 // Calculamos qual o rumo ideal para chegar no aeroporto a partir da posição atual do avião
                 const bearingToAirport = calculateBearing(ac.lat, ac.lon, CONFIG.LAT, CONFIG.LON);
 
-                // Diferença entre o rumo do avião e o rumo do aeroporto (tolerância de 35 graus)
+                // Diferença entre o rumo do avião e o rumo do aeroporto (tolerância de 25 graus)
                 let diffHeading = Math.abs(track - bearingToAirport);
                 if (diffHeading > 180) diffHeading = 360 - diffHeading;
 
-                const isPointingToAirport = diffHeading < 35; // Cone de 70 graus de abertura
+                const isPointingToAirport = diffHeading < 25; // Cone de 50 graus de abertura (mais rigido)
 
                 // 2. Filtro de Altitude Dinâmica (Proporcional à distância)
                 // Se ele está a 100km, pode estar a 15k ft. Se está a 30km, não pode estar acima de 6k ft.
