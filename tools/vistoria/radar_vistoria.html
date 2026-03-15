@@ -455,8 +455,8 @@
     <script>
         // CONFIGURAÇÕES GERAIS (Joinville SBJV)
         const CONFIG = {
-            // URL do seu Google Apps Script (Proxy Oficial)
-            API_URL: "https://script.google.com/macros/s/AKfycbzaa3EI_-VcfhQ2ZBHCSCkS1fhC3CI4PE5RrO0lmVwLy61Y2H_6XwI7j6PuyrIECQED7g/exec",
+            // URL do seu Google Apps Script (Proxy Oficial ADSB.lol)
+            API_URL: "https://script.google.com/macros/s/AKfycbw6D0lcCZxXO1lstsyyFObHGiNv-maRrDZok3jg8LhCCp0UKj2svGH6vrXDX0aHGzEVRQ/exec",
             LAT: -26.2245,
             LON: -48.7974,
             UPDATE_INTERVAL: 15000,
@@ -515,7 +515,7 @@
                 // O motor GAS repassa erros no campo 'error'
                 if (data.error) throw new Error(data.message || 'Erro no Proxy');
 
-                processTraffic(data.states || []);
+                processTraffic(data.ac || []);
 
             } catch (error) {
                 console.error("Erro na busca do radar via Proxy:", error);
@@ -533,48 +533,35 @@
             connStatus.querySelector('span').innerText = 'Conectado';
         }
 
-        // 3. PROCESSAMENTO DO TRÁFEGO (OpenSky Array Format)
-        function processTraffic(statesArray) {
+        // 3. PROCESSAMENTO DO TRÁFEGO (ADSB.lol JSON Format)
+        function processTraffic(aircraftList) {
             let foundRelevant = false;
             const currentCallsigns = new Set();
 
-            /* O OpenSky retorna um array de arrays (sem chaves). Índices úteis:
-               0: icao24 (hex)
-               1: callsign
-               5: longitude
-               6: latitude
-               7: baro_altitude (metros)
-               8: on_ground (boolean)
-               9: velocity (m/s)
-               11: vertical_rate (m/s)
-            */
+            aircraftList.forEach(ac => {
+                // Filtros Mínimos: (Tem flight? Tem altitude? Tem velocidade?)
+                if (!ac.flight || ac.alt_baro === undefined || ac.gs === undefined) return;
 
-            statesArray.forEach(state => {
-                const hex = state[0];
-                const callsignRaw = state[1];
-                const lon = state[5];
-                const lat = state[6];
-                const altMeters = state[7];
-                const isGrounded = state[8];
-                const velocityMs = state[9];
-                const vRate = state[11] || 0;
-
-                if (!callsignRaw || !lat || !lon || isGrounded) return;
-
-                const callsign = callsignRaw.trim();
-                const altFeet = altMeters ? (altMeters * 3.28084) : 0;
-                const speedKmh = velocityMs ? (velocityMs * 3.6) : 0;
+                const callsign = ac.flight.trim();
+                const altFeet = ac.alt_baro;
+                const speedKmh = ac.gs * 1.852; // Knots -> Km/h
 
                 // === LÓGICA DE DETECÇÃO DE APROXIMAÇÃO ===
-                if (altFeet < 15000 && vRate < 0) {
+                // Altura menor que 15.000ft E taxa de descida (se disponível) ou apenas altitude na região
+                const vRate = ac.baro_rate || ac.geom_rate || 0;
+
+                if (altFeet < 15000 && vRate <= 0) {
                     currentCallsigns.add(callsign);
 
-                    const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, lat, lon);
+                    // Distância Calculada (Haversine)
+                    const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
+
+                    // Estimativa de Tempo
                     let estMinutes = (distKm / speedKmh) * 60;
-                    estMinutes += 5; // +5 min de penalidade TMA
+                    estMinutes += 5; // Margem de segurança TMA
 
                     activeFlights.set(callsign, {
-                        hex: hex,
+                        hex: ac.hex,
                         callsign: callsign,
                         altFeet: Math.round(altFeet),
                         speedKmh: Math.round(speedKmh),
@@ -588,7 +575,7 @@
                 }
             });
 
-            // Remove quem saiu do radar/pousou
+            // Limpa da tela quem sumiu do radar (mantendo mocks)
             for (let [callsign, data] of activeFlights.entries()) {
                 if (!currentCallsigns.has(callsign) && !data.isMock) {
                     activeFlights.delete(callsign);
