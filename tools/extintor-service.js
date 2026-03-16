@@ -48,249 +48,19 @@ class ExtintorService {
   }
 
   // ══════════════════════════════════════════════════════════
-  //  USUÁRIO E PERMISSÕES
-  // ══════════════════════════════════════════════════════════
-
-  async getUserProfile() {
-    this._ensureInit();
-
-    if (!this.auth) {
-      throw new Error('Firebase Auth não está disponível. Adicione o script do Firebase Auth.');
-    }
-
-    // Aguardar usuário estar autenticado
-    const user = await new Promise((resolve) => {
-      const unsubscribe = this.auth.onAuthStateChanged((user) => {
-        unsubscribe();
-        resolve(user);
-      });
-    });
-
-    if (!user) {
-      throw new Error('Usuário não autenticado');
-    }
-
-    // Buscar perfil do usuário no Firestore
-    const doc = await this.db.collection('usuarios').doc(user.uid).get();
-
-    if (!doc.exists) {
-      throw new Error('Perfil do usuário não encontrado');
-    }
-
-    this.currentUser = { uid: user.uid, ...doc.data() };
-    return this.currentUser;
-  }
-
-  async getBaseSelecionadaPeloUsuario() {
-    this._ensureInit();
-
-    // ═══ PRIORIDADE 1: localStorage ═══
-    const baseSelecionada = localStorage.getItem('baseSelecionada');
-
-    if (baseSelecionada) {
-      console.log(`📍 Base selecionada (localStorage): ${baseSelecionada}`);
-      return baseSelecionada;
-    }
-
-    // ═══ PRIORIDADE 2: Perfil do usuário (REQUER AUTH) ═══
-    if (!this.auth) {
-      throw new Error(
-        '❌ Base não definida!\n\n' +
-        'Não há base selecionada no sistema.\n\n' +
-        'SOLUÇÃO:\n' +
-        '1. Faça login no sistema\n' +
-        '2. O sistema configurará automaticamente sua base\n' +
-        '3. Depois você poderá usar todas as páginas'
-      );
-    }
-
-    // Aguardar usuário estar autenticado
-    const user = await new Promise((resolve, reject) => {
-      const unsubscribe = this.auth.onAuthStateChanged((user) => {
-        unsubscribe();
-        resolve(user);
-      });
-
-      // Timeout de 5 segundos
-      setTimeout(() => {
-        unsubscribe();
-        reject(new Error('Timeout aguardando autenticação'));
-      }, 5000);
-    });
-
-    if (!user) {
-      throw new Error(
-        '❌ Usuário não autenticado!\n\n' +
-        'Você precisa fazer login para usar o sistema.\n\n' +
-        'SOLUÇÃO:\n' +
-        '1. Faça login em /login.html\n' +
-        '2. Sua base será configurada automaticamente'
-      );
-    }
-
-    // Pegar do perfil do usuário
-    const perfil = await this.getUserProfile();
-
-    if (!perfil.base) {
-      throw new Error(
-        '❌ Perfil sem base definida!\n\n' +
-        'Seu perfil não tem uma base configurada.\n\n' +
-        'Entre em contato com o administrador.'
-      );
-    }
-
-    const baseIATA = perfil.base; // Ex: "JOI"
-
-    // Buscar base pelo código IATA
-    const snapshot = await this.db.collection('bases')
-      .where('base', '==', baseIATA)
-      .limit(1)
-      .get();
-
-    if (snapshot.empty) {
-      throw new Error(
-        `❌ Base "${baseIATA}" não encontrada!\n\n` +
-        `Seu perfil está configurado para a base "${baseIATA}",\n` +
-        `mas ela não existe no sistema.\n\n` +
-        `Entre em contato com o administrador.`
-      );
-    }
-
-    const baseId = snapshot.docs[0].id;
-    const baseNome = snapshot.docs[0].data().nome;
-
-    // Salvar no localStorage
-    localStorage.setItem('baseSelecionada', baseId);
-
-    console.log(`✅ Base configurada: ${baseNome} (${baseIATA})`);
-    return baseId;
-  }
-
-  async selecionarBase(baseIdOuCodigo) {
-    this._ensureInit();
-
-    // 1. Resolver ID da base (suporta ID ou Código IATA de 3 letras)
-    let baseId = baseIdOuCodigo;
-
-    if (baseIdOuCodigo.length === 3) {
-      const snapshot = await this.db.collection('bases')
-        .where('base', '==', baseIdOuCodigo)
-        .limit(1)
-        .get();
-
-      if (snapshot.empty) {
-        throw new Error(`Base com código IATA "${baseIdOuCodigo}" não encontrada`);
-      }
-
-      baseId = snapshot.docs[0].id;
-    }
-
-    // 2. Verificar permissão
-    const perfil = await this.getUserProfile();
-
-    if (perfil.role !== 'super-admin') {
-      // Buscar código IATA da base para verificar permissões
-      const baseDoc = await this.db.collection('bases').doc(baseId).get();
-      if (!baseDoc.exists) {
-        throw new Error('Base não encontrada');
-      }
-
-      const codigoIATA = baseDoc.data().base;
-
-      if (!perfil.allowedBases || !perfil.allowedBases.includes(codigoIATA)) {
-        throw new Error(`Você não tem permissão para acessar a base "${codigoIATA}"`);
-      }
-    }
-
-    // 3. Salvar seleção e limpar cache
-    localStorage.setItem('baseSelecionada', baseId);
-
-    // Limpar cache
-    this.cache.base = null;
-    this.cache.extintores = null;
-    this.cache.edificacoes = null;
-
-    console.log(`✅ Base selecionada: ${baseId}`);
-
-    return baseId;
-  }
-
-  async getBasesPermitidas() {
-    this._ensureInit();
-
-    const perfil = await this.getUserProfile();
-
-    // Super-admin vê todas
-    if (perfil.role === 'super-admin') {
-      const snapshot = await this.db.collection('bases').get();
-      const bases = [];
-
-      snapshot.forEach(doc => {
-        bases.push({ id: doc.id, ...doc.data() });
-      });
-
-      return bases;
-    }
-
-    // Admin/User: apenas allowedBases
-    if (!perfil.allowedBases || perfil.allowedBases.length === 0) {
-      return [];
-    }
-
-    const bases = [];
-
-    for (const codigoIATA of perfil.allowedBases) {
-      const snapshot = await this.db.collection('bases')
-        .where('base', '==', codigoIATA)
-        .limit(1)
-        .get();
-
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        bases.push({ id: doc.id, ...doc.data() });
-      }
-    }
-
-    return bases;
-  }
-
-  // ══════════════════════════════════════════════════════════
-  //  BASE ATUAL
+  //  BASE ATUAL (Via BaseService)
   // ══════════════════════════════════════════════════════════
 
   async getBaseAtual() {
-    this._ensureInit();
-
-    // Cache por 30 segundos
-    if (this.cache.base && this.cache.lastUpdate) {
-      const diff = Date.now() - this.cache.lastUpdate;
-      if (diff < 30000) {
-        return this.cache.base;
-      }
+    if (!window.baseService) {
+      throw new Error('BaseService não inicializado');
     }
-
-    // Pegar base selecionada pelo usuário
-    const baseId = await this.getBaseSelecionadaPeloUsuario();
-
-    const doc = await this.db.collection('bases').doc(baseId).get();
-
-    if (!doc.exists) {
-      throw new Error('Base não encontrada. Execute o script de migração primeiro.');
-    }
-
-    const base = { id: doc.id, ...doc.data() };
-
-    this.cache.base = base;
-    this.cache.lastUpdate = Date.now();
-
-    console.log(`✅ Base ativa: ${base.nome} (${base.base})`);
-
-    return base;
+    return await window.baseService.getBaseAtual();
   }
 
   async getModoClassificacao() {
-    const base = await this.getBaseAtual();
-    return base.modo_classificacao || 'tipo_carga_nominal';
+    if (!window.baseService) return 'tipo_carga_nominal';
+    return await window.baseService.getModoClassificacao();
   }
 
   async getOpcoesCargaNominal() {
@@ -331,7 +101,8 @@ class ExtintorService {
       atualizado_em: new Date().toISOString()
     });
 
-    this.cache.base = null;
+    // Notificar BaseService para limpar cache
+    if (window.baseService) window.baseService.cache.base = null;
 
     await this.marcarTodosParaRevisaoSemLimpar(novoModo);
 

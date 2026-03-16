@@ -322,6 +322,9 @@
     }
   </script>
 
+  <!-- Core Layer -->
+  <script src="../../js/core/base-service.js"></script>
+
   <!-- Service Layer -->
   <script src="../extintor-service.js"></script>
 
@@ -357,8 +360,15 @@
       try {
         extintorService = new ExtintorService().init();
 
-        // Carregar perfil do usuário
-        userProfile = await extintorService.getUserProfile();
+        // Carregar perfil do usuário (usando AuthCore se disponível, ou direto do baseService)
+        if (window.authCore && window.authCore.currentUser) {
+          userProfile = window.authCore.currentUser;
+        } else {
+          // Fallback para buscar se ainda não carregado
+          const user = firebase.auth().currentUser;
+          const userDoc = await firebase.firestore().collection('usuarios').doc(user.uid).get();
+          userProfile = userDoc.data();
+        }
 
         // Carregar seletor de bases (se super-admin)
         await carregarSeletorBases();
@@ -387,9 +397,9 @@
 
       document.getElementById('seletor-base-container').style.display = 'block';
 
-      // Buscar bases permitidas
-      const bases = await extintorService.getBasesPermitidas();
-      const baseSelecionada = await extintorService.getBaseSelecionadaPeloUsuario();
+      // Buscar bases permitidas no BaseService
+      const bases = await window.baseService.getBasesPermitidas();
+      const baseSelecionada = await window.baseService.getBaseSelecionadaPeloUsuario();
 
       const grid = document.getElementById('bases-grid');
       grid.innerHTML = '';
@@ -423,7 +433,7 @@
       }
 
       try {
-        await extintorService.selecionarBase(baseId);
+        await window.baseService.selecionarBase(baseId);
         location.reload();
       } catch (error) {
         alert(`❌ Erro ao trocar base: ${error.message}`);
