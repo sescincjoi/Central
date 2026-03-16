@@ -303,253 +303,253 @@
       </div>
     </div>
 
-    <!-- Alert de Sucesso -->
     <div class="alert alert-success" id="alertSuccess">
       <strong>✅ Base criada com sucesso!</strong><br>
       Agora você pode adicionar edificações e extintores nesta nova base.
-
-      <!-- Informações Básicas -->
-      <div class="card">
-        <div class="card-title">📋 Informações Básicas</div>
-
-        <div class="alert alert-info">
-          <strong>ℹ️ Sobre os códigos:</strong><br>
-          • <strong>Código ICAO</strong> (4 letras): Código internacional da OACI/ICAO<br>
-          &nbsp;&nbsp;Exemplos: <code>SBJV</code> (Joinville), <code>SBGR</code> (Guarulhos), <code>SBFL</code>
-          (Florianópolis)<br><br>
-          • <strong>Código IATA</strong> (3 letras): Código usado em bilhetes e bagagens<br>
-          &nbsp;&nbsp;Exemplos: <code>JOI</code> (Joinville), <code>GRU</code> (Guarulhos), <code>FLN</code>
-          (Florianópolis)
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Nome da Base *</label>
-          <input type="text" id="nome" class="form-input" placeholder="Ex: SCI Aeroporto de Joinville" required>
-          <div class="form-hint">Nome completo da unidade</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Código ICAO (4 letras) *</label>
-          <input type="text" id="codigoICAO" class="form-input uppercase" placeholder="Ex: SBJV" maxlength="4" required>
-          <div class="form-hint">Código OACI/ICAO do aeroporto (4 letras)</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Código IATA (3 letras) *</label>
-          <input type="text" id="codigoIATA" class="form-input uppercase" placeholder="Ex: JOI" maxlength="3" required>
-          <div class="form-hint">Código IATA usado em bilhetes e bagagens (3 letras)</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">ID da Base *</label>
-          <input type="text" id="baseId" class="form-input" placeholder="Ex: aeroporto-joinville" required>
-          <div class="form-hint">Identificador único (sem espaços, usar hífen)</div>
-        </div>
-      </div>
-
-      <!-- Configurações de Capacidade Extintora -->
-      <div class="card">
-        <div class="card-title">🔥 Capacidade Extintora (Modo Recomendado)</div>
-
-        <div id="capacidadeContainer"></div>
-      </div>
-
-      <!-- Configurações de Carga Nominal -->
-      <div class="card">
-        <div class="card-title">⚖️ Carga Nominal (Modo Alternativo)</div>
-
-        <div id="cargaNominalContainer"></div>
-      </div>
-
-      <!-- Botão Criar -->
-      <button class="btn-criar" id="btnCriar" onclick="criarBase()">
-        🚀 Criar Base
-      </button>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <!-- Informações Básicas -->
+    <div class="card">
+      <div class="card-title">📋 Informações Básicas</div>
 
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
-        authDomain: "central-sci-joinville.firebaseapp.com",
-        databaseURL: "https://central-sci-joinville-default-rtdb.firebaseio.com",
-        projectId: "central-sci-joinville",
-        storageBucket: "central-sci-joinville.firebasestorage.app",
-        messagingSenderId: "340864161035",
-        appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
-      };
+      <div class="alert alert-info">
+        <strong>ℹ️ Sobre os códigos:</strong><br>
+        • <strong>Código ICAO</strong> (4 letras): Código internacional da OACI/ICAO<br>
+        &nbsp;&nbsp;Exemplos: <code>SBJV</code> (Joinville), <code>SBGR</code> (Guarulhos), <code>SBFL</code>
+        (Florianópolis)<br><br>
+        • <strong>Código IATA</strong> (3 letras): Código usado em bilhetes e bagagens<br>
+        &nbsp;&nbsp;Exemplos: <code>JOI</code> (Joinville), <code>GRU</code> (Guarulhos), <code>FLN</code>
+        (Florianópolis)
+      </div>
 
-      firebase.initializeApp(firebaseConfig);
+      <div class="form-group">
+        <label class="form-label">Nome da Base *</label>
+        <input type="text" id="nome" class="form-input" placeholder="Ex: SCI Aeroporto de Joinville" required>
+        <div class="form-hint">Nome completo da unidade</div>
+      </div>
 
-      // ══════════════════════════════════════════════════════════
-      //  CONFIGURAÇÕES PADRÃO
-      // ══════════════════════════════════════════════════════════
+      <div class="form-group">
+        <label class="form-label">Código ICAO (4 letras) *</label>
+        <input type="text" id="codigoICAO" class="form-input uppercase" placeholder="Ex: SBJV" maxlength="4" required>
+        <div class="form-hint">Código OACI/ICAO do aeroporto (4 letras)</div>
+      </div>
 
-      const TIPOS_EXTINTORES = [
-        'PQS ABC',
-        'PQS BC',
-        'CO²',
-        'Água Pressurizada',
-        'Espuma Mecânica',
-        'Classe K',
-        'Pó Classe D'
-      ];
+      <div class="form-group">
+        <label class="form-label">Código IATA (3 letras) *</label>
+        <input type="text" id="codigoIATA" class="form-input uppercase" placeholder="Ex: JOI" maxlength="3" required>
+        <div class="form-hint">Código IATA usado em bilhetes e bagagens (3 letras)</div>
+      </div>
 
-      const CONFIG_PADRAO = {
-        capacidade: {
-          'PQS ABC': ['2A:20B:C', '3A:40B:C', '4A:40B:C', '6A:60B:C', '6A:80B:C'],
-          'PQS BC': ['20B:C', '40B:C', '60B:C', '80B:C'],
-          'CO²': ['5B:C', '10B:C'],
-          'Água Pressurizada': ['2A', '3A', '4A'],
-          'Espuma Mecânica': ['2A:20B', '3A:40B', '4A:40B'],
-          'Classe K': ['K'],
-          'Pó Classe D': ['D-Magnésio', 'D-Sódio', 'D-Potássio', 'D-Lítio']
-        },
-        cargaNominal: {
-          'PQS ABC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
-          'PQS BC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
-          'CO²': { unidade: 'kg', valores: [2, 4, 6, 10, 25] },
-          'Água Pressurizada': { unidade: 'L', valores: [10, 15, 20] },
-          'Espuma Mecânica': { unidade: 'L', valores: [6, 10, 20] },
-          'Classe K': { unidade: 'L', valores: [6, 10] },
-          'Pó Classe D': { unidade: 'kg', valores: [4, 6, 9, 12, 20] }
+      <div class="form-group">
+        <label class="form-label">ID da Base *</label>
+        <input type="text" id="baseId" class="form-input" placeholder="Ex: aeroporto-joinville" required>
+        <div class="form-hint">Identificador único (sem espaços, usar hífen)</div>
+      </div>
+    </div>
+
+    <!-- Configurações de Capacidade Extintora -->
+    <div class="card">
+      <div class="card-title">🔥 Capacidade Extintora (Modo Recomendado)</div>
+
+      <div id="capacidadeContainer"></div>
+    </div>
+
+    <!-- Configurações de Carga Nominal -->
+    <div class="card">
+      <div class="card-title">⚖️ Carga Nominal (Modo Alternativo)</div>
+
+      <div id="cargaNominalContainer"></div>
+    </div>
+
+    <!-- Botão Criar -->
+    <button class="btn-criar" id="btnCriar" onclick="criarBase()">
+      🚀 Criar Base
+    </button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
+      authDomain: "central-sci-joinville.firebaseapp.com",
+      databaseURL: "https://central-sci-joinville-default-rtdb.firebaseio.com",
+      projectId: "central-sci-joinville",
+      storageBucket: "central-sci-joinville.firebasestorage.app",
+      messagingSenderId: "340864161035",
+      appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    // ══════════════════════════════════════════════════════════
+    //  CONFIGURAÇÕES PADRÃO
+    // ══════════════════════════════════════════════════════════
+
+    const TIPOS_EXTINTORES = [
+      'PQS ABC',
+      'PQS BC',
+      'CO²',
+      'Água Pressurizada',
+      'Espuma Mecânica',
+      'Classe K',
+      'Pó Classe D'
+    ];
+
+    const CONFIG_PADRAO = {
+      capacidade: {
+        'PQS ABC': ['2A:20B:C', '3A:40B:C', '4A:40B:C', '6A:60B:C', '6A:80B:C'],
+        'PQS BC': ['20B:C', '40B:C', '60B:C', '80B:C'],
+        'CO²': ['5B:C', '10B:C'],
+        'Água Pressurizada': ['2A', '3A', '4A'],
+        'Espuma Mecânica': ['2A:20B', '3A:40B', '4A:40B'],
+        'Classe K': ['K'],
+        'Pó Classe D': ['D-Magnésio', 'D-Sódio', 'D-Potássio', 'D-Lítio']
+      },
+      cargaNominal: {
+        'PQS ABC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+        'PQS BC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+        'CO²': { unidade: 'kg', valores: [2, 4, 6, 10, 25] },
+        'Água Pressurizada': { unidade: 'L', valores: [10, 15, 20] },
+        'Espuma Mecânica': { unidade: 'L', valores: [6, 10, 20] },
+        'Classe K': { unidade: 'L', valores: [6, 10] },
+        'Pó Classe D': { unidade: 'kg', valores: [4, 6, 9, 12, 20] }
+      }
+    };
+
+    // Inicializar estado global
+    window.opcoesCapacidade = JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade));
+    window.opcoesCargaNominal = JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal));
+    window.TIPOS_EXTINTORES = TIPOS_EXTINTORES;
+    window.CONFIG_PADRAO = CONFIG_PADRAO;
+
+    // O Firebase já é inicializado pelo auth-core.js (via firebase-config.js)
+    // Mas precisamos dessas referências v9 compat para o Realtime DB se quisermos continuar usando .ref().set()
+    // Ou podemos migrar tudo para modular.
+
+    // ══════════════════════════════════════════════════════════
+    //  AUTH SYSTEM INTEGRATION
+    // ══════════════════════════════════════════════════════════
+  </script>
+
+  <script type="module">
+    import authCore from '../js/auth/auth-core.js';
+    import authUI from '../js/auth/auth-ui.js';
+    import authGuard from '../js/auth/auth-guard.js';
+    import { db } from '../js/auth/firebase-config.js';
+    import { doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    window.authCore = authCore;
+    window.db = db; // Firestore Modular
+
+    // ══════════════════════════════════════════════════════════
+    //  CRIAR BASE (MODULAR)
+    // ══════════════════════════════════════════════════════════
+
+    window.criarBase = async function () {
+      const nome = document.getElementById('nome').value.trim();
+      const codigoICAO = document.getElementById('codigoICAO').value.trim().toUpperCase();
+      const codigoIATA = document.getElementById('codigoIATA').value.trim().toUpperCase();
+      const baseId = document.getElementById('baseId').value.trim();
+
+      // Validações
+      if (!nome || !codigoICAO || !codigoIATA || !baseId) {
+        alert('⚠️ Preencha todos os campos obrigatórios!');
+        return;
+      }
+
+      if (codigoICAO.length !== 4) {
+        alert('⚠️ Código ICAO deve ter exatamente 4 letras!');
+        return;
+      }
+
+      if (codigoIATA.length !== 3) {
+        alert('⚠️ Código IATA deve ter exatamente 3 letras!');
+        return;
+      }
+
+      if (!confirm(`Criar base "${nome}"?\n\n• ICAO: ${codigoICAO}\n• IATA: ${codigoIATA}\n• ID: ${baseId}`)) {
+        return;
+      }
+
+      const btnCriar = document.getElementById('btnCriar');
+      btnCriar.disabled = true;
+      btnCriar.textContent = '⏳ Criando base...';
+
+      try {
+        // Verificar se já existe (Modular)
+        const docRef = doc(db, 'bases', baseId);
+        const existe = await getDoc(docRef);
+        if (existe.exists()) {
+          throw new Error(`Base "${baseId}" já existe!`);
         }
-      };
 
-      // Inicializar estado global
-      window.opcoesCapacidade = JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade));
-      window.opcoesCargaNominal = JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal));
-      window.TIPOS_EXTINTORES = TIPOS_EXTINTORES;
-      window.CONFIG_PADRAO = CONFIG_PADRAO;
+        const novaBase = {
+          id: baseId,
+          nome: nome,
+          codigo: codigoICAO,
+          base: codigoIATA,
+          ativo: false,
+          modo_classificacao: 'tipo_capacidade',
+          opcoes_capacidade: window.opcoesCapacidade,
+          opcoes_carga_nominal: window.opcoesCargaNominal,
+          edificacoes: {},
+          historico_mudancas: [],
+          criado_em: new Date().toISOString(),
+          criado_por: authCore.currentUser?.email || 'admin',
+          atualizado_em: new Date().toISOString()
+        };
 
-      // O Firebase já é inicializado pelo auth-core.js (via firebase-config.js)
-      // Mas precisamos dessas referências v9 compat para o Realtime DB se quisermos continuar usando .ref().set()
-      // Ou podemos migrar tudo para modular.
+        // Salvar no Firestore (Modular)
+        await setDoc(docRef, novaBase);
 
-      // ══════════════════════════════════════════════════════════
-      //  AUTH SYSTEM INTEGRATION
-      // ══════════════════════════════════════════════════════════
-    </script>
-
-    <script type="module">
-      import authCore from '../js/auth/auth-core.js';
-      import authUI from '../js/auth/auth-ui.js';
-      import authGuard from '../js/auth/auth-guard.js';
-      import { db } from '../js/auth/firebase-config.js';
-      import { doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-
-      window.authCore = authCore;
-      window.db = db; // Firestore Modular
-
-      // ══════════════════════════════════════════════════════════
-      //  CRIAR BASE (MODULAR)
-      // ══════════════════════════════════════════════════════════
-
-      window.criarBase = async function () {
-        const nome = document.getElementById('nome').value.trim();
-        const codigoICAO = document.getElementById('codigoICAO').value.trim().toUpperCase();
-        const codigoIATA = document.getElementById('codigoIATA').value.trim().toUpperCase();
-        const baseId = document.getElementById('baseId').value.trim();
-
-        // Validações
-        if (!nome || !codigoICAO || !codigoIATA || !baseId) {
-          alert('⚠️ Preencha todos os campos obrigatórios!');
-          return;
-        }
-
-        if (codigoICAO.length !== 4) {
-          alert('⚠️ Código ICAO deve ter exatamente 4 letras!');
-          return;
-        }
-
-        if (codigoIATA.length !== 3) {
-          alert('⚠️ Código IATA deve ter exatamente 3 letras!');
-          return;
-        }
-
-        if (!confirm(`Criar base "${nome}"?\n\n• ICAO: ${codigoICAO}\n• IATA: ${codigoIATA}\n• ID: ${baseId}`)) {
-          return;
-        }
-
-        const btnCriar = document.getElementById('btnCriar');
-        btnCriar.disabled = true;
-        btnCriar.textContent = '⏳ Criando base...';
-
-        try {
-          // Verificar se já existe (Modular)
-          const docRef = doc(db, 'bases', baseId);
-          const existe = await getDoc(docRef);
-          if (existe.exists()) {
-            throw new Error(`Base "${baseId}" já existe!`);
+        // Inicializar Realtime Database (usando global firebase do compat SDK carregado antes)
+        console.log(`📦 Inicializando Realtime Database para base ${codigoIATA}...`);
+        await firebase.database().ref(`${codigoIATA}/extintores`).set({
+          _initialized: {
+            created_at: new Date().toISOString(),
+            message: "Base inicializada - pronta para inspeções"
           }
+        });
 
-          const novaBase = {
-            id: baseId,
-            nome: nome,
-            codigo: codigoICAO,
-            base: codigoIATA,
-            ativo: false,
-            modo_classificacao: 'tipo_capacidade',
-            opcoes_capacidade: window.opcoesCapacidade,
-            opcoes_carga_nominal: window.opcoesCargaNominal,
-            edificacoes: {},
-            historico_mudancas: [],
-            criado_em: new Date().toISOString(),
-            criado_por: authCore.currentUser?.email || 'admin',
-            atualizado_em: new Date().toISOString()
-          };
+        console.log(`✅ Realtime Database inicializado: ${codigoIATA}/extintores`);
 
-          // Salvar no Firestore (Modular)
-          await setDoc(docRef, novaBase);
+        document.getElementById('alertSuccess').classList.add('show');
+        btnCriar.textContent = '✅ Base Criada!';
 
-          // Inicializar Realtime Database (usando global firebase do compat SDK carregado antes)
-          console.log(`📦 Inicializando Realtime Database para base ${codigoIATA}...`);
-          await firebase.database().ref(`${codigoIATA}/extintores`).set({
-            _initialized: {
-              created_at: new Date().toISOString(),
-              message: "Base inicializada - pronta para inspeções"
-            }
-          });
+        // Limpar formulário após 2s
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
 
-          console.log(`✅ Realtime Database inicializado: ${codigoIATA}/extintores`);
+      } catch (error) {
+        console.error('❌ Erro:', error);
+        alert(`❌ Erro: ${error.message}`);
+        btnCriar.disabled = false;
+        btnCriar.textContent = '🚀 Criar Base';
+      }
+    };
+  </script>
 
-          document.getElementById('alertSuccess').classList.add('show');
-          btnCriar.textContent = '✅ Base Criada!';
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //  RENDERIZAR FORMULÁRIOS
+    // ══════════════════════════════════════════════════════════
 
-          // Limpar formulário após 2s
-          setTimeout(() => {
-            location.reload();
-          }, 2000);
+    function renderCapacidade() {
+      const container = document.getElementById('capacidadeContainer');
+      if (!container) return;
+      container.innerHTML = '';
 
-        } catch (error) {
-          console.error('❌ Erro:', error);
-          alert(`❌ Erro: ${error.message}`);
-          btnCriar.disabled = false;
-          btnCriar.textContent = '🚀 Criar Base';
-        }
-      };
-    </script>
+      window.TIPOS_EXTINTORES.forEach(tipo => {
+        const grupo = document.createElement('div');
+        grupo.className = 'tipo-grupo';
 
-    <script>
-      // ══════════════════════════════════════════════════════════
-      //  RENDERIZAR FORMULÁRIOS
-      // ══════════════════════════════════════════════════════════
+        const opcoes = window.opcoesCapacidade[tipo] || [];
 
-      function renderCapacidade() {
-        const container = document.getElementById('capacidadeContainer');
-        if (!container) return;
-        container.innerHTML = '';
-
-        window.TIPOS_EXTINTORES.forEach(tipo => {
-          const grupo = document.createElement('div');
-          grupo.className = 'tipo-grupo';
-
-          const opcoes = window.opcoesCapacidade[tipo] || [];
-
-          grupo.innerHTML = `
+        grupo.innerHTML = `
         <div class="tipo-header">
           <div class="tipo-nome">${tipo}</div>
         </div>
@@ -567,22 +567,22 @@
         </div>
       `;
 
-          container.appendChild(grupo);
-        });
-      }
+        container.appendChild(grupo);
+      });
+    }
 
-      function renderCargaNominal() {
-        const container = document.getElementById('cargaNominalContainer');
-        if (!container) return;
-        container.innerHTML = '';
+    function renderCargaNominal() {
+      const container = document.getElementById('cargaNominalContainer');
+      if (!container) return;
+      container.innerHTML = '';
 
-        window.TIPOS_EXTINTORES.forEach(tipo => {
-          const grupo = document.createElement('div');
-          grupo.className = 'tipo-grupo';
+      window.TIPOS_EXTINTORES.forEach(tipo => {
+        const grupo = document.createElement('div');
+        grupo.className = 'tipo-grupo';
 
-          const config = window.opcoesCargaNominal[tipo] || { unidade: 'kg', valores: [] };
+        const config = window.opcoesCargaNominal[tipo] || { unidade: 'kg', valores: [] };
 
-          grupo.innerHTML = `
+        grupo.innerHTML = `
         <div class="tipo-header">
           <div class="tipo-nome">${tipo}</div>
         </div>
@@ -599,69 +599,69 @@
         </div>
       `;
 
-          container.appendChild(grupo);
-        });
+        container.appendChild(grupo);
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  FUNÇÕES DE MANIPULAÇÃO
+    // ══════════════════════════════════════════════════════════
+
+    function adicionarCapacidade(tipo) {
+      const input = document.getElementById(`input-cap-${tipo.replace(/\s/g, '-')}`);
+      const valor = input.value.trim();
+
+      if (!valor) return;
+
+      if (!window.opcoesCapacidade[tipo]) {
+        window.opcoesCapacidade[tipo] = [];
       }
 
-      // ══════════════════════════════════════════════════════════
-      //  FUNÇÕES DE MANIPULAÇÃO
-      // ══════════════════════════════════════════════════════════
-
-      function adicionarCapacidade(tipo) {
-        const input = document.getElementById(`input-cap-${tipo.replace(/\s/g, '-')}`);
-        const valor = input.value.trim();
-
-        if (!valor) return;
-
-        if (!window.opcoesCapacidade[tipo]) {
-          window.opcoesCapacidade[tipo] = [];
-        }
-
-        if (!window.opcoesCapacidade[tipo].includes(valor)) {
-          window.opcoesCapacidade[tipo].push(valor);
-          renderCapacidade();
-        }
-
-        input.value = '';
-      }
-
-      function removerCapacidade(tipo, opcao) {
-        window.opcoesCapacidade[tipo] = window.opcoesCapacidade[tipo].filter(op => op !== opcao);
+      if (!window.opcoesCapacidade[tipo].includes(valor)) {
+        window.opcoesCapacidade[tipo].push(valor);
         renderCapacidade();
       }
 
-      function atualizarUnidade(tipo, unidade) {
-        if (!window.opcoesCargaNominal[tipo]) {
-          window.opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
-        }
-        window.opcoesCargaNominal[tipo].unidade = unidade;
-      }
+      input.value = '';
+    }
 
-      function atualizarValores(tipo, valoresStr) {
-        const valores = valoresStr.split(',').map(v => {
-          const num = parseFloat(v.trim());
-          return isNaN(num) ? null : num;
-        }).filter(v => v !== null);
-
-        if (!window.opcoesCargaNominal[tipo]) {
-          window.opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
-        }
-        window.opcoesCargaNominal[tipo].valores = valores;
-      }
-
-      // ══════════════════════════════════════════════════════════
-      //  CRIAR BASE
-      // ══════════════════════════════════════════════════════════
-
-      /* O código desta função foi movido para o bloco script type="module" acima */
-
-      // ══════════════════════════════════════════════════════════
-      //  INICIALIZAR
-      // ══════════════════════════════════════════════════════════
-
+    function removerCapacidade(tipo, opcao) {
+      window.opcoesCapacidade[tipo] = window.opcoesCapacidade[tipo].filter(op => op !== opcao);
       renderCapacidade();
-      renderCargaNominal();
-    </script>
+    }
+
+    function atualizarUnidade(tipo, unidade) {
+      if (!window.opcoesCargaNominal[tipo]) {
+        window.opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
+      }
+      window.opcoesCargaNominal[tipo].unidade = unidade;
+    }
+
+    function atualizarValores(tipo, valoresStr) {
+      const valores = valoresStr.split(',').map(v => {
+        const num = parseFloat(v.trim());
+        return isNaN(num) ? null : num;
+      }).filter(v => v !== null);
+
+      if (!window.opcoesCargaNominal[tipo]) {
+        window.opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
+      }
+      window.opcoesCargaNominal[tipo].valores = valores;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  CRIAR BASE
+    // ══════════════════════════════════════════════════════════
+
+    /* O código desta função foi movido para o bloco script type="module" acima */
+
+    // ══════════════════════════════════════════════════════════
+    //  INICIALIZAR
+    // ══════════════════════════════════════════════════════════
+
+    renderCapacidade();
+    renderCargaNominal();
+  </script>
 
 </body>
 
