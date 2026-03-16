@@ -8,7 +8,7 @@
       const savedUser = key ? localStorage.getItem(key) : null;
       if (!savedUser) document.documentElement.style.display = 'none';
     })();
-  </script>  
+  </script>
   <link rel="manifest" href="../pwa/manifest.json">
   <link rel="icon" type="image/png" href="../pwa/icons/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
@@ -996,7 +996,7 @@
           if (e.detail && e.detail.user) {
             document.documentElement.style.display = '';
             document.body.classList.add('auth-ready');
-            
+
             // Auto-fill nome
             const displayName = e.detail.user.displayName;
             if (displayName) {
@@ -1006,14 +1006,14 @@
                 localStorage.setItem('nomeUsuario', displayName);
               }
             }
-            
+
             await carregarExtintoresDoFirestore();
           }
         });
         if (authCore.initialized && authCore.isAuthenticated()) {
           document.documentElement.style.display = '';
           document.body.classList.add('auth-ready');
-          
+
           if (authCore.currentUser && authCore.currentUser.displayName) {
             const input = document.getElementById('nomeUsuario');
             if (input) {
@@ -1021,7 +1021,7 @@
               localStorage.setItem('nomeUsuario', authCore.currentUser.displayName);
             }
           }
-          
+
           await carregarExtintoresDoFirestore();
         }
       } else {
@@ -1062,7 +1062,7 @@
     let sistemaCarregado = false;
     let opcoesCapacidade = {};
     let extintorService;
-    
+
     // ──────────────────────────────────────────
     //  App state
     // ──────────────────────────────────────────
@@ -1080,15 +1080,15 @@
       if (window.baseIATACache) {
         return window.baseIATACache;
       }
-      
+
       try {
         const service = inicializarExtintorService();
         const base = await service.getBaseAtual();
         window.baseIATACache = base.base; // Ex: "JOI"
-        
+
         console.log(`📍 Base IATA: ${window.baseIATACache}`);
         return window.baseIATACache;
-        
+
       } catch (error) {
         console.error('❌ Erro ao obter base IATA:', error);
         // Fallback para base padrão
@@ -1119,7 +1119,7 @@
     async function carregarExtintoresDoFirestore() {
       const loadingEl = document.getElementById('loading-extintores');
       const extList = document.getElementById('ext-list');
-      
+
       try {
         if (loadingEl) {
           loadingEl.style.display = 'block';
@@ -1137,41 +1137,41 @@
               </div>`;
           }
         }
-        
+
         const service = inicializarExtintorService();
         const dados = await service.getExtintoresFormatoAntigo();
-        
+
         edificacoesDescr = dados.edificacoesDescr;
-        extintoresInfo   = dados.extintoresInfo;
+        extintoresInfo = dados.extintoresInfo;
         edificacoesArray = dados.edificacoesArray;
         modoClassificacao = dados.modo || 'tipo_carga_nominal';
-    
+
         await carregarOpcoesCapacidade();
-        
+
         console.log(`✅ Carregados: ${edificacoesArray.length} edificações | Modo: ${modoClassificacao}`);
-        
+
         popularSelectEdificacoes();
         sistemaCarregado = true;
-        
+
         if (loadingEl) loadingEl.style.display = 'none';
-        
+
         // ═══ AGUARDAR AUTH ESTAR PRONTO ANTES DE INICIAR LISTENER ═══
         console.log('🔍 Verificando auth antes de iniciar listener...');
-        
+
         const user = firebase.auth().currentUser;
-        
+
         if (user) {
           console.log('✅ Usuário já autenticado:', user.uid);
           iniciarListenerVistorias();
           renderList();
         } else {
           console.log('⏳ Aguardando autenticação completa...');
-          
+
           const unsubscribe = firebase.auth().onAuthStateChanged((authUser) => {
             if (authUser) {
               console.log('✅ Autenticação confirmada:', authUser.uid);
               unsubscribe(); // Parar de escutar
-              
+
               // Aguardar mais 500ms para garantir que o token está disponível
               setTimeout(() => {
                 iniciarListenerVistorias();
@@ -1186,19 +1186,19 @@
         if (btnReset && window.baseIATACache) {
           btnReset.textContent = `🔄 Resetar vistorias da base ${window.baseIATACache}`;
         }
-        
+
       } catch (error) {
         console.error('❌ Erro:', error);
         if (loadingEl) loadingEl.style.display = 'none';
       }
     }
-    
+
     function popularSelectEdificacoes() {
       const selectEl = document.getElementById('edificacao');
       if (!selectEl) return;
-      
+
       selectEl.innerHTML = '<option value="">Todas as edificações</option>';
-      
+
       edificacoesArray.forEach(ed => {
         const opt = document.createElement('option');
         opt.value = ed;
@@ -1206,17 +1206,17 @@
         selectEl.appendChild(opt);
       });
     }
-    
+
     async function iniciarListenerVistorias() {
       // Obter base IATA
       const baseIATA = await obterBaseIATAAtual();
-      
+
       console.log(`🔍 Iniciando listener: ${baseIATA}/extintores`);
-      
+
       // Listener na base específica
       db.ref(`${baseIATA}/extintores`).on('value', snapshot => {
         globalData = snapshot.val() || {};
-        
+
         if (Object.keys(extintoresInfo).length > 0) {
           updateGlobalCounter();
           updateSelectProgress();
@@ -1239,7 +1239,7 @@
 
     function updateGlobalCounter() {
       let total = 0, done = 0;
-      
+
       Object.entries(extintoresInfo).forEach(([edificacao, extintores]) => {
         Object.keys(extintores).forEach(numero => {
           total++;
@@ -1247,20 +1247,20 @@
           if (vistoriado) done++;
         });
       });
-      
+
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    
-      const elDone    = document.getElementById('global-done');
-      const elTotal   = document.getElementById('global-total');
+
+      const elDone = document.getElementById('global-done');
+      const elTotal = document.getElementById('global-total');
       const elPending = document.getElementById('global-pending');
-      const elPct     = document.getElementById('global-pct');
-      const fill      = document.getElementById('global-fill');
-    
-      if (elDone)    elDone.textContent    = done;
-      if (elTotal)   elTotal.textContent   = total;
+      const elPct = document.getElementById('global-pct');
+      const fill = document.getElementById('global-fill');
+
+      if (elDone) elDone.textContent = done;
+      if (elTotal) elTotal.textContent = total;
       if (elPending) elPending.textContent = total - done;
-      if (elPct)     elPct.textContent     = pct + '%';
-    
+      if (elPct) elPct.textContent = pct + '%';
+
       if (fill) {
         fill.style.width = pct + '%';
         fill.className = 'progress-fill' + (pct < 30 ? ' danger' : pct < 70 ? ' warn' : '');
@@ -1274,10 +1274,10 @@
       opts.forEach(opt => {
         const ed = opt.value;
         if (!ed) return;
-        const bldg  = globalData[ed] || {};
-        const keys  = Object.keys(extintoresInfo[ed] || {});
+        const bldg = globalData[ed] || {};
+        const keys = Object.keys(extintoresInfo[ed] || {});
         const total = keys.length;
-        const done  = keys.filter(k => bldg[k] && bldg[k].vistoriado).length;
+        const done = keys.filter(k => bldg[k] && bldg[k].vistoriado).length;
         opt.textContent = total > 0 ? `${ed}  (${done}/${total})` : ed;
       });
     }
@@ -1300,28 +1300,28 @@
     // ──────────────────────────────────────────
     function renderList() {
       const container = document.getElementById('ext-list');
-      const loading   = document.getElementById('loading-extintores');
-      
+      const loading = document.getElementById('loading-extintores');
+
       if (loading) loading.style.display = 'none';
 
       let items = [];
       const buildingsToShow = currentBuilding ? [currentBuilding] : edificacoesArray;
 
       buildingsToShow.forEach(ed => {
-        const fbBldg     = globalData[ed] || {};
+        const fbBldg = globalData[ed] || {};
         const staticBldg = extintoresInfo[ed] || {};
         Object.keys(staticBldg).forEach(num => {
           const fb = fbBldg[num] || {};
           items.push({
-            numero:        parseInt(num),
-            numeroStr:     num,
-            edificacao:    ed,
-            tipo:          staticBldg[num].tipo,
-            kg:            staticBldg[num].kg,
+            numero: parseInt(num),
+            numeroStr: num,
+            edificacao: ed,
+            tipo: staticBldg[num].tipo,
+            kg: staticBldg[num].kg,
             classificacao: staticBldg[num].classificacao || staticBldg[num].tipo, // ← classificação conforme modo
-            descricao:     staticBldg[num].descricao,
-            vistoriado:    !!fb.vistoriado,
-            por:           fb.por || ''
+            descricao: staticBldg[num].descricao,
+            vistoriado: !!fb.vistoriado,
+            por: fb.por || ''
           });
         });
       });
@@ -1344,20 +1344,20 @@
       });
 
       const pending = items.filter(i => !i.vistoriado);
-      const done    = items.filter(i =>  i.vistoriado);
+      const done = items.filter(i => i.vistoriado);
 
       // Update building info card
       if (currentBuilding) {
         const allForBldg = Object.keys(extintoresInfo[currentBuilding] || {});
-        const bldgTotal  = allForBldg.length;
-        const bldgDone   = allForBldg.filter(k => globalData[currentBuilding]?.[k]?.vistoriado).length;
-        const bldgPct    = bldgTotal > 0 ? Math.round((bldgDone / bldgTotal) * 100) : 0;
+        const bldgTotal = allForBldg.length;
+        const bldgDone = allForBldg.filter(k => globalData[currentBuilding]?.[k]?.vistoriado).length;
+        const bldgPct = bldgTotal > 0 ? Math.round((bldgDone / bldgTotal) * 100) : 0;
 
-        document.getElementById('bldg-name').textContent  = currentBuilding;
-        document.getElementById('bldg-desc').textContent  = edificacoesDescr[currentBuilding] || '';
-        document.getElementById('bldg-done').textContent  = bldgDone;
+        document.getElementById('bldg-name').textContent = currentBuilding;
+        document.getElementById('bldg-desc').textContent = edificacoesDescr[currentBuilding] || '';
+        document.getElementById('bldg-done').textContent = bldgDone;
         document.getElementById('bldg-total').textContent = bldgTotal;
-        document.getElementById('bldg-pct').textContent   = bldgPct + '%';
+        document.getElementById('bldg-pct').textContent = bldgPct + '%';
         const bldgFill = document.getElementById('bldg-fill');
         bldgFill.style.width = bldgPct + '%';
         bldgFill.className = 'progress-fill' + (bldgPct < 30 ? ' danger' : bldgPct < 70 ? ' warn' : '');
@@ -1443,21 +1443,21 @@
       console.log('🔍 Tipo do valor:', typeof tipoSelecionado);
       console.log('🔍 opcoesCapacidade global:', opcoesCapacidade);
       console.log('🔍 Chaves disponíveis:', Object.keys(opcoesCapacidade));
-      
+
       if (!tipoSelecionado) {
         console.warn('⚠️ Tipo vazio!');
         return;
       }
-      
+
       // Buscar configuração do tipo
       const config = opcoesCapacidade[tipoSelecionado];
-      
+
       console.log('🔍 Config encontrada para', tipoSelecionado, ':', config);
-      
+
       if (!config) {
         console.warn(`⚠️ Tipo "${tipoSelecionado}" não encontrado nas opções`);
         console.warn('⚠️ Tipos disponíveis:', Object.keys(opcoesCapacidade));
-        
+
         // DEBUG: Tentar encontrar similar
         Object.keys(opcoesCapacidade).forEach(chave => {
           console.log(`  🔎 Comparando "${tipoSelecionado}" com "${chave}"`);
@@ -1465,81 +1465,70 @@
           console.log(`     Char codes "${tipoSelecionado}":`, tipoSelecionado.split('').map(c => c.charCodeAt(0)));
           console.log(`     Char codes "${chave}":`, chave.split('').map(c => c.charCodeAt(0)));
         });
-        
+
         return;
       }
-      
+
       const container12 = document.getElementById('p1_2');
       if (!container12) {
         console.error('❌ Container p1_2 não encontrado!');
         return;
       }
-      
-      const labelTexto = config.modo === 'tipo_capacidade' 
-        ? 'Capacidade Extintora:' 
+
+      const labelTexto = config.modo === 'tipo_capacidade'
+        ? 'Capacidade Extintora:'
         : 'Carga Nominal:';
-      
+
       const label = container12.querySelector('label');
       if (label) {
         label.innerHTML = `1.2 — ${labelTexto}<br><p>Capacidade Extintora reduzida → declare como não conformidade.</p>`;
       }
-      
+
       const select = container12.querySelector('select[name="p1_2"]');
       if (select) {
         select.innerHTML = '<option value="">-- Selecione --</option>' +
           config.valores.map(v => `<option>${v}</option>`).join('');
         console.log('✅ Select atualizado com', config.valores.length, 'opções:', config.valores);
       }
-      
+
       console.log('═══════════════════════════════════');
     }
-    
+
     // ══════════════════════════════════════════════════════════
     //  CARREGAR OPÇÕES DE CAPACIDADE DO FIRESTORE
     // ══════════════════════════════════════════════════════════
     async function carregarOpcoesCapacidade() {
       try {
-        const firestore = firebase.firestore();
-        
-        console.log('🔍 Buscando base ativa no Firestore...');
-        
-        const snapshot = await firestore.collection('bases')
-          .where('ativo', '==', true)
-          .limit(1)
-          .get();
-        
-        if (snapshot.empty) {
-          console.warn('⚠️ Nenhuma base ativa encontrada');
-          return;
-        }
-        
-        const baseData = snapshot.docs[0].data();
-        
-        const opcoesCapacidadeRaw = baseData.opcoes_capacidade || {};
-        const opcoesCargaNominalRaw = baseData.opcoes_carga_nominal || {};
-        const modoAtivo = baseData.modo_classificacao || 'tipo_carga_nominal';
-        
+        const service = inicializarExtintorService();
+        const base = await service.getBaseAtual();
+
+        console.log(`🔍 Carregando opções da base: ${base.nome} (${base.base})`);
+
+        const modoAtivo = base.modo_classificacao || 'tipo_carga_nominal';
+        const opcoesCapacidadeRaw = base.opcoes_capacidade || {};
+        const opcoesCargaNominalRaw = base.opcoes_carga_nominal || {};
+
         console.log('📦 opcoes_capacidade:', Object.keys(opcoesCapacidadeRaw));
         console.log('📦 opcoes_carga_nominal:', Object.keys(opcoesCargaNominalRaw));
         console.log('🎯 Modo ativo:', modoAtivo);
-        
+
         opcoesCapacidade = {};
-        
+
         if (modoAtivo === 'tipo_capacidade') {
           console.log('✅ Priorizando CAPACIDADE EXTINTORA');
-          
+
           // 1º - Processar CARGA NOMINAL
           Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
             const config = opcoesCargaNominalRaw[tipo];
             const unidade = config.unidade || 'kg';
-            
+
             opcoesCapacidade[tipo] = {
               modo: 'tipo_carga_nominal',
               unidade: unidade,
               valores: config.valores.map(v => `${v}${unidade}`)
             };
           });
-          
+
           // 2º - Processar CAPACIDADE EXTINTORA (sobrescreve)
           Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
             opcoesCapacidade[tipo] = {
@@ -1547,10 +1536,10 @@
               valores: opcoesCapacidadeRaw[tipo]
             };
           });
-          
+
         } else {
           console.log('✅ Priorizando CARGA NOMINAL');
-          
+
           // 1º - Processar CAPACIDADE EXTINTORA
           Object.keys(opcoesCapacidadeRaw).forEach(tipo => {
             opcoesCapacidade[tipo] = {
@@ -1558,12 +1547,12 @@
               valores: opcoesCapacidadeRaw[tipo]
             };
           });
-          
+
           // 2º - Processar CARGA NOMINAL (sobrescreve)
           Object.keys(opcoesCargaNominalRaw).forEach(tipo => {
             const config = opcoesCargaNominalRaw[tipo];
             const unidade = config.unidade || 'kg';
-            
+
             opcoesCapacidade[tipo] = {
               modo: 'tipo_carga_nominal',
               unidade: unidade,
@@ -1571,12 +1560,12 @@
             };
           });
         }
-        
+
         console.log('✅ Tipos disponíveis:', Object.keys(opcoesCapacidade));
-        
+
         // ═══ NOVO: Preencher select de tipos ═══
         preencherSelectTipos();
-        
+
       } catch (error) {
         console.error('❌ Erro ao carregar opções de capacidade:', error);
       }
@@ -1588,14 +1577,14 @@
     function preencherSelectTipos() {
       // Obter todos os tipos únicos (união de capacidade + carga nominal)
       const tiposDisponiveis = Object.keys(opcoesCapacidade).sort();
-      
+
       console.log('📋 Tipos disponíveis para select:', tiposDisponiveis);
-      
+
       // Atualizar select da pergunta 1.1 (dentro do modal que será aberto)
       // Esta função será chamada quando o modal abrir
       window.tiposDisponiveis = tiposDisponiveis;
     }
-    
+
     // ──────────────────────────────────────────
     //  Modal
     // ──────────────────────────────────────────
@@ -1607,12 +1596,12 @@
         return;
       }
 
-      numeroAtual    = numero;
+      numeroAtual = numero;
       edificacaoAtual = edificacao;
 
       const info = extintoresInfo[edificacao]?.[numero] || {
-        descricao:     'Descrição não cadastrada',
-        tipo:          'N/D',
+        descricao: 'Descrição não cadastrada',
+        tipo: 'N/D',
         classificacao: 'N/D'
       };
 
@@ -1630,11 +1619,11 @@
         // Modo carga nominal: pergunta direta
         pergunta1Texto = `Este extintor é um ${classificacaoExibida}?`;
       }
-      
-      document.getElementById('modalTitulo').textContent  = `Extintor ${numero}`;
-      document.getElementById('modalTipo').textContent    = `Tipo: ${classificacaoExibida}`;
+
+      document.getElementById('modalTitulo').textContent = `Extintor ${numero}`;
+      document.getElementById('modalTipo').textContent = `Tipo: ${classificacaoExibida}`;
       document.getElementById('modalDescricao').textContent = info.descricao;
-      
+
       const form = document.getElementById('formInspecao');
       form.innerHTML = `
         <div class="pergunta">
@@ -1680,9 +1669,9 @@
         <div class="pergunta" id="p4_1" style="display:none;">
           <label>4.1 — Não conformidade(s):</label>
           ${[
-            'Despressurização', 'Lacre Rompido', 'Vencido', 'Sinalização',
-            'Integridade', 'Capacidade Extintora reduzida', 'Etiqueta ilegível ou ausente', 'Outros'
-          ].map(nc => `
+          'Despressurização', 'Lacre Rompido', 'Vencido', 'Sinalização',
+          'Integridade', 'Capacidade Extintora reduzida', 'Etiqueta ilegível ou ausente', 'Outros'
+        ].map(nc => `
             <label class="custom-checkbox opcoes-nc" style="padding:6px 14px;">
               <input type="checkbox" name="p4_1" value="${nc}">
               <span></span>
@@ -1710,7 +1699,7 @@
           window.tiposDisponiveis.map(tipo => `<option>${tipo}</option>`).join('');
         console.log('✅ Select de tipos preenchido com:', window.tiposDisponiveis);
       }
-      
+
       document.getElementById('modal').style.display = 'flex';
       document.getElementById('modalContent').scrollTop = 0;
     }
@@ -1739,29 +1728,29 @@
 
       const info = extintoresInfo[edificacaoAtual]?.[numeroAtual] || {};
 
-       // ═══ ADICIONAR ESTES LOGS ═══
+      // ═══ ADICIONAR ESTES LOGS ═══
       console.log('🔍 DEBUG SALVAR:');
       console.log('   edificacaoAtual:', edificacaoAtual);
       console.log('   numeroAtual:', numeroAtual);
       console.log('   Path completo:', `extintores/${edificacaoAtual}/${numeroAtual}`);
       console.log('   extintoresInfo[edificacaoAtual]:', extintoresInfo[edificacaoAtual]);
       // ═══ FIM DEBUG ═══
-      
+
       const dados = {
-        numero:        numeroAtual,
-        usuario:       document.getElementById('nomeUsuario').value,
-        edificacao:    edificacaoAtual,
-        descricao:     info.descricao || '-',
-        tipo:          info.tipo      || '-',
+        numero: numeroAtual,
+        usuario: document.getElementById('nomeUsuario').value,
+        edificacao: edificacaoAtual,
+        descricao: info.descricao || '-',
+        tipo: info.tipo || '-',
         classificacao: info.classificacao || info.tipo || '-',
         // mantido para compatibilidade com planilha legada
-        kg:            info.kg        || '-',
-        pergunta1:     form.p1.value,
-        pergunta1_1:   form.p1_1 ? (form.p1_1.value || '-') : '-',
-        pergunta1_2:   form.p1_2 ? (form.p1_2.value || '-') : '-',
-        pergunta2:     form.p2.value || '-',
-        pergunta3:     form.p3.value || '-',
-        pergunta4:     form.p4.value,
+        kg: info.kg || '-',
+        pergunta1: form.p1.value,
+        pergunta1_1: form.p1_1 ? (form.p1_1.value || '-') : '-',
+        pergunta1_2: form.p1_2 ? (form.p1_2.value || '-') : '-',
+        pergunta2: form.p2.value || '-',
+        pergunta3: form.p3.value || '-',
+        pergunta4: form.p4.value,
         pergunta4_1: (() => {
           const checked = Array.from(document.querySelectorAll('input[name="p4_1"]:checked')).map(cb => cb.value);
           return checked.length > 0 ? checked.join(', ') : '-';
@@ -1773,21 +1762,21 @@
       // Save to Firebase Realtime DB
       // Obter base IATA
       const baseIATA = await obterBaseIATAAtual();
-      
+
       // Salvar na base específica
       db.ref(`${baseIATA}/extintores/${edificacaoAtual}/${numeroAtual}`).update({
         vistoriado: true,
-        por:        dados.usuario,
-        dataHora:   new Date().toISOString(),
-        respostas:  dados
+        por: dados.usuario,
+        dataHora: new Date().toISOString(),
+        respostas: dados
       });
 
       // Send to Google Sheets
       fetch("https://script.google.com/macros/s/AKfycbzThm10P6Q0waSZb7j23Zfkjqv3iS1BOg2uU04_4NfsmHz-WeuaYxkQLHRwAnqfjl7mvA/exec", {
-        method:  "POST",
-        mode:    "no-cors",
+        method: "POST",
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(dados)
+        body: JSON.stringify(dados)
       });
 
       fecharModal();
@@ -1807,29 +1796,29 @@
     async function confirmReset(decisao) {
       document.getElementById('confirmResetOverlay').style.display = 'none';
       if (!decisao) return;
-      
+
       try {
         // Obter base IATA
         const baseIATA = await obterBaseIATAAtual();
-        
+
         console.log(`🔄 Resetando vistorias da base: ${baseIATA}`);
-        
+
         const snapshot = await db.ref(`${baseIATA}/extintores`).once('value');
         const updates = {};
-        
+
         snapshot.forEach(ed => {
           ed.forEach(ext => {
-            updates[`${baseIATA}/extintores/${ed.key}/${ext.key}`] = { 
-              vistoriado: false, 
-              por: '' 
+            updates[`${baseIATA}/extintores/${ed.key}/${ext.key}`] = {
+              vistoriado: false,
+              por: ''
             };
           });
         });
-        
+
         await db.ref().update(updates);
-        
+
         console.log('✅ Reset concluído!');
-        
+
       } catch (error) {
         console.error('❌ Erro ao resetar:', error);
         alert('Erro ao resetar vistorias: ' + error.message);
@@ -1845,7 +1834,7 @@
 
     window.addEventListener('auth-initialized', () => {
       if (window.authCore?.currentUser?.displayName) {
-        const nome  = window.authCore.currentUser.displayName;
+        const nome = window.authCore.currentUser.displayName;
         const input = document.getElementById('nomeUsuario');
         if (input) {
           input.value = nome;
@@ -1868,7 +1857,7 @@
     }
   </script>
   <script src="../pwa/app.js"></script>
-  
+
   <!-- Service Layer Extintores -->
   <script src="./extintor-service.js"></script>
 </body>
