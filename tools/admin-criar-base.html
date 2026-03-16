@@ -383,6 +383,48 @@
       };
 
       firebase.initializeApp(firebaseConfig);
+
+      // ══════════════════════════════════════════════════════════
+      //  CONFIGURAÇÕES PADRÃO
+      // ══════════════════════════════════════════════════════════
+
+      const TIPOS_EXTINTORES = [
+        'PQS ABC',
+        'PQS BC',
+        'CO²',
+        'Água Pressurizada',
+        'Espuma Mecânica',
+        'Classe K',
+        'Pó Classe D'
+      ];
+
+      const CONFIG_PADRAO = {
+        capacidade: {
+          'PQS ABC': ['2A:20B:C', '3A:40B:C', '4A:40B:C', '6A:60B:C', '6A:80B:C'],
+          'PQS BC': ['20B:C', '40B:C', '60B:C', '80B:C'],
+          'CO²': ['5B:C', '10B:C'],
+          'Água Pressurizada': ['2A', '3A', '4A'],
+          'Espuma Mecânica': ['2A:20B', '3A:40B', '4A:40B'],
+          'Classe K': ['K'],
+          'Pó Classe D': ['D-Magnésio', 'D-Sódio', 'D-Potássio', 'D-Lítio']
+        },
+        cargaNominal: {
+          'PQS ABC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+          'PQS BC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+          'CO²': { unidade: 'kg', valores: [2, 4, 6, 10, 25] },
+          'Água Pressurizada': { unidade: 'L', valores: [10, 15, 20] },
+          'Espuma Mecânica': { unidade: 'L', valores: [6, 10, 20] },
+          'Classe K': { unidade: 'L', valores: [6, 10] },
+          'Pó Classe D': { unidade: 'kg', valores: [4, 6, 9, 12, 20] }
+        }
+      };
+
+      // Inicializar estado global
+      window.opcoesCapacidade = JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade));
+      window.opcoesCargaNominal = JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal));
+      window.TIPOS_EXTINTORES = TIPOS_EXTINTORES;
+      window.CONFIG_PADRAO = CONFIG_PADRAO;
+
       // O Firebase já é inicializado pelo auth-core.js (via firebase-config.js)
       // Mas precisamos dessas referências v9 compat para o Realtime DB se quisermos continuar usando .ref().set()
       // Ou podemos migrar tudo para modular.
@@ -492,54 +534,16 @@
     </script>
 
     <script>
-      // Variáveis para os formulários se comunicarem com a função criarBase
-      window.opcoesCapacidade = JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade));
-      window.opcoesCargaNominal = JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal));
-
-      // ══════════════════════════════════════════════════════════
-      //  CONFIGURAÇÕES PADRÃO
-      // ══════════════════════════════════════════════════════════
-
-      const TIPOS_EXTINTORES = [
-        'PQS ABC',
-        'PQS BC',
-        'CO²',
-        'Água Pressurizada',
-        'Espuma Mecânica',
-        'Classe K',
-        'Pó Classe D'
-      ];
-
-      const CONFIG_PADRAO = {
-        capacidade: {
-          'PQS ABC': ['2A:20B:C', '3A:40B:C', '4A:40B:C', '6A:60B:C', '6A:80B:C'],
-          'PQS BC': ['20B:C', '40B:C', '60B:C', '80B:C'],
-          'CO²': ['5B:C', '10B:C'],
-          'Água Pressurizada': ['2A', '3A', '4A'],
-          'Espuma Mecânica': ['2A:20B', '3A:40B', '4A:40B'],
-          'Classe K': ['K'],
-          'Pó Classe D': ['D-Magnésio', 'D-Sódio', 'D-Potássio', 'D-Lítio']
-        },
-        cargaNominal: {
-          'PQS ABC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
-          'PQS BC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
-          'CO²': { unidade: 'kg', valores: [2, 4, 6, 10, 25] },
-          'Água Pressurizada': { unidade: 'L', valores: [10, 15, 20] },
-          'Espuma Mecânica': { unidade: 'L', valores: [6, 10, 20] },
-          'Classe K': { unidade: 'L', valores: [6, 10] },
-          'Pó Classe D': { unidade: 'kg', valores: [4, 6, 9, 12, 20] }
-        }
-      };
-
       // ══════════════════════════════════════════════════════════
       //  RENDERIZAR FORMULÁRIOS
       // ══════════════════════════════════════════════════════════
 
       function renderCapacidade() {
         const container = document.getElementById('capacidadeContainer');
+        if (!container) return;
         container.innerHTML = '';
 
-        TIPOS_EXTINTORES.forEach(tipo => {
+        window.TIPOS_EXTINTORES.forEach(tipo => {
           const grupo = document.createElement('div');
           grupo.className = 'tipo-grupo';
 
@@ -569,9 +573,10 @@
 
       function renderCargaNominal() {
         const container = document.getElementById('cargaNominalContainer');
+        if (!container) return;
         container.innerHTML = '';
 
-        TIPOS_EXTINTORES.forEach(tipo => {
+        window.TIPOS_EXTINTORES.forEach(tipo => {
           const grupo = document.createElement('div');
           grupo.className = 'tipo-grupo';
 
