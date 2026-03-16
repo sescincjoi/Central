@@ -25,16 +25,26 @@ class BaseService {
     //  INICIALIZAÇÃO
     // ══════════════════════════════════════════════════════════
 
-    init() {
+    init(config = {}) {
+        // Permitir injeção manual de dependências (útil para módulos)
+        if (config.db) this.db = config.db;
+        if (config.auth) this.auth = config.auth;
+
         if (!this.db) {
-            if (typeof firebase === 'undefined') {
-                throw new Error('Firebase não foi carregado. Adicione o script do Firebase antes do base-service.js');
+            // Tentar encontrar Firebase Global (Compat)
+            if (typeof firebase !== 'undefined') {
+                this.db = firebase.firestore();
+                if (firebase.auth) this.auth = firebase.auth();
+                console.log('✅ BaseService inicializado (Compat)');
+            } else {
+                // Tentar encontrar instâncias globais injetadas por módulos
+                if (window.db) this.db = window.db;
+                if (window.authCore) this.auth = window.authCore; // BaseService pode usar o authCore direto
+
+                if (this.db) {
+                    console.log('✅ BaseService inicializado (Modular via globals)');
+                }
             }
-            this.db = firebase.firestore();
-            if (firebase.auth) {
-                this.auth = firebase.auth();
-            }
-            console.log('✅ BaseService inicializado');
         }
         return this;
     }
@@ -42,6 +52,15 @@ class BaseService {
     _ensureInit() {
         if (!this.db) {
             this.init();
+        }
+
+        // Se ainda não tiver DB, tenta um último fallback via window
+        if (!this.db && window.db) {
+            this.db = window.db;
+        }
+
+        if (!this.db) {
+            console.warn('⚠️ BaseService: Firebase Firestore ainda não disponível');
         }
     }
 
@@ -203,5 +222,5 @@ class BaseService {
 }
 
 // Singleton global
-const baseService = new BaseService().init();
+const baseService = new BaseService();
 window.baseService = baseService;
