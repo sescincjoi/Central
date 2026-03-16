@@ -28,11 +28,23 @@ class AuthUI {
       if (event === 'login') {
         this.closeModal();
 
+        // LÓGICA DE NOTIFICAÇÃO INTELIGENTE
+        const isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('Central/');
+        const alreadyGreeted = sessionStorage.getItem('auth_greeted');
+
         if (this.isCadastreFlow) {
           this.showNotification(`Cadastro realizado com sucesso! Bem-vindo(a), ${user.displayName}!`, 'success');
+          sessionStorage.setItem('auth_greeted', 'true');
           this.isCadastreFlow = false;
-        } else {
+        } else if (this.isManualLogin) {
+          // Sempre mostrar se o usuário clicou em "Entrar" ativamente
           this.showNotification(`Bem-vindo(a), ${user.displayName}!`, 'success');
+          sessionStorage.setItem('auth_greeted', 'true');
+          this.isManualLogin = false;
+        } else if (isHomePage && !alreadyGreeted) {
+          // Mostrar na Home apenas uma vez por sessão (ao carregar/recuperar sessão)
+          this.showNotification(`Bem-vindo(a) de volta, ${user.displayName}!`, 'success');
+          sessionStorage.setItem('auth_greeted', 'true');
         }
       }
     });
@@ -359,6 +371,7 @@ class AuthUI {
     try {
       this.setLoading(btn, true);
       this.hideMessage();
+      this.isManualLogin = true;
 
       await authCore.login(matricula, senha);
 
@@ -770,6 +783,64 @@ class AuthUI {
         .auth-modal-footer {
           padding-left: 16px;
           padding-right: 16px;
+        }
+      }
+
+      /* NOTIFICAÇÕES TOAST (Central SCI Style) */
+      .auth-notification {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        padding: 16px 20px;
+        z-index: 10001;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        max-width: 90%;
+        border-left: 4px solid #10b981;
+      }
+
+      .auth-notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .auth-notification-success {
+        border-left-color: #10b981;
+      }
+
+      .auth-notification-error {
+        border-left-color: #ef4444;
+      }
+
+      .auth-notification-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #1d1d1f;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .auth-notification-success i, 
+      .auth-notification-success .w-5 {
+        color: #10b981;
+      }
+
+      .auth-notification-error i,
+      .auth-notification-error .w-5 {
+        color: #ef4444;
+      }
+
+      @media (max-width: 640px) {
+        .auth-notification {
+          top: 70px;
+          right: 10px;
+          left: 10px;
+          max-width: none;
         }
       }
     `;

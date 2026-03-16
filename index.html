@@ -971,53 +971,6 @@
             color: #FF3B30;
         }
 
-        /* NOTIFICAÇÕES TOAST */
-        .auth-notification {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            padding: 16px 20px;
-            z-index: 10001;
-            transform: translateX(400px);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 90%;
-            border-left: 4px solid #10b981;
-        }
-
-        .auth-notification.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .auth-notification-success {
-            border-left-color: #10b981;
-        }
-
-        .auth-notification-error {
-            border-left-color: #ef4444;
-        }
-
-        .auth-notification-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #1d1d1f;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .auth-notification-success i {
-            color: #10b981;
-        }
-
-        .auth-notification-error i {
-            color: #ef4444;
-        }
-
         @media (max-width: 640px) {
             .auth-notification {
                 top: 70px;
