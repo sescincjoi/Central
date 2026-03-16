@@ -539,48 +539,41 @@
             const currentCallsigns = new Set();
 
             aircraftList.forEach(ac => {
-                // Filtros Mínimos: (Tem flight? Tem altitude? Tem velocidade? Tem rumo?)
-                if (!ac.flight || ac.alt_baro === undefined || ac.gs === undefined || ac.track === undefined) return;
+                // Filtros Mínimos: (Fallback para HEX se não tiver Flight, Fallback para Geom se não tiver Baro)
+                const flightId = ac.flight ? ac.flight.trim() : (ac.hex ? `ID:${ac.hex.toUpperCase()}` : null);
+                const altitude = ac.alt_baro !== undefined ? ac.alt_baro : ac.alt_geom;
 
-                const callsign = ac.flight.trim();
-                const altFeet = ac.alt_baro;
-                const speedKmh = ac.gs * 1.852; // Knots -> Km/h
-                const track = ac.track; // Rumo (0-359)
+                if (!flightId || altitude === undefined || ac.gs === undefined || ac.track === undefined) return;
 
-                // Distância Calculada (Haversine)
+                const callsign = flightId;
+                const altFeet = altitude;
+                const speedKmh = ac.gs * 1.852;
+                const track = ac.track;
                 const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
 
                 // === LÓGICA DE JANELA DE ALTITUDE (RAMPA SBJV) ===
-                // Teto: Ajustado para permitir voos altos como 11k ft a 11min (aprox 45km)
-                // Usando base de 5000ft + 200ft por km (inclinação mais suave para aeronaves pesadas/rápidas)
                 const maxAltAllowed = Math.min(20000, 5000 + (distKm * 200));
-
-                // Piso: Se estiver baixo demais longe, é pouso em outro lugar (Navegantes/Floripa)
                 const minAltRequired = Math.max(800, (distKm * 100) - 5000);
 
-                // 3. Filtro de Rumo (Heading)
                 const bearingToAirport = calculateBearing(ac.lat, ac.lon, CONFIG.LAT, CONFIG.LON);
                 let diffHeading = Math.abs(track - bearingToAirport);
                 if (diffHeading > 180) diffHeading = 360 - diffHeading;
 
-                // 4. Filtro de Taxa de Descida (Vertical Rate)
                 const vRate = ac.baro_rate || ac.geom_rate || 0;
 
                 // DECISÃO DE EXIBIÇÃO:
-                // - Não pode estar subindo forte (permite jitter ou nivelamento até 600 fpm)
                 const isNotClimbing = vRate < 600;
-                // - Se estiver perto (< 60km), aceita qualquer rumo (pode estar fazendo curva de base)
                 const isClose = distKm < 60;
-                // - Se estiver longe, aceita rumo até 90 graus
                 const isHeadingOk = diffHeading < 90;
 
-                // - Deve estar dentro da JANELA (Entre Piso e Teto) - ESSENCIAL
-                if (isNotClimbing && (isHeadingOk || isClose || ac.isMock) && altFeet < maxAltAllowed && altFeet > minAltRequired) {
-                    currentCallsigns.add(callsign);
+                // - Deve estar dentro da JANELA (Entre Piso e Teto)
+                // - SE ESTIVER MUITO PERTO (< 15km), ignora o piso (pode estar na final baixa)
+                const isVeryClose = distKm < 15;
+                const isAltOk = altFeet < maxAltAllowed && (altFeet > minAltRequired || isVeryClose);
 
-                    // Estimativa de Tempo
-                    let estMinutes = (distKm / speedKmh) * 60;
-                    estMinutes += 5; // Margem de segurança TMA
+                if (isNotClimbing && (isHeadingOk || isClose || ac.isMock) && isAltOk) {
+                    currentCallsigns.add(callsign);
+                    let estMinutes = (distKm / speedKmh) * 60 + 5;
 
                     activeFlights.set(callsign, {
                         hex: ac.hex,
@@ -592,7 +585,6 @@
                         targetTime: new Date(Date.now() + (estMinutes * 60000)),
                         type: 'Aproximação'
                     });
-
                     foundRelevant = true;
                 }
             });
