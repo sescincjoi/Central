@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Criar Nova Base</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
   <style>
     * {
       margin: 0;
@@ -31,7 +33,7 @@
       border-radius: 20px;
       padding: 30px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .header h1 {
@@ -54,7 +56,7 @@
       border-radius: 20px;
       padding: 30px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .card-title {
@@ -89,7 +91,7 @@
     .form-input {
       width: 100%;
       padding: 12px 16px;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 12px;
       font-size: 15px;
       font-family: inherit;
@@ -99,7 +101,7 @@
     .form-input:focus {
       outline: none;
       border-color: #007AFF;
-      box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
     }
 
     .form-input.uppercase {
@@ -134,7 +136,7 @@
     .toggle-btn {
       padding: 6px 12px;
       border-radius: 8px;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       background: white;
       font-size: 12px;
       font-weight: 600;
@@ -157,7 +159,7 @@
 
     .opcao-tag {
       background: white;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       padding: 6px 12px;
       border-radius: 8px;
       font-size: 13px;
@@ -190,7 +192,7 @@
     .add-opcao input {
       flex: 1;
       padding: 8px 12px;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 8px;
       font-size: 13px;
     }
@@ -215,7 +217,7 @@
 
     .unidade-select {
       padding: 8px 12px;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 8px;
       font-size: 13px;
       font-weight: 500;
@@ -223,7 +225,7 @@
 
     .valores-input {
       padding: 8px 12px;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 8px;
       font-size: 13px;
     }
@@ -238,7 +240,7 @@
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(52,199,89,0.3);
+      box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
       transition: all 0.2s;
     }
 
@@ -278,7 +280,7 @@
     }
 
     code {
-      background: rgba(0,0,0,0.05);
+      background: rgba(0, 0, 0, 0.05);
       padding: 2px 6px;
       border-radius: 4px;
       font-family: 'Courier New', monospace;
@@ -286,148 +288,152 @@
     }
   </style>
 </head>
+
 <body>
 
-<div class="container">
-  <!-- Header -->
-  <div class="header">
-    <h1><span style="font-size: 32px;">🏗️</span> Criar Nova Base</h1>
-    <p>Configure uma nova base no sistema com todas as opções necessárias</p>
-  </div>
-
-  <!-- Alert de Sucesso -->
-  <div class="alert alert-success" id="alertSuccess">
-    <strong>✅ Base criada com sucesso!</strong><br>
-    Agora você pode adicionar edificações e extintores nesta nova base.
-  </div>
-
-  <!-- Informações Básicas -->
-  <div class="card">
-    <div class="card-title">📋 Informações Básicas</div>
-
-    <div class="alert alert-info">
-      <strong>ℹ️ Sobre os códigos:</strong><br>
-      • <strong>Código ICAO</strong> (4 letras): Código internacional da OACI/ICAO<br>
-      &nbsp;&nbsp;Exemplos: <code>SBJV</code> (Joinville), <code>SBGR</code> (Guarulhos), <code>SBFL</code> (Florianópolis)<br><br>
-      • <strong>Código IATA</strong> (3 letras): Código usado em bilhetes e bagagens<br>
-      &nbsp;&nbsp;Exemplos: <code>JOI</code> (Joinville), <code>GRU</code> (Guarulhos), <code>FLN</code> (Florianópolis)
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1><span style="font-size: 32px;">🏗️</span> Criar Nova Base</h1>
+      <p>Configure uma nova base no sistema com todas as opções necessárias</p>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Nome da Base *</label>
-      <input type="text" id="nome" class="form-input" placeholder="Ex: SCI Aeroporto de Joinville" required>
-      <div class="form-hint">Nome completo da unidade</div>
+    <!-- Alert de Sucesso -->
+    <div class="alert alert-success" id="alertSuccess">
+      <strong>✅ Base criada com sucesso!</strong><br>
+      Agora você pode adicionar edificações e extintores nesta nova base.
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Código ICAO (4 letras) *</label>
-      <input type="text" id="codigoICAO" class="form-input uppercase" placeholder="Ex: SBJV" maxlength="4" required>
-      <div class="form-hint">Código OACI/ICAO do aeroporto (4 letras)</div>
+    <!-- Informações Básicas -->
+    <div class="card">
+      <div class="card-title">📋 Informações Básicas</div>
+
+      <div class="alert alert-info">
+        <strong>ℹ️ Sobre os códigos:</strong><br>
+        • <strong>Código ICAO</strong> (4 letras): Código internacional da OACI/ICAO<br>
+        &nbsp;&nbsp;Exemplos: <code>SBJV</code> (Joinville), <code>SBGR</code> (Guarulhos), <code>SBFL</code>
+        (Florianópolis)<br><br>
+        • <strong>Código IATA</strong> (3 letras): Código usado em bilhetes e bagagens<br>
+        &nbsp;&nbsp;Exemplos: <code>JOI</code> (Joinville), <code>GRU</code> (Guarulhos), <code>FLN</code>
+        (Florianópolis)
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nome da Base *</label>
+        <input type="text" id="nome" class="form-input" placeholder="Ex: SCI Aeroporto de Joinville" required>
+        <div class="form-hint">Nome completo da unidade</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Código ICAO (4 letras) *</label>
+        <input type="text" id="codigoICAO" class="form-input uppercase" placeholder="Ex: SBJV" maxlength="4" required>
+        <div class="form-hint">Código OACI/ICAO do aeroporto (4 letras)</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Código IATA (3 letras) *</label>
+        <input type="text" id="codigoIATA" class="form-input uppercase" placeholder="Ex: JOI" maxlength="3" required>
+        <div class="form-hint">Código IATA usado em bilhetes e bagagens (3 letras)</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ID da Base *</label>
+        <input type="text" id="baseId" class="form-input" placeholder="Ex: aeroporto-joinville" required>
+        <div class="form-hint">Identificador único (sem espaços, usar hífen)</div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Código IATA (3 letras) *</label>
-      <input type="text" id="codigoIATA" class="form-input uppercase" placeholder="Ex: JOI" maxlength="3" required>
-      <div class="form-hint">Código IATA usado em bilhetes e bagagens (3 letras)</div>
+    <!-- Configurações de Capacidade Extintora -->
+    <div class="card">
+      <div class="card-title">🔥 Capacidade Extintora (Modo Recomendado)</div>
+
+      <div id="capacidadeContainer"></div>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">ID da Base *</label>
-      <input type="text" id="baseId" class="form-input" placeholder="Ex: aeroporto-joinville" required>
-      <div class="form-hint">Identificador único (sem espaços, usar hífen)</div>
+    <!-- Configurações de Carga Nominal -->
+    <div class="card">
+      <div class="card-title">⚖️ Carga Nominal (Modo Alternativo)</div>
+
+      <div id="cargaNominalContainer"></div>
     </div>
+
+    <!-- Botão Criar -->
+    <button class="btn-criar" id="btnCriar" onclick="criarBase()">
+      🚀 Criar Base
+    </button>
   </div>
 
-  <!-- Configurações de Capacidade Extintora -->
-  <div class="card">
-    <div class="card-title">🔥 Capacidade Extintora (Modo Recomendado)</div>
-    
-    <div id="capacidadeContainer"></div>
-  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <!-- Configurações de Carga Nominal -->
-  <div class="card">
-    <div class="card-title">⚖️ Carga Nominal (Modo Alternativo)</div>
-    
-    <div id="cargaNominalContainer"></div>
-  </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
+      authDomain: "central-sci-joinville.firebaseapp.com",
+      databaseURL: "https://central-sci-joinville-default-rtdb.firebaseio.com",
+      projectId: "central-sci-joinville",
+      storageBucket: "central-sci-joinville.firebasestorage.app",
+      messagingSenderId: "340864161035",
+      appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
+    };
 
-  <!-- Botão Criar -->
-  <button class="btn-criar" id="btnCriar" onclick="criarBase()">
-    🚀 Criar Base
-  </button>
-</div>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    // ══════════════════════════════════════════════════════════
+    //  CONFIGURAÇÕES PADRÃO
+    // ══════════════════════════════════════════════════════════
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
-    authDomain: "central-sci-joinville.firebaseapp.com",
-    databaseURL: "https://central-sci-joinville-default-rtdb.firebaseio.com",
-    projectId: "central-sci-joinville",
-    storageBucket: "central-sci-joinville.firebasestorage.app",
-    messagingSenderId: "340864161035",
-    appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
-  };
+    const TIPOS_EXTINTORES = [
+      'PQS ABC',
+      'PQS BC',
+      'CO²',
+      'Água Pressurizada',
+      'Espuma Mecânica',
+      'Classe K',
+      'Pó Classe D'
+    ];
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    const CONFIG_PADRAO = {
+      capacidade: {
+        'PQS ABC': ['2A:20B:C', '3A:40B:C', '4A:40B:C', '6A:60B:C', '6A:80B:C'],
+        'PQS BC': ['20B:C', '40B:C', '60B:C', '80B:C'],
+        'CO²': ['5B:C', '10B:C'],
+        'Água Pressurizada': ['2A', '3A', '4A'],
+        'Espuma Mecânica': ['2A:20B', '3A:40B', '4A:40B'],
+        'Classe K': ['K'],
+        'Pó Classe D': ['D-Magnésio', 'D-Sódio', 'D-Potássio', 'D-Lítio']
+      },
+      cargaNominal: {
+        'PQS ABC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+        'PQS BC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+        'CO²': { unidade: 'kg', valores: [2, 4, 6, 10, 25] },
+        'Água Pressurizada': { unidade: 'L', valores: [10, 15, 20] },
+        'Espuma Mecânica': { unidade: 'L', valores: [6, 10, 20] },
+        'Classe K': { unidade: 'L', valores: [6, 10] },
+        'Pó Classe D': { unidade: 'kg', valores: [4, 6, 9, 12, 20] }
+      }
+    };
 
-  // ══════════════════════════════════════════════════════════
-  //  CONFIGURAÇÕES PADRÃO
-  // ══════════════════════════════════════════════════════════
-  
-  const TIPOS_EXTINTORES = [
-    'PQS ABC',
-    'PQS BC',
-    'CO²',
-    'Água Pressurizada',
-    'Espuma Mecânica',
-    'Classe K',
-    'Pó Classe D'
-  ];
+    let opcoesCapacidade = JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade));
+    let opcoesCargaNominal = JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal));
 
-  const CONFIG_PADRAO = {
-    capacidade: {
-      'PQS ABC': ['2A:20B:C', '3A:40B:C', '4A:40B:C', '6A:60B:C', '6A:80B:C'],
-      'PQS BC': ['20B:C', '40B:C', '60B:C', '80B:C'],
-      'CO²': ['5B:C', '10B:C'],
-      'Água Pressurizada': ['2A', '3A', '4A'],
-      'Espuma Mecânica': ['2A:20B', '3A:40B', '4A:40B'],
-      'Classe K': ['K'],
-      'Pó Classe D': ['D-Magnésio', 'D-Sódio', 'D-Potássio', 'D-Lítio']
-    },
-    cargaNominal: {
-      'PQS ABC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
-      'PQS BC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
-      'CO²': { unidade: 'kg', valores: [2, 4, 6, 10, 25] },
-      'Água Pressurizada': { unidade: 'L', valores: [10, 15, 20] },
-      'Espuma Mecânica': { unidade: 'L', valores: [6, 10, 20] },
-      'Classe K': { unidade: 'L', valores: [6, 10] },
-      'Pó Classe D': { unidade: 'kg', valores: [4, 6, 9, 12, 20] }
-    }
-  };
+    // ══════════════════════════════════════════════════════════
+    //  RENDERIZAR FORMULÁRIOS
+    // ══════════════════════════════════════════════════════════
 
-  let opcoesCapacidade = JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade));
-  let opcoesCargaNominal = JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal));
+    function renderCapacidade() {
+      const container = document.getElementById('capacidadeContainer');
+      container.innerHTML = '';
 
-  // ══════════════════════════════════════════════════════════
-  //  RENDERIZAR FORMULÁRIOS
-  // ══════════════════════════════════════════════════════════
-  
-  function renderCapacidade() {
-    const container = document.getElementById('capacidadeContainer');
-    container.innerHTML = '';
+      TIPOS_EXTINTORES.forEach(tipo => {
+        const grupo = document.createElement('div');
+        grupo.className = 'tipo-grupo';
 
-    TIPOS_EXTINTORES.forEach(tipo => {
-      const grupo = document.createElement('div');
-      grupo.className = 'tipo-grupo';
-      
-      const opcoes = opcoesCapacidade[tipo] || [];
-      
-      grupo.innerHTML = `
+        const opcoes = opcoesCapacidade[tipo] || [];
+
+        grupo.innerHTML = `
         <div class="tipo-header">
           <div class="tipo-nome">${tipo}</div>
         </div>
@@ -444,22 +450,22 @@
           <button onclick="adicionarCapacidade('${tipo}')">+ Adicionar</button>
         </div>
       `;
-      
-      container.appendChild(grupo);
-    });
-  }
 
-  function renderCargaNominal() {
-    const container = document.getElementById('cargaNominalContainer');
-    container.innerHTML = '';
+        container.appendChild(grupo);
+      });
+    }
 
-    TIPOS_EXTINTORES.forEach(tipo => {
-      const grupo = document.createElement('div');
-      grupo.className = 'tipo-grupo';
-      
-      const config = opcoesCargaNominal[tipo] || { unidade: 'kg', valores: [] };
-      
-      grupo.innerHTML = `
+    function renderCargaNominal() {
+      const container = document.getElementById('cargaNominalContainer');
+      container.innerHTML = '';
+
+      TIPOS_EXTINTORES.forEach(tipo => {
+        const grupo = document.createElement('div');
+        grupo.className = 'tipo-grupo';
+
+        const config = opcoesCargaNominal[tipo] || { unidade: 'kg', valores: [] };
+
+        grupo.innerHTML = `
         <div class="tipo-header">
           <div class="tipo-nome">${tipo}</div>
         </div>
@@ -475,146 +481,161 @@
                  onchange="atualizarValores('${tipo}', this.value)">
         </div>
       `;
-      
-      container.appendChild(grupo);
-    });
-  }
 
-  // ══════════════════════════════════════════════════════════
-  //  FUNÇÕES DE MANIPULAÇÃO
-  // ══════════════════════════════════════════════════════════
-  
-  function adicionarCapacidade(tipo) {
-    const input = document.getElementById(`input-cap-${tipo.replace(/\s/g, '-')}`);
-    const valor = input.value.trim();
-    
-    if (!valor) return;
-    
-    if (!opcoesCapacidade[tipo]) {
-      opcoesCapacidade[tipo] = [];
+        container.appendChild(grupo);
+      });
     }
-    
-    if (!opcoesCapacidade[tipo].includes(valor)) {
-      opcoesCapacidade[tipo].push(valor);
+
+    // ══════════════════════════════════════════════════════════
+    //  FUNÇÕES DE MANIPULAÇÃO
+    // ══════════════════════════════════════════════════════════
+
+    function adicionarCapacidade(tipo) {
+      const input = document.getElementById(`input-cap-${tipo.replace(/\s/g, '-')}`);
+      const valor = input.value.trim();
+
+      if (!valor) return;
+
+      if (!opcoesCapacidade[tipo]) {
+        opcoesCapacidade[tipo] = [];
+      }
+
+      if (!opcoesCapacidade[tipo].includes(valor)) {
+        opcoesCapacidade[tipo].push(valor);
+        renderCapacidade();
+      }
+
+      input.value = '';
+    }
+
+    function removerCapacidade(tipo, opcao) {
+      opcoesCapacidade[tipo] = opcoesCapacidade[tipo].filter(op => op !== opcao);
       renderCapacidade();
     }
-    
-    input.value = '';
-  }
 
-  function removerCapacidade(tipo, opcao) {
-    opcoesCapacidade[tipo] = opcoesCapacidade[tipo].filter(op => op !== opcao);
-    renderCapacidade();
-  }
-
-  function atualizarUnidade(tipo, unidade) {
-    if (!opcoesCargaNominal[tipo]) {
-      opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
-    }
-    opcoesCargaNominal[tipo].unidade = unidade;
-  }
-
-  function atualizarValores(tipo, valoresStr) {
-    const valores = valoresStr.split(',').map(v => {
-      const num = parseFloat(v.trim());
-      return isNaN(num) ? null : num;
-    }).filter(v => v !== null);
-    
-    if (!opcoesCargaNominal[tipo]) {
-      opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
-    }
-    opcoesCargaNominal[tipo].valores = valores;
-  }
-
-  // ══════════════════════════════════════════════════════════
-  //  CRIAR BASE
-  // ══════════════════════════════════════════════════════════
-  
-  async function criarBase() {
-    const nome = document.getElementById('nome').value.trim();
-    const codigoICAO = document.getElementById('codigoICAO').value.trim().toUpperCase();
-    const codigoIATA = document.getElementById('codigoIATA').value.trim().toUpperCase();
-    const baseId = document.getElementById('baseId').value.trim();
-    
-    // Validações
-    if (!nome || !codigoICAO || !codigoIATA || !baseId) {
-      alert('⚠️ Preencha todos os campos obrigatórios!');
-      return;
-    }
-    
-    if (codigoICAO.length !== 4) {
-      alert('⚠️ Código ICAO deve ter exatamente 4 letras!');
-      return;
-    }
-    
-    if (codigoIATA.length !== 3) {
-      alert('⚠️ Código IATA deve ter exatamente 3 letras!');
-      return;
-    }
-    
-    if (!confirm(`Criar base "${nome}"?\n\n• ICAO: ${codigoICAO}\n• IATA: ${codigoIATA}\n• ID: ${baseId}`)) {
-      return;
-    }
-    
-    const btnCriar = document.getElementById('btnCriar');
-    btnCriar.disabled = true;
-    btnCriar.textContent = '⏳ Criando base...';
-    
-    try {
-      // Verificar se já existe
-      const existe = await db.collection('bases').doc(baseId).get();
-      if (existe.exists) {
-        throw new Error(`Base "${baseId}" já existe!`);
+    function atualizarUnidade(tipo, unidade) {
+      if (!opcoesCargaNominal[tipo]) {
+        opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
       }
-      
-      // Criar base
-      const novaBase = {
-        id: baseId,
-        nome: nome,
-        codigo: codigoICAO,
-        base: codigoIATA,
-        ativo: false, // Não ativar automaticamente
-        
-        modo_classificacao: 'tipo_capacidade',
-        
-        opcoes_capacidade: opcoesCapacidade,
-        opcoes_carga_nominal: opcoesCargaNominal,
-        
-        edificacoes: {},
-        historico_mudancas: [],
-        
-        sheets_historico_id: '',
-        sheets_visualizacao_id: '',
-        
-        criado_em: new Date().toISOString(),
-        criado_por: 'admin',
-        atualizado_em: new Date().toISOString()
-      };
-      
-      await db.collection('bases').doc(baseId).set(novaBase);
-      
-      document.getElementById('alertSuccess').classList.add('show');
-      btnCriar.textContent = '✅ Base Criada!';
-      
-      // Limpar formulário após 2s
-      setTimeout(() => {
-        location.reload();
-      }, 2000);
-      
-    } catch (error) {
-      alert(`❌ Erro: ${error.message}`);
-      btnCriar.disabled = false;
-      btnCriar.textContent = '🚀 Criar Base';
+      opcoesCargaNominal[tipo].unidade = unidade;
     }
-  }
 
-  // ══════════════════════════════════════════════════════════
-  //  INICIALIZAR
-  // ══════════════════════════════════════════════════════════
-  
-  renderCapacidade();
-  renderCargaNominal();
-</script>
+    function atualizarValores(tipo, valoresStr) {
+      const valores = valoresStr.split(',').map(v => {
+        const num = parseFloat(v.trim());
+        return isNaN(num) ? null : num;
+      }).filter(v => v !== null);
+
+      if (!opcoesCargaNominal[tipo]) {
+        opcoesCargaNominal[tipo] = { unidade: 'kg', valores: [] };
+      }
+      opcoesCargaNominal[tipo].valores = valores;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  CRIAR BASE
+    // ══════════════════════════════════════════════════════════
+
+    async function criarBase() {
+      const nome = document.getElementById('nome').value.trim();
+      const codigoICAO = document.getElementById('codigoICAO').value.trim().toUpperCase();
+      const codigoIATA = document.getElementById('codigoIATA').value.trim().toUpperCase();
+      const baseId = document.getElementById('baseId').value.trim();
+
+      // Validações
+      if (!nome || !codigoICAO || !codigoIATA || !baseId) {
+        alert('⚠️ Preencha todos os campos obrigatórios!');
+        return;
+      }
+
+      if (codigoICAO.length !== 4) {
+        alert('⚠️ Código ICAO deve ter exatamente 4 letras!');
+        return;
+      }
+
+      if (codigoIATA.length !== 3) {
+        alert('⚠️ Código IATA deve ter exatamente 3 letras!');
+        return;
+      }
+
+      if (!confirm(`Criar base "${nome}"?\n\n• ICAO: ${codigoICAO}\n• IATA: ${codigoIATA}\n• ID: ${baseId}`)) {
+        return;
+      }
+
+      const btnCriar = document.getElementById('btnCriar');
+      btnCriar.disabled = true;
+      btnCriar.textContent = '⏳ Criando base...';
+
+      try {
+        // Verificar se já existe
+        const existe = await db.collection('bases').doc(baseId).get();
+        if (existe.exists) {
+          throw new Error(`Base "${baseId}" já existe!`);
+        }
+
+        // Criar base
+        const novaBase = {
+          id: baseId,
+          nome: nome,
+          codigo: codigoICAO,
+          base: codigoIATA,
+          ativo: false, // Não ativar automaticamente
+
+          modo_classificacao: 'tipo_capacidade',
+
+          opcoes_capacidade: opcoesCapacidade,
+          opcoes_carga_nominal: opcoesCargaNominal,
+
+          edificacoes: {},
+          historico_mudancas: [],
+
+          sheets_historico_id: '',
+          sheets_visualizacao_id: '',
+
+          criado_em: new Date().toISOString(),
+          criado_por: 'admin',
+          atualizado_em: new Date().toISOString()
+        };
+
+        await db.collection('bases').doc(baseId).set(novaBase);
+
+        // ══════════════════════════════════════════════════════════
+        //  ADICIONAR: INICIALIZAR REALTIME DATABASE
+        // ══════════════════════════════════════════════════════════
+        console.log(`📦 Inicializando Realtime Database para base ${codigoIATA}...`);
+
+        await firebase.database().ref(`${codigoIATA}/extintores`).set({
+          _initialized: {
+            created_at: new Date().toISOString(),
+            message: "Base inicializada - pronta para inspeções"
+          }
+        });
+
+        console.log(`✅ Realtime Database inicializado: ${codigoIATA}/extintores`);
+
+        document.getElementById('alertSuccess').classList.add('show');
+        btnCriar.textContent = '✅ Base Criada!';
+
+        // Limpar formulário após 2s
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+
+      } catch (error) {
+        alert(`❌ Erro: ${error.message}`);
+        btnCriar.disabled = false;
+        btnCriar.textContent = '🚀 Criar Base';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  INICIALIZAR
+    // ══════════════════════════════════════════════════════════
+
+    renderCapacidade();
+    renderCargaNominal();
+  </script>
 
 </body>
+
 </html>
