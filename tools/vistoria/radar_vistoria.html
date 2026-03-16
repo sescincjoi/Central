@@ -539,59 +539,60 @@
             const currentCallsigns = new Set();
 
             aircraftList.forEach(ac => {
-                // Filtros Mínimos: (Fallback para HEX se não tiver Flight, Fallback para Geom se não tiver Baro)
-                const flightId = ac.flight ? ac.flight.trim() : (ac.hex ? `ID:${ac.hex.toUpperCase()}` : null);
-                const altitude = ac.alt_baro !== undefined ? ac.alt_baro : ac.alt_geom;
+                // Filtros Mínimos Relaxados: Fallback para HEX e Altitudes
+                const flightId = (ac.flight && ac.flight.trim()) || (ac.hex ? `ID:${ac.hex.toUpperCase()}` : null);
+                const altitude = ac.alt_baro !== undefined ? ac.alt_baro : (ac.alt_geom !== undefined ? ac.alt_geom : null);
 
-                if (!flightId || altitude === undefined || ac.gs === undefined || ac.track === undefined) return;
+                if (!flightId || altitude === null) return; // Só altitude é realmente obrigatória
 
                 const callsign = flightId;
                 const altFeet = altitude;
-                const speedKmh = ac.gs * 1.852;
-                const track = ac.track;
+                const speedKmh = (ac.gs || 200) * 1.852; // Fallback 200kts se sumir velocidade
+                const track = ac.track || 0;
                 const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
 
-                // === LÓGICA DE JANELA DE ALTITUDE (RAMPA SBJV) ===
-                const maxAltAllowed = Math.min(20000, 5000 + (distKm * 200));
-                const minAltRequired = Math.max(800, (distKm * 100) - 5000);
+                // === LÓGICA DE JANELA DE ALTITUDE (SENSIBILIDADE MÁXIMA) ===
+                const maxAltAllowed = Math.min(25000, 6000 + (distKm * 250)); // Muito mais alto
+                const minAltRequired = Math.max(500, (distKm * 100) - 6000); // Piso muito mais baixo
 
                 const bearingToAirport = calculateBearing(ac.lat, ac.lon, CONFIG.LAT, CONFIG.LON);
                 let diffHeading = Math.abs(track - bearingToAirport);
                 if (diffHeading > 180) diffHeading = 360 - diffHeading;
 
-                const vRate = ac.baro_rate || ac.geom_rate || 0;
-
                 // DECISÃO DE EXIBIÇÃO:
-                const isNotClimbing = vRate < 600;
-                const isClose = distKm < 60;
+                // Se estiver a menos de 70km, aceita qualquer rumo e quase qualquer altitude
+                const isClose = distKm < 70;
                 const isHeadingOk = diffHeading < 90;
 
-                // - Deve estar dentro da JANELA (Entre Piso e Teto)
-                // - SE ESTIVER MUITO PERTO (< 15km), ignora o piso (pode estar na final baixa)
-                const isVeryClose = distKm < 15;
-                const isAltOk = altFeet < maxAltAllowed && (altFeet > minAltRequired || isVeryClose);
+                // Se estiver muito perto (< 40km), ignora o piso totalmente
+                const isAltOk = altFeet < maxAltAllowed && (altFeet > minAltRequired || distKm < 40);
 
-                if (isNotClimbing && (isHeadingOk || isClose || ac.isMock) && isAltOk) {
+                if ((isHeadingOk || isClose || ac.isMock) && isAltOk) {
                     currentCallsigns.add(callsign);
                     let estMinutes = (distKm / speedKmh) * 60 + 5;
 
+                    // Persistência: Se já existia, mantém o targetTime original para não pular o relógio
+                    const existing = activeFlights.get(callsign);
                     activeFlights.set(callsign, {
-                        hex: ac.hex,
+                        hex: ac.hex || 'N/A',
                         callsign: callsign,
                         altFeet: Math.round(altFeet),
                         speedKmh: Math.round(speedKmh),
                         distKm: distKm.toFixed(1),
                         etaMinutes: estMinutes,
-                        targetTime: new Date(Date.now() + (estMinutes * 60000)),
-                        type: 'Aproximação'
+                        targetTime: existing ? existing.targetTime : new Date(Date.now() + (estMinutes * 60000)),
+                        type: 'Aproximação',
+                        lastSeen: Date.now()
                     });
                     foundRelevant = true;
                 }
             });
 
-            // Limpa da tela quem sumiu do radar (mantendo mocks)
+            // Limpa da tela quem sumiu (Mantém por 30 segundos de "fumaça" para evitar sumiços)
+            const now = Date.now();
             for (let [callsign, data] of activeFlights.entries()) {
-                if (!currentCallsigns.has(callsign) && !data.isMock) {
+                const age = now - (data.lastSeen || 0);
+                if (!currentCallsigns.has(callsign) && !data.isMock && age > 30000) {
                     activeFlights.delete(callsign);
                 }
             }
