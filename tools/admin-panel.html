@@ -879,7 +879,7 @@
   <!-- Service Layer -->
   <script src="./extintor-service.js"></script>
 
-  <script>
+  <script type="module">
     // ══════════════════════════════════════════════════════════
     //  FIREBASE CONFIG
     // ══════════════════════════════════════════════════════════
@@ -899,21 +899,29 @@
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+
+    // Tornar rtdb, ref, set e remove disponíveis para o service ou funções abaixo
+    window.rtdb = rtdb;
+    window.ref = ref;
+    window.set = set;
+    window.remove = remove;
+    window.authCore = authCore;
     // A variável rtdb agora vem do import modular abaixo
 
     // ══════════════════════════════════════════════════════════
     //  STATE
     // ══════════════════════════════════════════════════════════
-    let extintorService;
-    let todosExtintores = [];
-    let extintoresFiltrados = [];
-    let edificacoes = {};
-    let modoEdicao = false;
+    // Variáveis de estado anexadas ao window para visibilidade no console e funções
+    window.extintorService = null;
+    window.todosExtintores = [];
+    window.extintoresFiltrados = [];
+    window.edificacoes = {};
+    window.modoEdicao = false;
 
     // Novos: modo de classificação
-    let modoClassificacao = 'tipo_carga_nominal';
-    let opcoesCargaNominal = {};
-    let opcoesCapacidade = {};
+    window.modoClassificacao = 'tipo_carga_nominal';
+    window.opcoesCargaNominal = {};
+    window.opcoesCapacidade = {};
 
     // ══════════════════════════════════════════════════════════
     //  INIT
