@@ -551,26 +551,31 @@
                 const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
 
                 // === LÓGICA DE JANELA DE ALTITUDE (RAMPA SBJV) ===
-                // Teto: Não pode estar em cruzeiro (muito alto)
-                const maxAltAllowed = Math.min(15000, 3000 + (distKm * 150));
+                // Teto: Ajustado para permitir voos altos como 11k ft a 11min (aprox 45km)
+                // Usando base de 5000ft + 200ft por km (inclinação mais suave para aeronaves pesadas/rápidas)
+                const maxAltAllowed = Math.min(20000, 5000 + (distKm * 200));
 
                 // Piso: Se estiver baixo demais longe, é pouso em outro lugar (Navegantes/Floripa)
-                const minAltRequired = Math.max(1000, (distKm * 100) - 4000);
+                const minAltRequired = Math.max(800, (distKm * 100) - 5000);
 
-                // 3. Filtro de Rumo (Heading) - Relaxado para 60 graus para permitir curvas
+                // 3. Filtro de Rumo (Heading)
                 const bearingToAirport = calculateBearing(ac.lat, ac.lon, CONFIG.LAT, CONFIG.LON);
                 let diffHeading = Math.abs(track - bearingToAirport);
                 if (diffHeading > 180) diffHeading = 360 - diffHeading;
-                const isPointingToAirport = diffHeading < 60; // Cone de 120 graus total
 
                 // 4. Filtro de Taxa de Descida (Vertical Rate)
                 const vRate = ac.baro_rate || ac.geom_rate || 0;
 
                 // DECISÃO DE EXIBIÇÃO:
-                // - Deve estar descendo ou nivelado
-                // - Deve estar apontando para o aeroporto (mesmo que de longe)
-                // - Deve estar dentro da JANELA (Entre Piso e Teto)
-                if (vRate <= 0 && (isPointingToAirport || ac.isMock) && altFeet < maxAltAllowed && altFeet > minAltRequired) {
+                // - Não pode estar subindo forte (permite jitter ou nivelamento até 600 fpm)
+                const isNotClimbing = vRate < 600;
+                // - Se estiver perto (< 60km), aceita qualquer rumo (pode estar fazendo curva de base)
+                const isClose = distKm < 60;
+                // - Se estiver longe, aceita rumo até 90 graus
+                const isHeadingOk = diffHeading < 90;
+
+                // - Deve estar dentro da JANELA (Entre Piso e Teto) - ESSENCIAL
+                if (isNotClimbing && (isHeadingOk || isClose || ac.isMock) && altFeet < maxAltAllowed && altFeet > minAltRequired) {
                     currentCallsigns.add(callsign);
 
                     // Estimativa de Tempo
