@@ -9,7 +9,6 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <!-- Tailwind CSS -->
@@ -894,9 +893,13 @@
       appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
     };
 
+    import authCore from '../js/auth/auth-core.js';
+    import { rtdb } from '../js/auth/firebase-config.js';
+    import { ref, set, remove } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const rtdb = firebase.database();
+    // A variável rtdb agora vem do import modular abaixo
 
     // ══════════════════════════════════════════════════════════
     //  STATE
@@ -1425,7 +1428,7 @@
             const base = await extintorService.getBaseAtual();
             const baseIATA = base.base;
 
-            await rtdb.ref(`${baseIATA}/extintores/${edificacao}/${numero}`).set({
+            await set(ref(rtdb, `${baseIATA}/extintores/${edificacao}/${numero}`), {
               vistoriado: false,
               por: '',
               criado_em: new Date().toISOString()
@@ -1479,7 +1482,7 @@
           if (ext) {
             const base = await extintorService.getBaseAtual();
             const baseIATA = base.base;
-            await rtdb.ref(`${baseIATA}/extintores/${ext.edificacao}/${ext.numero}`).remove();
+            await remove(ref(rtdb, `${baseIATA}/extintores/${ext.edificacao}/${ext.numero}`));
             console.log(`✅ Extintor removido do Realtime: ${baseIATA}/extintores/${ext.edificacao}/${ext.numero}`);
           }
         } catch (rtError) {

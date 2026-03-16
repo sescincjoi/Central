@@ -10,6 +10,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getDatabase, connectDatabaseEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
 // Configuração do Firebase (suas credenciais)
 const firebaseConfig = {
@@ -27,6 +28,7 @@ const app = initializeApp(firebaseConfig);
 // Inicializar serviços
 const auth = getAuth(app);
 const db = getFirestore(app);
+const rtdb = getDatabase(app);
 
 // Configurações do domínio
 const CONFIG = {
@@ -56,11 +58,12 @@ const CONFIG = {
 if (CONFIG.dev && window.location.hostname === 'localhost') {
   connectAuthEmulator(auth, 'http://localhost:9099');
   connectFirestoreEmulator(db, 'localhost', 8080);
+  connectDatabaseEmulator(rtdb, 'localhost', 9000);
   console.log('🔧 Usando emuladores Firebase locais');
 }
 
 // Exportar para uso em outros módulos
-export { auth, db, CONFIG };
+export { auth, db, rtdb, CONFIG };
 
 // Log de inicialização
 console.log('✅ Firebase inicializado:', {

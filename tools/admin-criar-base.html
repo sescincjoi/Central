@@ -367,11 +367,10 @@
     </button>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <!-- Firebase será carregado via módulos importados -->
 
   <script>
+    // Configurações Globais (não dependem do SDK)
     const firebaseConfig = {
       apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
       authDomain: "central-sci-joinville.firebaseapp.com",
@@ -382,10 +381,8 @@
       appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
     };
 
-    firebase.initializeApp(firebaseConfig);
-
     // ══════════════════════════════════════════════════════════
-    //  CONFIGURAÇÕES PADRÃO
+    //  CONFIGURAÇÕES PADRÃO (GLOBAL)
     // ══════════════════════════════════════════════════════════
 
     const TIPOS_EXTINTORES = [
@@ -438,11 +435,13 @@
     import authCore from '../js/auth/auth-core.js';
     import authUI from '../js/auth/auth-ui.js';
     import authGuard from '../js/auth/auth-guard.js';
-    import { db } from '../js/auth/firebase-config.js';
+    import { db, rtdb } from '../js/auth/firebase-config.js';
     import { doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import { ref, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
     window.authCore = authCore;
     window.db = db; // Firestore Modular
+    window.rtdb = rtdb;
 
     // ══════════════════════════════════════════════════════════
     //  CRIAR BASE (MODULAR)
@@ -505,9 +504,9 @@
         // Salvar no Firestore (Modular)
         await setDoc(docRef, novaBase);
 
-        // Inicializar Realtime Database (usando global firebase do compat SDK carregado antes)
+        // Inicializar Realtime Database (Modular)
         console.log(`📦 Inicializando Realtime Database para base ${codigoIATA}...`);
-        await firebase.database().ref(`${codigoIATA}/extintores`).set({
+        await set(ref(rtdb, `${codigoIATA}/extintores`), {
           _initialized: {
             created_at: new Date().toISOString(),
             message: "Base inicializada - pronta para inspeções"
