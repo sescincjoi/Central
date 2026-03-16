@@ -19,7 +19,7 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  INICIALIZAÇÃO
   // ══════════════════════════════════════════════════════════
-  
+
   init() {
     if (!this.db) {
       if (typeof firebase === 'undefined') {
@@ -29,7 +29,7 @@ class ExtintorService {
         throw new Error('Firestore não está disponível. Verifique se o script do Firestore foi carregado.');
       }
       this.db = firebase.firestore();
-      
+
       // Auth é opcional (nem todas as páginas usam)
       if (firebase.auth) {
         this.auth = firebase.auth();
@@ -50,14 +50,14 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  USUÁRIO E PERMISSÕES
   // ══════════════════════════════════════════════════════════
-  
+
   async getUserProfile() {
     this._ensureInit();
-    
+
     if (!this.auth) {
       throw new Error('Firebase Auth não está disponível. Adicione o script do Firebase Auth.');
     }
-    
+
     // Aguardar usuário estar autenticado
     const user = await new Promise((resolve) => {
       const unsubscribe = this.auth.onAuthStateChanged((user) => {
@@ -65,33 +65,33 @@ class ExtintorService {
         resolve(user);
       });
     });
-    
+
     if (!user) {
       throw new Error('Usuário não autenticado');
     }
-    
+
     // Buscar perfil do usuário no Firestore
     const doc = await this.db.collection('usuarios').doc(user.uid).get();
-    
+
     if (!doc.exists) {
       throw new Error('Perfil do usuário não encontrado');
     }
-    
+
     this.currentUser = { uid: user.uid, ...doc.data() };
     return this.currentUser;
   }
 
   async getBaseSelecionadaPeloUsuario() {
     this._ensureInit();
-    
+
     // ═══ PRIORIDADE 1: localStorage ═══
     const baseSelecionada = localStorage.getItem('baseSelecionada');
-    
+
     if (baseSelecionada) {
       console.log(`📍 Base selecionada (localStorage): ${baseSelecionada}`);
       return baseSelecionada;
     }
-    
+
     // ═══ PRIORIDADE 2: Perfil do usuário (REQUER AUTH) ═══
     if (!this.auth) {
       throw new Error(
@@ -103,21 +103,21 @@ class ExtintorService {
         '3. Depois você poderá usar todas as páginas'
       );
     }
-    
+
     // Aguardar usuário estar autenticado
     const user = await new Promise((resolve, reject) => {
       const unsubscribe = this.auth.onAuthStateChanged((user) => {
         unsubscribe();
         resolve(user);
       });
-      
+
       // Timeout de 5 segundos
       setTimeout(() => {
         unsubscribe();
         reject(new Error('Timeout aguardando autenticação'));
       }, 5000);
     });
-    
+
     if (!user) {
       throw new Error(
         '❌ Usuário não autenticado!\n\n' +
@@ -127,10 +127,10 @@ class ExtintorService {
         '2. Sua base será configurada automaticamente'
       );
     }
-    
+
     // Pegar do perfil do usuário
     const perfil = await this.getUserProfile();
-    
+
     if (!perfil.base) {
       throw new Error(
         '❌ Perfil sem base definida!\n\n' +
@@ -138,15 +138,15 @@ class ExtintorService {
         'Entre em contato com o administrador.'
       );
     }
-    
+
     const baseIATA = perfil.base; // Ex: "JOI"
-    
+
     // Buscar base pelo código IATA
     const snapshot = await this.db.collection('bases')
       .where('base', '==', baseIATA)
       .limit(1)
       .get();
-    
+
     if (snapshot.empty) {
       throw new Error(
         `❌ Base "${baseIATA}" não encontrada!\n\n` +
@@ -155,116 +155,112 @@ class ExtintorService {
         `Entre em contato com o administrador.`
       );
     }
-    
+
     const baseId = snapshot.docs[0].id;
     const baseNome = snapshot.docs[0].data().nome;
-    
+
     // Salvar no localStorage
     localStorage.setItem('baseSelecionada', baseId);
-    
+
     console.log(`✅ Base configurada: ${baseNome} (${baseIATA})`);
     return baseId;
   }
 
   async selecionarBase(baseIdOuCodigo) {
     this._ensureInit();
-    
-    const perfil = await this.getUserProfile();
-    
-    // Verificar permissão
-    if (perfil.role !== 'super-admin') {
-      // Admin/User: verificar se está em allowedBases
-      
-      // Se passaram código IATA, buscar o ID
-      let baseId = baseIdOuCodigo;
-      
-      if (baseIdOuCodigo.length === 3) {
-        // É código IATA (ex: "JOI")
-        const snapshot = await this.db.collection('bases')
-          .where('base', '==', baseIdOuCodigo)
-          .limit(1)
-          .get();
-        
-        if (snapshot.empty) {
-          throw new Error(`Base com código IATA "${baseIdOuCodigo}" não encontrada`);
-        }
-        
-        baseId = snapshot.docs[0].id;
+
+    // 1. Resolver ID da base (suporta ID ou Código IATA de 3 letras)
+    let baseId = baseIdOuCodigo;
+
+    if (baseIdOuCodigo.length === 3) {
+      const snapshot = await this.db.collection('bases')
+        .where('base', '==', baseIdOuCodigo)
+        .limit(1)
+        .get();
+
+      if (snapshot.empty) {
+        throw new Error(`Base com código IATA "${baseIdOuCodigo}" não encontrada`);
       }
-      
-      // Buscar código IATA da base
+
+      baseId = snapshot.docs[0].id;
+    }
+
+    // 2. Verificar permissão
+    const perfil = await this.getUserProfile();
+
+    if (perfil.role !== 'super-admin') {
+      // Buscar código IATA da base para verificar permissões
       const baseDoc = await this.db.collection('bases').doc(baseId).get();
       if (!baseDoc.exists) {
         throw new Error('Base não encontrada');
       }
-      
+
       const codigoIATA = baseDoc.data().base;
-      
-      // Verificar se está permitido
+
       if (!perfil.allowedBases || !perfil.allowedBases.includes(codigoIATA)) {
         throw new Error(`Você não tem permissão para acessar a base "${codigoIATA}"`);
       }
     }
-    
-    // Salvar seleção
+
+    // 3. Salvar seleção e limpar cache
     localStorage.setItem('baseSelecionada', baseId);
-    
+
     // Limpar cache
     this.cache.base = null;
     this.cache.extintores = null;
     this.cache.edificacoes = null;
-    
+
     console.log(`✅ Base selecionada: ${baseId}`);
-    
+
     return baseId;
   }
 
   async getBasesPermitidas() {
     this._ensureInit();
-    
+
     const perfil = await this.getUserProfile();
-    
+
     // Super-admin vê todas
     if (perfil.role === 'super-admin') {
       const snapshot = await this.db.collection('bases').get();
       const bases = [];
-      
+
       snapshot.forEach(doc => {
         bases.push({ id: doc.id, ...doc.data() });
       });
-      
+
       return bases;
     }
-    
+
     // Admin/User: apenas allowedBases
     if (!perfil.allowedBases || perfil.allowedBases.length === 0) {
       return [];
     }
-    
+
     const bases = [];
-    
+
     for (const codigoIATA of perfil.allowedBases) {
       const snapshot = await this.db.collection('bases')
         .where('base', '==', codigoIATA)
         .limit(1)
         .get();
-      
+
       if (!snapshot.empty) {
         const doc = snapshot.docs[0];
         bases.push({ id: doc.id, ...doc.data() });
       }
     }
-    
+
     return bases;
   }
 
   // ══════════════════════════════════════════════════════════
   //  BASE ATUAL
   // ══════════════════════════════════════════════════════════
-  
+
   async getBaseAtual() {
     this._ensureInit();
-    
+
     // Cache por 30 segundos
     if (this.cache.base && this.cache.lastUpdate) {
       const diff = Date.now() - this.cache.lastUpdate;
@@ -272,23 +268,23 @@ class ExtintorService {
         return this.cache.base;
       }
     }
-    
+
     // Pegar base selecionada pelo usuário
     const baseId = await this.getBaseSelecionadaPeloUsuario();
-    
+
     const doc = await this.db.collection('bases').doc(baseId).get();
-    
+
     if (!doc.exists) {
       throw new Error('Base não encontrada. Execute o script de migração primeiro.');
     }
-    
+
     const base = { id: doc.id, ...doc.data() };
-    
+
     this.cache.base = base;
     this.cache.lastUpdate = Date.now();
-    
+
     console.log(`✅ Base ativa: ${base.nome} (${base.base})`);
-    
+
     return base;
   }
 
@@ -309,7 +305,7 @@ class ExtintorService {
 
   async trocarModoClassificacao(novoModo, motivo = '') {
     this._ensureInit();
-    
+
     if (!['tipo_carga_nominal', 'tipo_capacidade'].includes(novoModo)) {
       throw new Error('Modo inválido. Use "tipo_carga_nominal" ou "tipo_capacidade"');
     }
@@ -349,15 +345,15 @@ class ExtintorService {
 
   async marcarTodosParaRevisaoSemLimpar(novoModo) {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
-    
+
     const snapshot = await this.db
       .collection('bases')
       .doc(base.id)
       .collection('extintores')
       .get();
-    
+
     const batch = this.db.batch();
     let count = 0;
 
@@ -386,9 +382,9 @@ class ExtintorService {
 
   async getExtintoresPendentesRevisao() {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
-    
+
     const snapshot = await this.db
       .collection('bases')
       .doc(base.id)
@@ -406,9 +402,9 @@ class ExtintorService {
 
   async marcarExtintorRevisado(extintorId) {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
-    
+
     await this.db
       .collection('bases')
       .doc(base.id)
@@ -427,23 +423,23 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  EXTINTORES - CRUD
   // ══════════════════════════════════════════════════════════
-  
+
   async listarExtintores(forcarRecarregar = false) {
     this._ensureInit();
-    
+
     if (
-      !forcarRecarregar && 
-      this.cache.extintores && 
-      this.cache.lastUpdate && 
+      !forcarRecarregar &&
+      this.cache.extintores &&
+      this.cache.lastUpdate &&
       (Date.now() - this.cache.lastUpdate < 300000)
     ) {
       return this.cache.extintores;
     }
 
     console.log('📥 Carregando extintores do Firestore...');
-    
+
     const base = await this.getBaseAtual();
-    
+
     const snapshot = await this.db
       .collection('bases')
       .doc(base.id)
@@ -468,9 +464,9 @@ class ExtintorService {
 
   async getExtintor(id) {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
-    
+
     const doc = await this.db
       .collection('bases')
       .doc(base.id)
@@ -487,17 +483,17 @@ class ExtintorService {
 
   async criarExtintor(dados) {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
     const id = `${dados.edificacao}_${dados.numero}`;
-    
+
     const existeNaEdificacao = await this.db
       .collection('bases')
       .doc(base.id)
       .collection('extintores')
       .doc(id)
       .get();
-    
+
     if (existeNaEdificacao.exists) {
       throw new Error(`Extintor ${dados.numero} já existe na edificação ${dados.edificacao}`);
     }
@@ -509,7 +505,7 @@ class ExtintorService {
       .where('numero', '==', dados.numero)
       .where('ativo', '==', true)
       .get();
-    
+
     if (!snapshot.empty) {
       const existente = snapshot.docs[0].data();
       throw new Error(
@@ -529,15 +525,15 @@ class ExtintorService {
       edificacao: dados.edificacao,
       descricao: dados.descricao,
       tipo: dados.tipo,
-      
+
       carga_nominal_valor: dados.carga_nominal_valor || null,
       carga_nominal_unidade: dados.carga_nominal_unidade || "",
-      
+
       capacidade_extintora: dados.capacidade_extintora || "",
-      
+
       modo_atual: modo,
       requer_revisao: false,
-      
+
       localizacao_gps: dados.localizacao_gps || null,
       qrcode: dados.qrcode || `EXT-${base.codigo}-${dados.edificacao.substring(0, 6).toUpperCase()}-${dados.numero}`,
       ativo: true,
@@ -564,16 +560,16 @@ class ExtintorService {
 
   async atualizarExtintor(id, dados) {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
-    
+
     const doc = await this.db
       .collection('bases')
       .doc(base.id)
       .collection('extintores')
       .doc(id)
       .get();
-    
+
     if (!doc.exists) {
       throw new Error(`Extintor ${id} não encontrado`);
     }
@@ -602,9 +598,9 @@ class ExtintorService {
 
   async desativarExtintor(id, motivo) {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
-    
+
     await this.db
       .collection('bases')
       .doc(base.id)
@@ -626,14 +622,14 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  EDIFICAÇÕES
   // ══════════════════════════════════════════════════════════
-  
+
   async listarEdificacoes() {
     this._ensureInit();
-    
+
     if (this.cache.edificacoes) return this.cache.edificacoes;
 
     const base = await this.getBaseAtual();
-    
+
     if (!base.edificacoes) {
       throw new Error('Edificações não encontradas. Execute a migração primeiro.');
     }
@@ -650,7 +646,7 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  FORMATO LEGADO (compatibilidade)
   // ══════════════════════════════════════════════════════════
-  
+
   async getExtintoresFormatoAntigo() {
     const extintores = await this.listarExtintores();
     const edificacoes = await this.listarEdificacoes();
@@ -704,12 +700,12 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  BUSCA E FILTROS
   // ══════════════════════════════════════════════════════════
-  
+
   async buscarExtintores(filtros = {}) {
     this._ensureInit();
-    
+
     const base = await this.getBaseAtual();
-    
+
     let query = this.db
       .collection('bases')
       .doc(base.id)
@@ -733,7 +729,7 @@ class ExtintorService {
 
     const snapshot = await query.get();
     const extintores = [];
-    
+
     snapshot.forEach(doc => {
       extintores.push({ id: doc.id, ...doc.data() });
     });
@@ -744,10 +740,10 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  ESTATÍSTICAS
   // ══════════════════════════════════════════════════════════
-  
+
   async getEstatisticas() {
     const extintores = await this.listarExtintores();
-    
+
     const stats = {
       total: extintores.length,
       por_tipo: {},
@@ -800,26 +796,26 @@ class ExtintorService {
   // ══════════════════════════════════════════════════════════
   //  HELPERS
   // ══════════════════════════════════════════════════════════
-  
+
   formatarCargaNominal(extintor) {
     const { tipo, carga_nominal_valor, carga_nominal_unidade } = extintor;
-    
+
     if (!carga_nominal_valor) return tipo;
-    
+
     return `${tipo} ${carga_nominal_valor}${carga_nominal_unidade}`;
   }
 
   formatarCapacidadeExtintora(extintor) {
     const { tipo, capacidade_extintora } = extintor;
-    
+
     if (!capacidade_extintora) return tipo;
-    
+
     return `${tipo} ${capacidade_extintora}`;
   }
 
   formatarExtintor(extintor) {
     const modo = extintor.modo_atual || 'tipo_carga_nominal';
-    
+
     if (modo === 'tipo_capacidade') {
       return this.formatarCapacidadeExtintora(extintor);
     } else {
