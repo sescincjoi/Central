@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Gerenciar Bases - Central SCI</title>
+
+    <link rel="icon" type="image/png" href="../pwa/icons/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../pwa/lucide.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .premium-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .premium-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        .base-card {
+            cursor: pointer;
+            border: 2.5px solid transparent;
+        }
+
+        .base-card.active {
+            border-color: #007AFF;
+            background: rgba(0, 122, 255, 0.02);
+        }
+
+        .btn-apple-primary {
+            background: #007AFF;
+            color: white;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-apple-primary:hover {
+            background: #0062cc;
+            transform: scale(1.02);
+        }
+
+        .btn-apple-secondary {
+            background: #f5f5f7;
+            color: #007AFF;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-online {
+            background: #E3FBE3;
+            color: #1E621E;
+        }
+
+        .status-offline {
+            background: #FEECEC;
+            color: #731212;
+        }
+
+        /* Modal refine */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            width: 95%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="safe-area-top" data-auth-required data-auth-login>
+
+    <!-- Barra de Navegação -->
+    <nav class="glass-nav fixed top-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='/Central/'"
+                    class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                </button>
+                <h1 class="text-xl font-bold tracking-tight">Gerenciar Bases</h1>
+            </div>
+            <div id="auth-button-container"></div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 pt-24 pb-12">
+
+        <!-- SEÇÃO 1: SELETOR DE BASE ATIVA -->
+        <section class="mb-12">
+            <div class="flex items-end justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-black mb-1">🌐 Base Ativa</h2>
+                    <p class="text-gray-500">Escolha a base que deseja visualizar no sistema globalmente.</p>
+                </div>
+                <span class="status-badge status-online">Super-Admin</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="seletor-bases-grid">
+                <!-- Skeleton Loading -->
+                <div class="premium-card p-6 animate-pulse bg-gray-200 h-24"></div>
+                <div class="premium-card p-6 animate-pulse bg-gray-200 h-24"></div>
+                <div class="premium-card p-6 animate-pulse bg-gray-200 h-24"></div>
+            </div>
+        </section>
+
+        <hr class="border-gray-200 mb-12">
+
+        <!-- SEÇÃO 2: GESTÃO DE UNIDADES (CRUD) -->
+        <section>
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-2xl font-black mb-1">🏭 Unidades Operacionais</h2>
+                    <p class="text-gray-500">Gerenciar detalhes técnicos, logos e endpoints de cada base.</p>
+                </div>
+                <button onclick="abrirModalNovaBase()" class="btn-apple-primary flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    Nova Unidade
+                </button>
+            </div>
+
+            <div id="gestao-bases-container" class="space-y-4">
+                <!-- Lista será preenchida via JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Edição/Criação -->
+    <div id="modal-base" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-8">
+                <h3 id="modal-title" class="text-2xl font-bold">Editar Unidade</h3>
+                <button onclick="fecharModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <form id="form-base" class="space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold uppercase text-gray-500">Código IATA</label>
+                        <input type="text" id="base-iata"
+                            class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Ex: JOI">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold uppercase text-gray-500">Código ICAO</label>
+                        <input type="text" id="base-icao"
+                            class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Ex: SBJV">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase text-gray-500">Nome Amigável</label>
+                    <input type="text" id="base-nome"
+                        class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Ex: Joinville">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase text-gray-500">Logo URL</label>
+                    <input type="url" id="base-logo"
+                        class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="https://...">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold uppercase text-gray-500">Modo de Classificação</label>
+                        <select id="base-modo"
+                            class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="tipo_carga_nominal">Carga Nominal (kg/L)</option>
+                            <option value="tipo_capacidade">Capacidade Extintora (A/B/C)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold uppercase text-gray-500">Status</label>
+                        <select id="base-status"
+                            class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="true">Ativa</option>
+                            <option value="false">Inativa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-6 flex gap-3">
+                    <button type="button" onclick="fecharModal()" class="flex-1 btn-apple-secondary">Cancelar</button>
+                    <button type="submit" class="flex-1 btn-apple-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+    <script type="module">
+        import authCore from '../js/auth/auth-core.js';
+        import authGuard from '../js/auth/auth-guard.js';
+        import '../js/core/base-service.js';
+
+        // ══════════════════════════════════════════════════════════
+        //  FIREBASE & AUTH INIT
+        // ══════════════════════════════════════════════════════════
+        const firebaseConfig = {
+            apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
+            authDomain: "central-sci-joinville.firebaseapp.com",
+            databaseURL: "https://central-sci-joinville-default-rtdb.firebaseio.com",
+            projectId: "central-sci-joinville",
+            storageBucket: "central-sci-joinville.firebasestorage.app",
+            messagingSenderId: "340864161035",
+            appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+        window.initPage = async () => {
+            if (!authCore.isSuperAdmin()) {
+                alert('Acesso restrito a Super Administradores.');
+                window.location.href = '/Central/';
+                return;
+            }
+            await carregarBases();
+            lucide.createIcons();
+        };
+
+        // ══════════════════════════════════════════════════════════
+        //  LÓGICA DE NEGÓCIO
+        // ══════════════════════════════════════════════════════════
+        async function carregarBases() {
+            const grid = document.getElementById('seletor-bases-grid');
+            const lista = document.getElementById('gestao-bases-container');
+
+            try {
+                const basesPermitidas = await window.baseService.getBasesPermitidas();
+                const baseAtivaId = await window.baseService.getBaseSelecionadaPeloUsuario();
+
+                grid.innerHTML = '';
+                lista.innerHTML = '';
+
+                basesPermitidas.forEach(base => {
+                    const isActive = base.id === baseAtivaId;
+
+                    // Render Seletor
+                    const seletorCard = document.createElement('div');
+                    seletorCard.className = `premium-card p-5 base-card ${isActive ? 'active' : ''}`;
+                    seletorCard.onclick = () => trocarBaseGlobal(base.id, base.nome);
+                    seletorCard.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-gray-900">${base.nome}</div>
+                                <div class="text-xs text-gray-500">${base.base} • ${base.icao}</div>
+                            </div>
+                            ${isActive ? '<div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center"><i data-lucide="check" class="w-4 h-4 text-white"></i></div>' : ''}
+                        </div>
+                    `;
+                    grid.appendChild(seletorCard);
+
+                    // Render Gestão
+                    const gestaoCard = document.createElement('div');
+                    gestaoCard.className = 'premium-card p-6 flex items-center justify-between';
+                    gestaoCard.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 p-2">
+                                <img src="${base.logoUrl || '../pwa/icons/icon-192.png'}" class="w-full h-full object-contain">
+                            </div>
+                            <div>
+                                <h4 class="font-bold">${base.nome}</h4>
+                                <p class="text-xs text-gray-500">ID: ${base.id} • Modo: ${base.modo_classificacao === 'tipo_capacidade' ? 'Capacidade' : 'Carga'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editarBase('${base.id}')" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <i data-lucide="edit-3" class="w-5 h-5 text-gray-400"></i>
+                            </button>
+                        </div>
+                    `;
+                    lista.appendChild(gestaoCard);
+                });
+
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Erro ao carregar bases:', error);
+            }
+        }
+
+        async function trocarBaseGlobal(baseId, nome) {
+            if (confirm(`Trocar contexto global para a base ${nome}?`)) {
+                await window.baseService.selecionarBase(baseId);
+                window.location.reload();
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  MODAL HANDLERS
+        // ══════════════════════════════════════════════════════════
+        window.abrirModalNovaBase = () => {
+            document.getElementById('modal-title').textContent = 'Nova Unidade';
+            document.getElementById('form-base').reset();
+            document.getElementById('base-iata').disabled = false;
+            document.getElementById('modal-base').style.display = 'flex';
+            lucide.createIcons();
+        };
+
+        window.fecharModal = () => {
+            document.getElementById('modal-base').style.display = 'none';
+        };
+
+        window.editarBase = async (id) => {
+            const base = (await window.baseService.getBasesPermitidas()).find(b => b.id === id);
+            if (!base) return;
+
+            document.getElementById('modal-title').textContent = `Configurar ${base.nome}`;
+            document.getElementById('base-iata').value = base.base;
+            document.getElementById('base-iata').disabled = true;
+            document.getElementById('base-icao').value = base.icao;
+            document.getElementById('base-nome').value = base.nome;
+            document.getElementById('base-logo').value = base.logoUrl || '';
+            document.getElementById('base-modo').value = base.modo_classificacao || 'tipo_carga_nominal';
+            document.getElementById('base-status').value = (base.ativo !== false).toString();
+
+            document.getElementById('modal-base').style.display = 'flex';
+            lucide.createIcons();
+        };
+
+        document.getElementById('form-base').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Gravando...';
+
+            try {
+                const baseId = document.getElementById('base-iata').value.toUpperCase();
+                const data = {
+                    base: baseId,
+                    icao: document.getElementById('base-icao').value.toUpperCase(),
+                    nome: document.getElementById('base-nome').value,
+                    logoUrl: document.getElementById('base-logo').value,
+                    modo_classificacao: document.getElementById('base-modo').value,
+                    ativo: document.getElementById('base-status').value === 'true',
+                    atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // No Firestore, usamos o ID da coleção como o código IATA ou um ID autogerado
+                // Aqui manteremos a compatibilidade com a estrutura encontrada anteriormente
+                const basesRef = firebase.firestore().collection('bases');
+
+                // Procurar se já existe pelo campo 'base' (IATA)
+                const snapshot = await basesRef.where('base', '==', baseId).limit(1).get();
+
+                if (!snapshot.empty) {
+                    await basesRef.doc(snapshot.docs[0].id).update(data);
+                } else {
+                    await basesRef.add({ ...data, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+                }
+
+                alert('Dados salvos com sucesso!');
+                fecharModal();
+                carregarBases();
+            } catch (error) {
+                alert('Erro ao salvar: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar Alterações';
+            }
+        };
+
+        // Listeners delegados
+        window.addEventListener('auth-state-changed', (e) => {
+            if (e.detail.user) window.initPage();
+        });
+
+    </script>
+</body>
+
+</html>

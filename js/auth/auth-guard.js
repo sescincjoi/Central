@@ -241,11 +241,11 @@ class AuthGuard {
             <div class="auth-user-matricula" id="auth-user-matricula">--</div>
             <span class="auth-user-role user" id="auth-user-role">usuário</span>
           </div>
-          <a href="../admin/usuarios.html" class="auth-menu-item" id="auth-menu-admin" style="display: none;">
+          <a href="/Central/admin/usuarios.html" class="auth-menu-item" id="auth-menu-admin" style="display: none;">
             <i data-lucide="shield" class="w-4 h-4"></i>
             <span>Painel Admin</span>
           </a>
-          <a href="../admin/config-bases.html" class="auth-menu-item" id="auth-menu-bases" style="display: none;">
+          <a href="/Central/admin/bases-config.html" class="auth-menu-item" id="auth-menu-bases" style="display: none;">
             <i data-lucide="database" class="w-4 h-4"></i>
             <span>Configurar Bases</span>
           </a>
