@@ -205,4 +205,3 @@ class BaseService {
 // Singleton global
 const baseService = new BaseService().init();
 window.baseService = baseService;
-export default baseService;
