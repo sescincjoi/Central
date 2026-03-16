@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configurações - Admin</title>
-  
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <style>
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: #f5f5f7;
     }
+
     .card {
       background: white;
       border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       padding: 24px;
     }
+
     .radio-card {
       border: 2px solid #e5e5ea;
       border-radius: 12px;
@@ -31,14 +34,17 @@
       cursor: pointer;
       transition: all 0.2s;
     }
+
     .radio-card:hover {
       border-color: #667eea;
       background: #f9f9fb;
     }
+
     .radio-card.selected {
       border-color: #667eea;
       background: rgba(102, 126, 234, 0.05);
     }
+
     .btn-primary {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -48,6 +54,7 @@
       border: none;
       cursor: pointer;
     }
+
     .btn-secondary {
       background: #f5f5f7;
       color: #1d1d1f;
@@ -57,6 +64,7 @@
       border: none;
       cursor: pointer;
     }
+
     .badge {
       display: inline-block;
       padding: 4px 10px;
@@ -64,9 +72,22 @@
       font-size: 12px;
       font-weight: 600;
     }
-    .badge-purple { background: rgba(118, 75, 162, 0.1); color: #764ba2; }
-    .badge-orange { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
-    .badge-green { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+
+    .badge-purple {
+      background: rgba(118, 75, 162, 0.1);
+      color: #764ba2;
+    }
+
+    .badge-orange {
+      background: rgba(255, 149, 0, 0.1);
+      color: #ff9500;
+    }
+
+    .badge-green {
+      background: rgba(52, 199, 89, 0.1);
+      color: #34c759;
+    }
+
     .alert {
       background: #fff3cd;
       border: 2px solid #ffc107;
@@ -74,16 +95,18 @@
       padding: 20px;
       margin: 20px 0;
     }
+
     .alert h4 {
       color: #856404;
       font-weight: 700;
       margin-bottom: 8px;
     }
+
     .alert ul {
       color: #856404;
       margin-left: 20px;
     }
-    
+
     /* Seletor de Base */
     .base-selector {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -92,34 +115,40 @@
       color: white;
       margin-bottom: 24px;
     }
+
     .base-option {
-      background: rgba(255,255,255,0.1);
-      border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
       padding: 16px;
       cursor: pointer;
       transition: all 0.2s;
       backdrop-filter: blur(10px);
     }
+
     .base-option:hover {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.4);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
       transform: translateY(-2px);
     }
+
     .base-option.active {
       background: white;
       border-color: white;
       color: #667eea;
     }
+
     .base-option.disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
+
     .base-option.disabled:hover {
       transform: none;
     }
   </style>
 </head>
+
 <body class="p-4 md:p-8" data-auth-required data-auth-login>
 
   <!-- Header -->
@@ -145,7 +174,7 @@
         </div>
         <span class="badge badge-green" id="role-badge">SUPER-ADMIN</span>
       </div>
-      
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="bases-grid">
         <!-- Preenchido dinamicamente -->
       </div>
@@ -248,8 +277,7 @@
               Alguns extintores precisam ter seus dados atualizados
             </div>
           </div>
-          <button onclick="window.location.href='./admin-revisao.html'" 
-                  class="btn-primary ml-auto">
+          <button onclick="window.location.href='./admin-revisao.html'" class="btn-primary ml-auto">
             Revisar Agora
           </button>
         </div>
@@ -279,7 +307,7 @@
           window.location.href = './login.html';
           return;
         }
-        
+
         // Carregar perfil e inicializar
         if (window.initPage) {
           await window.initPage();
@@ -295,7 +323,7 @@
   </script>
 
   <!-- Service Layer -->
-  <script src="./extintor-service.js"></script>
+  <script src="../extintor-service.js"></script>
 
   <script>
     // ══════════════════════════════════════════════════════════
@@ -310,7 +338,7 @@
       messagingSenderId: "340864161035",
       appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
     };
-    
+
     firebase.initializeApp(firebaseConfig);
 
     // ══════════════════════════════════════════════════════════
@@ -328,18 +356,18 @@
     async function init() {
       try {
         extintorService = new ExtintorService().init();
-        
+
         // Carregar perfil do usuário
         userProfile = await extintorService.getUserProfile();
-        
+
         // Carregar seletor de bases (se super-admin)
         await carregarSeletorBases();
-        
+
         // Carregar dados da base atual
         await carregarDados();
         await carregarHistorico();
         await verificarPendentes();
-        
+
       } catch (error) {
         console.error('❌ Erro:', error);
         alert('Erro ao carregar configurações: ' + error.message);
@@ -356,23 +384,23 @@
       if (userProfile.role !== 'super-admin') {
         return;
       }
-      
+
       document.getElementById('seletor-base-container').style.display = 'block';
-      
+
       // Buscar bases permitidas
       const bases = await extintorService.getBasesPermitidas();
       const baseSelecionada = await extintorService.getBaseSelecionadaPeloUsuario();
-      
+
       const grid = document.getElementById('bases-grid');
       grid.innerHTML = '';
-      
+
       bases.forEach(base => {
         const isActive = base.id === baseSelecionada;
-        
+
         const card = document.createElement('div');
         card.className = `base-option ${isActive ? 'active' : ''}`;
         card.onclick = () => trocarBase(base.id, base.nome);
-        
+
         card.innerHTML = `
           <div class="flex items-center justify-between">
             <div>
@@ -384,7 +412,7 @@
             ${isActive ? '<div class="text-2xl">✓</div>' : ''}
           </div>
         `;
-        
+
         grid.appendChild(card);
       });
     }
@@ -393,7 +421,7 @@
       if (!confirm(`Trocar para base "${nomeBase}"?\n\nA página será recarregada.`)) {
         return;
       }
-      
+
       try {
         await extintorService.selecionarBase(baseId);
         location.reload();
@@ -454,7 +482,7 @@
 
     async function verificarPendentes() {
       const pendentes = await extintorService.getExtintoresPendentesRevisao();
-      
+
       if (pendentes.length > 0) {
         document.getElementById('stats-revisao').style.display = 'flex';
         document.getElementById('count-pendentes').textContent = pendentes.length;
@@ -525,11 +553,12 @@
       } catch (error) {
         console.error('❌ Erro:', error);
         alert('❌ Erro ao salvar: ' + error.message);
-        
+
         document.getElementById('btn-salvar').disabled = false;
         document.getElementById('btn-salvar').textContent = 'Salvar Configuração';
       }
     }
   </script>
 </body>
+
 </html>
