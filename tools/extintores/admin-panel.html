@@ -877,7 +877,7 @@
   </script>
 
   <!-- Service Layer -->
-  <script src="./extintor-service.js"></script>
+  <script src="../extintor-service.js"></script>
 
   <script type="module">
     // ══════════════════════════════════════════════════════════
@@ -893,8 +893,8 @@
       appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
     };
 
-    import authCore from '../js/auth/auth-core.js';
-    import { rtdb } from '../js/auth/firebase-config.js';
+    import authCore from '../../js/auth/auth-core.js';
+    import { rtdb } from '../../js/auth/firebase-config.js';
     import { ref, set, remove } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
     firebase.initializeApp(firebaseConfig);
