@@ -24,6 +24,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="../js/base-service.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -412,8 +416,8 @@
     </div>
 
     <script>
-        const SPREADSHEET_ID = '1SIM3VeI1tFSyI0PA07O6QsYzDTt3nJmfEFJm9807mto';
-        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+        let SPREADSHEET_ID = '1SIM3VeI1tFSyI0PA07O6QsYzDTt3nJmfEFJm9807mto'; // Fallback Joinville
+        let JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
         const GOAL_S = 60;
         const LIMIT_S = 90;
 
@@ -869,7 +873,28 @@
             download() { this.doc.save(`Relatorio_Vestimenta_${new Date().toISOString().slice(0, 10)}.pdf`); }
         };
 
-        window.onload = () => {
+        window.onload = async () => {
+            // Inicializar BaseService e buscar configurações da base
+            if (window.baseService) {
+                try {
+                    await window.baseService.init();
+                    const baseAtual = await window.baseService.getBaseAtual();
+                    if (baseAtual && baseAtual.sheets_historico_id) {
+                        SPREADSHEET_ID = baseAtual.sheets_historico_id;
+                        JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+                        console.log("TP-EPR: Usando Sheet ID da base:", SPREADSHEET_ID);
+
+                        // Se tiver logo personalizada, injetar no cabeçalho
+                        if (baseAtual.logoUrl) {
+                            const headerLogo = document.querySelector('.header img');
+                            if (headerLogo) headerLogo.src = baseAtual.logoUrl;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar base no TP-EPR:", e);
+                }
+            }
+
             google.charts.load('current', { 'packages': ['corechart'] });
             google.charts.setOnLoadCallback(() => { DataLoader.fetch(); });
             window.onresize = () => ChartModule.draw();

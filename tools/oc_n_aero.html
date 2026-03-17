@@ -1094,10 +1094,15 @@
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="../js/core/base-service.js"></script>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyal0depSGSESznpVqxnv6FnwOsv2CZXWTdEtU59GB1eC359G3chsgNBnE8ywiXEJXgKw/exec';
+        let WEB_APP_URL = '';
 
         let configData = null;
         let proximoNumero = null;
@@ -1105,14 +1110,15 @@
         let relatoriosHistorico = [];
         let relatorioEmEdicao = null;
 
-        const EQUIPES = ['ALFA', 'BRAVO', 'CHARLIE', 'DELTA'];
-        const DATA_REF_FIXA = new Date('2026-01-15T17:00:00');
-        const EQUIPE_REF_FIXA = 'DELTA';
+        let EQUIPES = ['ALFA', 'BRAVO', 'CHARLIE', 'DELTA'];
+        let DATA_REF_FIXA = new Date('2026-01-15T17:00:00');
+        let EQUIPE_REF_FIXA = 'DELTA';
+        let TURNO_HORAS = 12;
 
         function calcularEquipeAtual() {
             const agora = new Date();
             const diffHoras = (agora - DATA_REF_FIXA) / (1000 * 60 * 60);
-            const trocas = Math.floor(diffHoras / 12);
+            const trocas = Math.floor(diffHoras / TURNO_HORAS);
             const idx = (EQUIPES.indexOf(EQUIPE_REF_FIXA) + trocas) % EQUIPES.length;
             return EQUIPES[idx];
         }
@@ -1120,6 +1126,21 @@
         async function carregarConfiguracoes() {
             try {
                 showLoading();
+
+                // 1. Carregar Dados da Base do Firestore via BaseService
+                const base = await window.baseService.getBaseAtual();
+                if (base) {
+                    WEB_APP_URL = base.endpoints?.relatorios || base.endpoints?.RELATORIOS_SCRIPT || WEB_APP_URL;
+                    if (base.equipes && base.equipes.length > 0) EQUIPES = base.equipes;
+                    if (base.turno) TURNO_HORAS = base.turno;
+                    // TODO: Suportar DATA_REF_FIXA vindo do Firestore se necessário
+                }
+
+                if (!WEB_APP_URL) {
+                    showToast('Endpoint de integração não configurado para esta base.', 'error');
+                    hideLoading();
+                    return;
+                }
 
                 const response = await fetch(`${WEB_APP_URL}?action=getConfiguracoes`);
                 const data = await response.json();

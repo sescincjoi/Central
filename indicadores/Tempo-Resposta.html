@@ -28,6 +28,12 @@
         window.authGuard = authGuard;
     </script>
 
+    <!-- Firebase Compat e BaseService -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="../js/core/base-service.js"></script>
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1012,7 +1018,7 @@
         // 📦 CONFIGURAÇÃO GLOBAL
         // ============================================
         const CONFIG = {
-            SHEET_ID: '1MB0Q-vQ_dv27LiB0Jfblj5g5bcpLEJAMG2mE59uQ5Rg',
+            SHEET_ID: '', // Dinâmico
             TIME_LIMIT: 180,
             COLOR_PALETTE: ['#2563eb', '#dc2626', '#f59e0b', '#059669', '#7c3aed']
         };
@@ -2006,6 +2012,20 @@
                 // Inicializar módulos
                 UIModule.init();
                 FilterModule.init();
+
+                // 1. Carregar Configuração da Base (Dinâmico)
+                try {
+                    const base = await window.baseService.getBaseAtual();
+                    if (base && base.sheets_historico_id) {
+                        CONFIG.SHEET_ID = base.sheets_historico_id;
+                    } else {
+                        // Fallback para Joinville se não configurado
+                        CONFIG.SHEET_ID = '1MB0Q-vQ_dv27LiB0Jfblj5g5bcpLEJAMG2mE59uQ5Rg';
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar BaseService:', e);
+                    CONFIG.SHEET_ID = '1MB0Q-vQ_dv27LiB0Jfblj5g5bcpLEJAMG2mE59uQ5Rg';
+                }
 
                 // Mostrar loading
                 UIModule.showLoading('barChart');
