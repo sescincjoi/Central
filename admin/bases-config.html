@@ -125,6 +125,60 @@
                 opacity: 1;
             }
         }
+
+        /* Seções Expansíveis (Acordeão) */
+        .config-section {
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .config-header {
+            padding: 12px 16px;
+            background: #f8f8f9;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .config-body {
+            padding: 16px;
+            display: none;
+            background: white;
+        }
+
+        .config-section.open .config-body {
+            display: block;
+        }
+
+        .config-section.open .config-header {
+            background: #f0f0f5;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background: #f0f0f5;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag button {
+            color: #ff3b30;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -244,6 +298,34 @@
                     </div>
                 </div>
 
+                <!-- CONFIGURAÇÃO TÉCNICA (EXTINTORES) -->
+                <div class="space-y-4 pt-4 border-t border-gray-100">
+                    <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Configurações de Extintores
+                    </h4>
+
+                    <!-- Aba Capacidade -->
+                    <div class="config-section" id="section-capacidade">
+                        <div class="config-header" onclick="toggleSection('section-capacidade')">
+                            <span>🔥 Opções de Capacidade Extintora</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </div>
+                        <div class="config-body space-y-4" id="render-capacidade">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+
+                    <!-- Aba Carga -->
+                    <div class="config-section" id="section-carga">
+                        <div class="config-header" onclick="toggleSection('section-carga')">
+                            <span>⚖️ Opções de Carga Nominal</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </div>
+                        <div class="config-body space-y-4" id="render-carga">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+
                 <div class="pt-6 flex gap-3">
                     <button type="button" onclick="fecharModal()" class="flex-1 btn-apple-secondary">Cancelar</button>
                     <button type="submit" class="flex-1 btn-apple-primary">Salvar Alterações</button>
@@ -252,15 +334,46 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
     <script type="module">
         import authCore from '../js/auth/auth-core.js';
         import authGuard from '../js/auth/auth-guard.js';
         import '../js/core/base-service.js';
+
+        // ══════════════════════════════════════════════════════════
+        //  CONFIGS PADRÃO (MIGRADO DO ANTIGO admin-criar-base.html)
+        // ══════════════════════════════════════════════════════════
+        const TIPOS_EXTINTORES = ['PQS ABC', 'PQS BC', 'CO²', 'Água Pressurizada', 'Espuma Mecânica', 'Classe K', 'Pó Classe D'];
+
+        const CONFIG_PADRAO = {
+            capacidade: {
+                'PQS ABC': ['2A:20B:C', '3A:40B:C', '4A:40B:C', '6A:60B:C', '6A:80B:C'],
+                'PQS BC': ['20B:C', '40B:C', '60B:C', '80B:C'],
+                'CO²': ['5B:C', '10B:C'],
+                'Água Pressurizada': ['2A', '3A', '4A'],
+                'Espuma Mecânica': ['2A:20B', '3A:40B', '4A:40B'],
+                'Classe K': ['K'],
+                'Pó Classe D': ['D-Magnésio', 'D-Sódio', 'D-Potássio', 'D-Lítio']
+            },
+            cargaNominal: {
+                'PQS ABC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+                'PQS BC': { unidade: 'kg', valores: [1, 2, 4, 6, 8, 12, 20, 50] },
+                'CO²': { unidade: 'kg', valores: [2, 4, 6, 10, 25] },
+                'Água Pressurizada': { unidade: 'L', valores: [10, 15, 20] },
+                'Espuma Mecânica': { unidade: 'L', valores: [6, 10, 20] },
+                'Classe K': { unidade: 'L', valores: [6, 10] },
+                'Pó Classe D': { unidade: 'kg', valores: [4, 6, 9, 12, 20] }
+            }
+        };
+
+        window.currentConfig = {
+            capacidade: JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade)),
+            carga: JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal))
+        };
 
         // ══════════════════════════════════════════════════════════
         //  FIREBASE & AUTH INIT
@@ -361,12 +474,24 @@
             document.getElementById('modal-title').textContent = 'Nova Unidade';
             document.getElementById('form-base').reset();
             document.getElementById('base-iata').disabled = false;
+
+            // Reset config para padrão ao criar nova
+            window.currentConfig = {
+                capacidade: JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade)),
+                carga: JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal))
+            };
+            renderTechnicalConfigs();
+
             document.getElementById('modal-base').style.display = 'flex';
             lucide.createIcons();
         };
 
         window.fecharModal = () => {
             document.getElementById('modal-base').style.display = 'none';
+        };
+
+        window.toggleSection = (id) => {
+            document.getElementById(id).classList.toggle('open');
         };
 
         window.editarBase = async (id) => {
@@ -382,8 +507,84 @@
             document.getElementById('base-modo').value = base.modo_classificacao || 'tipo_carga_nominal';
             document.getElementById('base-status').value = (base.ativo !== false).toString();
 
+            // Carregar config técnica da base ou padrão se não existir
+            window.currentConfig = {
+                capacidade: base.opcoes_capacidade || JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade)),
+                carga: base.opcoes_carga_nominal || JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal))
+            };
+            renderTechnicalConfigs();
+
             document.getElementById('modal-base').style.display = 'flex';
             lucide.createIcons();
+        };
+
+        // ══════════════════════════════════════════════════════════
+        //  RENDERIZADORES TÉCNICOS
+        // ══════════════════════════════════════════════════════════
+        function renderTechnicalConfigs() {
+            const capDiv = document.getElementById('render-capacidade');
+            const cargaDiv = document.getElementById('render-carga');
+            capDiv.innerHTML = '';
+            cargaDiv.innerHTML = '';
+
+            TIPOS_EXTINTORES.forEach(tipo => {
+                // Render Capacidade
+                const groupCap = document.createElement('div');
+                groupCap.className = 'space-y-2 pb-2 border-b border-gray-50';
+                groupCap.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-500">${tipo}</span>
+                        <div class="flex gap-2">
+                            <input type="text" id="add-cap-${tipo.replace(/\s/g, '-')}" class="p-1 px-2 text-xs border rounded-md" placeholder="Ex: 2A:20B:C">
+                            <button type="button" onclick="addCap('${tipo}')" class="text-blue-500 font-bold text-lg">+</button>
+                        </div>
+                    </div>
+                    <div class="tag-container" id="tags-cap-${tipo.replace(/\s/g, '-')}">
+                        ${(window.currentConfig.capacidade[tipo] || []).map(val => `
+                            <div class="tag">${val} <button type="button" onclick="removeCap('${tipo}', '${val}')">×</button></div>
+                        `).join('')}
+                    </div>
+                `;
+                capDiv.appendChild(groupCap);
+
+                // Render Carga
+                const groupCarga = document.createElement('div');
+                groupCarga.className = 'space-y-2 pb-2 border-b border-gray-50';
+                const configCarga = window.currentConfig.carga[tipo] || { unidade: 'kg', valores: [] };
+                groupCarga.innerHTML = `
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-bold text-gray-500">${tipo}</span>
+                        <select onchange="updateUnidade('${tipo}', this.value)" class="border rounded px-1">
+                            <option value="kg" ${configCarga.unidade === 'kg' ? 'selected' : ''}>kg</option>
+                            <option value="L" ${configCarga.unidade === 'L' ? 'selected' : ''}>L</option>
+                        </select>
+                    </div>
+                    <input type="text" class="w-full border rounded p-1 text-xs" 
+                           placeholder="Ex: 2, 4, 6" 
+                           value="${configCarga.valores.join(', ')}"
+                           onchange="updateValoresCarga('${tipo}', this.value)">
+                `;
+                cargaDiv.appendChild(groupCarga);
+            });
+        }
+
+        window.addCap = (tipo) => {
+            const input = document.getElementById(`add-cap-${tipo.replace(/\s/g, '-')}`);
+            if (!input.value) return;
+            if (!window.currentConfig.capacidade[tipo]) window.currentConfig.capacidade[tipo] = [];
+            window.currentConfig.capacidade[tipo].push(input.value);
+            renderTechnicalConfigs();
+        };
+
+        window.removeCap = (tipo, val) => {
+            window.currentConfig.capacidade[tipo] = window.currentConfig.capacidade[tipo].filter(v => v !== val);
+            renderTechnicalConfigs();
+        };
+
+        window.updateUnidade = (tipo, un) => { window.currentConfig.carga[tipo].unidade = un; };
+
+        window.updateValoresCarga = (tipo, str) => {
+            window.currentConfig.carga[tipo].valores = str.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
         };
 
         document.getElementById('form-base').onsubmit = async (e) => {
@@ -393,28 +594,43 @@
             btn.textContent = 'Gravando...';
 
             try {
-                const baseId = document.getElementById('base-iata').value.toUpperCase();
+                const iataCode = document.getElementById('base-iata').value.toUpperCase();
                 const data = {
-                    base: baseId,
+                    id: iataCode.toLowerCase(), // Padronizando o ID
+                    base: iataCode,
                     icao: document.getElementById('base-icao').value.toUpperCase(),
                     nome: document.getElementById('base-nome').value,
                     logoUrl: document.getElementById('base-logo').value,
                     modo_classificacao: document.getElementById('base-modo').value,
                     ativo: document.getElementById('base-status').value === 'true',
+                    opcoes_capacidade: window.currentConfig.capacidade,
+                    opcoes_carga_nominal: window.currentConfig.carga,
                     atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                // No Firestore, usamos o ID da coleção como o código IATA ou um ID autogerado
-                // Aqui manteremos a compatibilidade com a estrutura encontrada anteriormente
                 const basesRef = firebase.firestore().collection('bases');
+                const snapshot = await basesRef.where('base', '==', iataCode).limit(1).get();
 
-                // Procurar se já existe pelo campo 'base' (IATA)
-                const snapshot = await basesRef.where('base', '==', baseId).limit(1).get();
-
+                let docId = null;
                 if (!snapshot.empty) {
-                    await basesRef.doc(snapshot.docs[0].id).update(data);
+                    docId = snapshot.docs[0].id;
+                    await basesRef.doc(docId).update(data);
                 } else {
-                    await basesRef.add({ ...data, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+                    const result = await basesRef.add({
+                        ...data,
+                        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+                        criadoPor: authCore.currentUser?.email || 'admin'
+                    });
+                    docId = result.id;
+
+                    // INICIALIZAR REALTIME DATABASE (Se for base nova)
+                    console.log(`📦 Inicializando RTDB para ${iataCode}...`);
+                    await firebase.database().ref(`${iataCode}/extintores`).set({
+                        _initialized: {
+                            created_at: new Date().toISOString(),
+                            message: "Base inicializada via painel administrativo"
+                        }
+                    });
                 }
 
                 alert('Dados salvos com sucesso!');
