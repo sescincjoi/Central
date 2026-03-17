@@ -14,6 +14,7 @@ import authUI from './auth-ui.js';
 
 class AuthGuard {
   constructor() {
+    this.injectStyles();
     this.isInitialized = false;
 
     // Escutar mudanças de autenticação
@@ -348,6 +349,176 @@ class AuthGuard {
     if (window.lucide) {
       lucide.createIcons();
     }
+  }
+
+  /**
+   * INJETAR ESTILOS CSS
+   */
+  injectStyles() {
+    if (document.getElementById('auth-guard-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'auth-guard-styles';
+    style.textContent = `
+      /* AUTH BUTTON */
+      .auth-button {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        background: transparent;
+      }
+
+      .auth-button svg.lucide {
+        width: 1.2rem;
+        height: 1.2rem;
+      }
+
+      .auth-button.login {
+        color: #222222;
+      }
+
+      .auth-button.login:hover {
+        background: rgba(0, 122, 255, 0.1);
+        color: #007AFF;
+      }
+
+      .auth-button.user {
+        background: rgba(0, 122, 255, 0.1);
+        color: #007AFF;
+      }
+
+      .auth-button.user:hover {
+        background: rgba(0, 122, 255, 0.2);
+      }
+
+      /* RESPONSIVO MOBILE - Apenas ícone */
+      @media (max-width: 640px) {
+        .auth-button {
+          padding: 0;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          justify-content: center;
+          background: transparent;
+        }
+
+        .auth-button.user {
+          background: transparent;
+        }
+
+        .auth-button span {
+          display: none;
+        }
+
+        .auth-button i, .auth-button svg {
+          width: 24px !important;
+          height: 24px !important;
+        }
+      }
+
+      .auth-user-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 8px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        border: 0.5px solid rgba(0, 0, 0, 0.1);
+        min-width: 200px;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+        z-index: 1000;
+      }
+
+      .auth-user-menu.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .auth-user-info {
+        padding: 16px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .auth-user-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .auth-user-matricula {
+        font-size: 12px;
+        color: #86868b;
+      }
+
+      .auth-user-role {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 6px;
+      }
+
+      .auth-user-role.admin {
+        background: #FFD60A;
+        color: #1d1d1f;
+      }
+
+      .auth-user-role.user {
+        background: #e8e8ed;
+        color: #86868b;
+      }
+
+      .auth-menu-item {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        color: #1d1d1f;
+        text-decoration: none;
+      }
+
+      .auth-menu-item:hover {
+        background: #f5f5f7;
+      }
+
+      .auth-menu-item i, .auth-menu-item svg {
+        width: 18px;
+        height: 18px;
+        color: #86868b;
+      }
+
+      .auth-menu-item.logout {
+        color: #FF3B30;
+        border-top: 1px solid #f0f0f0;
+      }
+
+      .auth-menu-item.logout i, .auth-menu-item.logout svg {
+        color: #FF3B30;
+      }
+    `;
+    document.head.appendChild(style);
   }
 }
 
