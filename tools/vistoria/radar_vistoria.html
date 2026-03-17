@@ -537,66 +537,114 @@
         function processTraffic(aircraftList) {
             let foundRelevant = false;
             const currentCallsigns = new Set();
-
+            const now = Date.now();
+        
             aircraftList.forEach(ac => {
-                // Filtros Mínimos Relaxados: Fallback para HEX e Altitudes
                 const flightId = (ac.flight && ac.flight.trim()) || (ac.hex ? `ID:${ac.hex.toUpperCase()}` : null);
-                const altitude = ac.alt_baro !== undefined ? ac.alt_baro : (ac.alt_geom !== undefined ? ac.alt_geom : null);
-
-                if (!flightId || altitude === null) return; // Só altitude é realmente obrigatória
-
+                const altitude = ac.alt_baro ?? ac.alt_geom;
+        
+                if (!flightId || altitude === null || !ac.lat || !ac.lon) return;
+        
                 const callsign = flightId;
                 const altFeet = altitude;
-                const speedKmh = (ac.gs || 200) * 1.852; // Fallback 200kts se sumir velocidade
+                const speedKmh = (ac.gs || 220) * 1.852;
                 const track = ac.track || 0;
+                const baroRate = ac.baro_rate ?? 0;
+        
                 const distKm = calculateDistance(CONFIG.LAT, CONFIG.LON, ac.lat, ac.lon);
-
-                // === LÓGICA DE JANELA DE ALTITUDE (SENSIBILIDADE MÁXIMA) ===
-                const maxAltAllowed = Math.min(25000, 6000 + (distKm * 250)); // Muito mais alto
-                const minAltRequired = Math.max(500, (distKm * 100) - 6000); // Piso muito mais baixo
-
                 const bearingToAirport = calculateBearing(ac.lat, ac.lon, CONFIG.LAT, CONFIG.LON);
+        
                 let diffHeading = Math.abs(track - bearingToAirport);
                 if (diffHeading > 180) diffHeading = 360 - diffHeading;
-
-                // DECISÃO DE EXIBIÇÃO:
-                // Se estiver a menos de 70km, aceita qualquer rumo e quase qualquer altitude
-                const isClose = distKm < 70;
-                const isHeadingOk = diffHeading < 90;
-
-                // Se estiver muito perto (< 40km), ignora o piso totalmente
-                const isAltOk = altFeet < maxAltAllowed && (altFeet > minAltRequired || distKm < 40);
-
-                if ((isHeadingOk || isClose || ac.isMock) && isAltOk) {
-                    currentCallsigns.add(callsign);
-                    let estMinutes = (distKm / speedKmh) * 60 + 5;
-
-                    // Persistência: Se já existia, mantém o targetTime original para não pular o relógio
-                    const existing = activeFlights.get(callsign);
-                    activeFlights.set(callsign, {
-                        hex: ac.hex || 'N/A',
-                        callsign: callsign,
-                        altFeet: Math.round(altFeet),
-                        speedKmh: Math.round(speedKmh),
-                        distKm: distKm.toFixed(1),
-                        etaMinutes: estMinutes,
-                        targetTime: existing ? existing.targetTime : new Date(Date.now() + (estMinutes * 60000)),
-                        type: 'Aproximação',
-                        lastSeen: Date.now()
-                    });
-                    foundRelevant = true;
+        
+                // =============================
+                // 🔹 CAMADA 1: DETECÇÃO LONGE (30min)
+                // =============================
+                const isInboundWide = diffHeading < 70;
+                const isFar = distKm < 150;
+                const isCruiseOrDescent = baroRate < 500;
+        
+                // =============================
+                // 🔹 CAMADA 2: CONFIRMAÇÃO
+                // =============================
+                const isHeadingOk = diffHeading < 45;
+                const isDescending = baroRate < -300;
+        
+                const maxAltAllowed = distKm * 300;
+                const minAltAllowed = distKm * 50;
+        
+                const isAltitudeOk = altFeet < maxAltAllowed && altFeet > minAltAllowed;
+        
+                // =============================
+                // 🔹 ETA INTELIGENTE (MAIS REAL)
+                // =============================
+                const adjustedSpeed = speedKmh * 0.75;
+                let estMinutes = (distKm / adjustedSpeed) * 60 + 8;
+        
+                // =============================
+                // 🔹 CONTROLE DE ESTADO
+                // =============================
+                const existing = activeFlights.get(callsign) || {
+                    hits: 0,
+                    stage: 'none'
+                };
+        
+                let stage = existing.stage;
+                let hits = existing.hits || 0;
+        
+                // 🟢 CANDIDATO (longe)
+                if (isInboundWide && isFar && isCruiseOrDescent) {
+                    hits++;
+                    if (hits >= 3) stage = 'candidate';
                 }
+        
+                // 🟡 CONFIRMADO
+                if (isHeadingOk && isDescending && isAltitudeOk) {
+                    stage = 'confirmed';
+                }
+        
+                // 🔴 FINAL
+                if (estMinutes <= CONFIG.TIME_DANGER) {
+                    stage = 'final';
+                }
+        
+                // ❌ IGNORA quem nunca virou candidato
+                if (stage === 'none') return;
+        
+                currentCallsigns.add(callsign);
+        
+                activeFlights.set(callsign, {
+                    hex: ac.hex || 'N/A',
+                    callsign: callsign,
+                    altFeet: Math.round(altFeet),
+                    speedKmh: Math.round(speedKmh),
+                    distKm: distKm.toFixed(1),
+                    etaMinutes: estMinutes,
+                    targetTime: existing.targetTime || new Date(now + estMinutes * 60000),
+                    type: 'Aproximação',
+                    lastSeen: now,
+                    stage,
+                    hits
+                });
+        
+                foundRelevant = true;
             });
-
-            // Limpa da tela quem sumiu (Mantém por 30 segundos de "fumaça" para evitar sumiços)
-            const now = Date.now();
+        
+            // 🧹 Limpeza inteligente
             for (let [callsign, data] of activeFlights.entries()) {
                 const age = now - (data.lastSeen || 0);
-                if (!currentCallsigns.has(callsign) && !data.isMock && age > 30000) {
+        
+                // remove rápido se nunca confirmou
+                if (data.stage === 'candidate' && age > 20000) {
+                    activeFlights.delete(callsign);
+                }
+        
+                // mantém confirmados mais tempo
+                else if (age > 40000) {
                     activeFlights.delete(callsign);
                 }
             }
-
+        
             renderInterface();
             checkAlarms();
         }
@@ -636,13 +684,20 @@
                 const timeStr = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
                 let cardClass = '';
-                let timerLabel = 'RESTANTE MÁX';
-                let timerSubtitle = 'VOANDO';
-
-                if (m <= CONFIG.TIME_WARNING && m > CONFIG.TIME_DANGER) {
+                let timerLabel = 'RESTANTE';
+                let timerSubtitle = 'MONITORANDO';
+                
+                // NOVO: usa stage real
+                if (flight.stage === 'candidate') {
+                    timerSubtitle = 'MONITORANDO';
+                }
+                
+                if (flight.stage === 'confirmed') {
                     cardClass = 'warning';
-                    timerSubtitle = '1ª CHAMADA';
-                } else if (m <= CONFIG.TIME_DANGER) {
+                    timerSubtitle = 'APROXIMAÇÃO';
+                }
+                
+                if (flight.stage === 'final') {
                     cardClass = 'danger';
                     timerLabel = 'VISTORIA!';
                     timerSubtitle = 'VÁ PARA PISTA';
@@ -697,19 +752,19 @@
         // 5. SISTEMA DE ALARME (Grito de 20 minutos)
         function checkAlarms() {
             let shouldRing = false;
-
-            for (let [callsign, flight] of activeFlights.entries()) {
+        
+            for (let flight of activeFlights.values()) {
                 const tRemainingMs = flight.targetTime - new Date();
                 const minutesLeft = Math.floor(tRemainingMs / 60000);
-
-                if (minutesLeft <= CONFIG.TIME_DANGER && minutesLeft > 0) {
+        
+                if (flight.stage === 'final' && minutesLeft > 0) {
                     shouldRing = true;
                     break;
                 }
             }
-
+        
             if (shouldRing && !alarmTriggered) {
-                alarmAudio.play().catch(e => console.log('Audio mixado pelo navegador.'));
+                alarmAudio.play().catch(() => {});
                 alarmTriggered = true;
             } else if (!shouldRing && alarmTriggered) {
                 alarmAudio.pause();
