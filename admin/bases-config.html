@@ -517,7 +517,7 @@
                             </div>
                             <div>
                                 <h4 class="font-bold">${base.nome}</h4>
-                                <p class="text-xs text-gray-500">ID: ${base.id} • Modo: ${base.modo_classificacao === 'tipo_capacidade' ? 'Capacidade' : 'Carga'}</p>
+                                <p class="text-xs text-gray-500">ID: ${base.id}</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
@@ -583,19 +583,35 @@
             const base = (await window.baseService.getBasesPermitidas()).find(b => b.id === id);
             if (!base) return;
 
+            // Buscar config técnica na subcoleção (com fallback legado localmente do objeto base caso não migrado)
+            let configExtintores = {
+                modo_classificacao: base.modo_classificacao || 'tipo_carga_nominal',
+                opcoes_capacidade: base.opcoes_capacidade,
+                opcoes_carga_nominal: base.opcoes_carga_nominal
+            };
+
+            try {
+                const snap = await firebase.firestore().collection('bases').doc(id).collection('config_extintores').doc('dados').get();
+                if (snap.exists) {
+                    configExtintores = { ...configExtintores, ...snap.data() };
+                }
+            } catch (e) {
+                console.warn('Ler config técnica:', e);
+            }
+
             document.getElementById('modal-title').textContent = `Configurar ${base.nome}`;
             document.getElementById('base-iata').value = base.base;
             document.getElementById('base-iata').disabled = true;
             document.getElementById('base-icao').value = base.icao;
             document.getElementById('base-nome').value = base.nome;
             document.getElementById('base-logo').value = base.logoUrl || '';
-            document.getElementById('base-modo').value = base.modo_classificacao || 'tipo_carga_nominal';
+            document.getElementById('base-modo').value = configExtintores.modo_classificacao || 'tipo_carga_nominal';
             document.getElementById('base-status').value = (base.ativo !== false).toString();
 
             // Carregar config técnica da base ou padrão se não existir
             window.currentConfig = {
-                capacidade: base.opcoes_capacidade || JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade)),
-                carga: base.opcoes_carga_nominal || JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal))
+                capacidade: configExtintores.opcoes_capacidade || JSON.parse(JSON.stringify(CONFIG_PADRAO.capacidade)),
+                carga: configExtintores.opcoes_carga_nominal || JSON.parse(JSON.stringify(CONFIG_PADRAO.cargaNominal))
             };
 
             // Carregar campos sistêmicos
@@ -690,18 +706,13 @@
 
             try {
                 const iataCode = document.getElementById('base-iata').value.toUpperCase();
-                const data = {
+                const dataBase = {
                     id: iataCode.toLowerCase(), // Padronizando o ID
                     base: iataCode,
                     icao: document.getElementById('base-icao').value.toUpperCase(),
                     nome: document.getElementById('base-nome').value,
                     logoUrl: document.getElementById('base-logo').value,
-                    modo_classificacao: document.getElementById('base-modo').value,
                     ativo: document.getElementById('base-status').value === 'true',
-
-                    // Configurações Técnicas
-                    opcoes_capacidade: window.currentConfig.capacidade,
-                    opcoes_carga_nominal: window.currentConfig.carga,
 
                     // Configurações Sistêmicas (CONSOLIDAÇÃO)
                     turno: parseInt(document.getElementById('base-turno').value) || 12,
@@ -717,16 +728,23 @@
                     atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
+                const dataConfigExtintores = {
+                    modo_classificacao: document.getElementById('base-modo').value,
+                    opcoes_capacidade: window.currentConfig.capacidade,
+                    opcoes_carga_nominal: window.currentConfig.carga,
+                    atualizado_em: new Date().toISOString()
+                };
+
                 const basesRef = firebase.firestore().collection('bases');
                 const snapshot = await basesRef.where('base', '==', iataCode).limit(1).get();
 
                 let docId = null;
                 if (!snapshot.empty) {
                     docId = snapshot.docs[0].id;
-                    await basesRef.doc(docId).update(data);
+                    await basesRef.doc(docId).update(dataBase);
                 } else {
                     const result = await basesRef.add({
-                        ...data,
+                        ...dataBase,
                         criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
                         criadoPor: authCore.currentUser?.email || 'admin'
                     });
@@ -741,6 +759,9 @@
                         }
                     });
                 }
+
+                // Salvar Configurações de Extintores na subcoleção específica
+                await basesRef.doc(docId).collection('config_extintores').doc('dados').set(dataConfigExtintores, { merge: true });
 
                 alert('Dados salvos com sucesso!');
                 fecharModal();

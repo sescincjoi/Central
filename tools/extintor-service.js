@@ -59,18 +59,49 @@ class ExtintorService {
   }
 
   async getModoClassificacao() {
-    if (!window.baseService) return 'tipo_carga_nominal';
-    return await window.baseService.getModoClassificacao();
+    const config = await this.getConfigExtintores();
+    return config.modo_classificacao || 'tipo_carga_nominal';
   }
 
   async getOpcoesCargaNominal() {
-    const base = await this.getBaseAtual();
-    return base.opcoes_carga_nominal || {};
+    const config = await this.getConfigExtintores();
+    return config.opcoes_carga_nominal || {};
   }
 
   async getOpcoesCapacidade() {
+    const config = await this.getConfigExtintores();
+    return config.opcoes_capacidade || {};
+  }
+
+  /**
+   * Retorna o documento de configuração de extintores da base.
+   * Caminho: bases/{id}/config_extintores/dados
+   * Fallback: lê campos legados do documento raiz se a subcoleção ainda não existir.
+   */
+  async getConfigExtintores() {
+    this._ensureInit();
     const base = await this.getBaseAtual();
-    return base.opcoes_capacidade || {};
+
+    try {
+      const snap = await this.db
+        .collection('bases').doc(base.id)
+        .collection('config_extintores').doc('dados')
+        .get();
+
+      if (snap.exists) {
+        return snap.data();
+      }
+    } catch (e) {
+      console.warn('ExtintorService: config_extintores não encontrado, usando fallback legado.');
+    }
+
+    // Fallback: ler do documento raiz (estrutura antiga)
+    return {
+      modo_classificacao: base.modo_classificacao || 'tipo_carga_nominal',
+      opcoes_capacidade: base.opcoes_capacidade || {},
+      opcoes_carga_nominal: base.opcoes_carga_nominal || {},
+      historico_mudancas: base.historico_mudancas || []
+    };
   }
 
   async trocarModoClassificacao(novoModo, motivo = '') {
@@ -81,7 +112,8 @@ class ExtintorService {
     }
 
     const base = await this.getBaseAtual();
-    const modoAntigo = base.modo_classificacao;
+    const configAtual = await this.getConfigExtintores();
+    const modoAntigo = configAtual.modo_classificacao || 'tipo_carga_nominal';
 
     if (modoAntigo === novoModo) {
       throw new Error('Este modo já está ativo');
@@ -95,11 +127,16 @@ class ExtintorService {
       por: 'admin'
     };
 
-    await this.db.collection('bases').doc(base.id).update({
+    // Gravar na nova estrutura: bases/{id}/config_extintores/dados
+    const configRef = this.db
+      .collection('bases').doc(base.id)
+      .collection('config_extintores').doc('dados');
+
+    await configRef.set({
       modo_classificacao: novoModo,
       historico_mudancas: firebase.firestore.FieldValue.arrayUnion(mudanca),
       atualizado_em: new Date().toISOString()
-    });
+    }, { merge: true });
 
     // Notificar BaseService para limpar cache
     if (window.baseService) window.baseService.cache.base = null;
@@ -401,15 +438,48 @@ class ExtintorService {
 
     const base = await this.getBaseAtual();
 
-    if (!base.edificacoes) {
-      throw new Error('Edificações não encontradas. Execute a migração primeiro.');
+    // Nova estrutura: subcoleção bases/{id}/edificacoes
+    const snap = await this.db
+      .collection('bases').doc(base.id)
+      .collection('edificacoes')
+      .get();
+
+    if (!snap.empty) {
+      const edificacoes = {};
+      snap.forEach(doc => {
+        edificacoes[doc.id] = { ...doc.data(), nome: doc.id };
+      });
+      this.cache.edificacoes = edificacoes;
+      return this.cache.edificacoes;
     }
 
-    this.cache.edificacoes = base.edificacoes;
-    return this.cache.edificacoes;
+    // Fallback legado: ler mapa do documento raiz
+    if (base.edificacoes && typeof base.edificacoes === 'object') {
+      console.warn('ExtintorService: usando edificacoes legadas do doc raiz. Execute a migração.');
+      this.cache.edificacoes = base.edificacoes;
+      return this.cache.edificacoes;
+    }
+
+    // Nenhuma encontrada
+    console.warn('ExtintorService: Nenhuma edificação encontrada para a base', base.id);
+    return {};
   }
 
   async getEdificacao(nome) {
+    this._ensureInit();
+    const base = await this.getBaseAtual();
+
+    // Tenta ler diretamente da subcoleção pelo ID (nome)
+    try {
+      const doc = await this.db
+        .collection('bases').doc(base.id)
+        .collection('edificacoes').doc(nome)
+        .get();
+
+      if (doc.exists) return { ...doc.data(), nome: doc.id };
+    } catch (e) { /* fallback abaixo */ }
+
+    // Fallback: ler do cache/mapa legado
     const edificacoes = await this.listarEdificacoes();
     return edificacoes[nome] || null;
   }

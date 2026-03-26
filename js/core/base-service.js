@@ -198,8 +198,24 @@ class BaseService {
     // ══════════════════════════════════════════════════════════
 
     async getModoClassificacao() {
-        const base = await this.getBaseAtual();
-        return base.modo_classificacao || 'tipo_carga_nominal';
+        this._ensureInit();
+
+        try {
+            const base = await this.getBaseAtual();
+            const configSnap = await this.db
+                .collection('bases').doc(base.id)
+                .collection('config_extintores').doc('dados')
+                .get();
+
+            if (configSnap.exists && configSnap.data().modo_classificacao) {
+                return configSnap.data().modo_classificacao;
+            }
+
+            // Fallback legado: campo no documento raiz
+            return base.modo_classificacao || 'tipo_carga_nominal';
+        } catch (e) {
+            return 'tipo_carga_nominal';
+        }
     }
 
     // ══════════════════════════════════════════════════════════

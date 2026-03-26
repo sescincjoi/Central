@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração: Estrutura de Extintores</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .log-entry {
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .log-ok {
+            background: rgba(34, 197, 94, 0.15);
+            color: #86efac;
+        }
+
+        .log-warn {
+            background: rgba(234, 179, 8, 0.15);
+            color: #fde047;
+        }
+
+        .log-err {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+        }
+
+        .log-info {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+        }
+
+        .log-step {
+            background: rgba(148, 163, 184, 0.1);
+            color: #94a3b8;
+            border-left: 3px solid #475569;
+        }
+    </style>
+</head>
+
+<body class="p-6">
+
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl">🗄️</span>
+                <h1 class="text-2xl font-black text-white">Migração: Estrutura de Extintores</h1>
+            </div>
+            <p class="text-slate-400 text-sm">
+                Reorganiza os dados de controle de extintores de cada base para a nova estrutura:
+                <code class="bg-slate-800 px-1 rounded">edificacoes/</code> (subcoleção) e
+                <code class="bg-slate-800 px-1 rounded">config_extintores</code> (documento).
+            </p>
+        </div>
+
+        <!-- Status geral -->
+        <div id="status-card" class="bg-slate-800 rounded-2xl p-6 mb-6 border border-slate-700">
+            <div class="flex items-center gap-3 mb-4">
+                <div id="status-icon" class="text-2xl">⏳</div>
+                <div>
+                    <div id="status-title" class="font-bold text-white">Aguardando início</div>
+                    <div id="status-desc" class="text-sm text-slate-400">Clique em "Iniciar Migração" para começar</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-4 gap-4 mt-4">
+                <div class="text-center bg-slate-900 rounded-xl p-3">
+                    <div id="cnt-bases" class="text-2xl font-black text-blue-400">—</div>
+                    <div class="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Bases</div>
+                </div>
+                <div class="text-center bg-slate-900 rounded-xl p-3">
+                    <div id="cnt-edificacoes" class="text-2xl font-black text-purple-400">—</div>
+                    <div class="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Edificações</div>
+                </div>
+                <div class="text-center bg-slate-900 rounded-xl p-3">
+                    <div id="cnt-configs" class="text-2xl font-black text-emerald-400">—</div>
+                    <div class="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Configs</div>
+                </div>
+                <div class="text-center bg-slate-900 rounded-xl p-3">
+                    <div id="cnt-erros" class="text-2xl font-black text-red-400">—</div>
+                    <div class="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Erros</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aviso importante -->
+        <div class="bg-amber-950 border border-amber-700 rounded-2xl p-5 mb-6">
+            <h3 class="font-bold text-amber-300 mb-2">⚠️ Antes de migrar</h3>
+            <ul class="text-amber-200 text-sm space-y-1 list-disc list-inside">
+                <li>Faça um <strong>backup</strong> do Firestore antes de executar</li>
+                <li>A migração é segura: dados antigos só são <strong>removidos ao confirmar</strong></li>
+                <li>A coleção <code class="bg-amber-900 px-1 rounded">extintores</code> <strong>não é alterada</strong>
+                </li>
+                <li>Execute apenas uma vez por base</li>
+            </ul>
+        </div>
+
+        <!-- Controles -->
+        <div class="flex gap-3 mb-6">
+            <button id="btn-simular" onclick="executarMigracao(true)"
+                class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-xl transition-all">
+                🔍 Simular (dry-run)
+            </button>
+            <button id="btn-migrar" onclick="executarMigracao(false)"
+                class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition-all">
+                🚀 Iniciar Migração Real
+            </button>
+        </div>
+
+        <!-- Log -->
+        <div class="bg-slate-900 rounded-2xl border border-slate-700 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Log de Execução</span>
+                <button onclick="document.getElementById('log').innerHTML=''"
+                    class="text-slate-600 hover:text-slate-400 text-xs">Limpar</button>
+            </div>
+            <div id="log" class="p-4 max-h-96 overflow-y-auto space-y-1">
+                <div class="log-entry log-info">Aguardando execução...</div>
+            </div>
+        </div>
+
+        <!-- Botão voltar -->
+        <div class="mt-6 text-center">
+            <a href="./index.html" class="text-slate-500 hover:text-slate-300 text-sm transition-colors">← Voltar para
+                Central</a>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
+            authDomain: "central-sci-joinville.firebaseapp.com",
+            projectId: "central-sci-joinville",
+            storageBucket: "central-sci-joinville.firebasestorage.app",
+            messagingSenderId: "340864161035",
+            appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ══════════════════════════════════
+        //  LOGGING
+        // ══════════════════════════════════
+        function log(msg, tipo = 'info') {
+            const el = document.getElementById('log');
+            const div = document.createElement('div');
+            div.className = `log-entry log-${tipo}`;
+            div.textContent = msg;
+            el.appendChild(div);
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function logStep(msg) { log(`\n━━━ ${msg} ━━━`, 'step'); }
+
+        function setStatus(icon, title, desc) {
+            document.getElementById('status-icon').textContent = icon;
+            document.getElementById('status-title').textContent = title;
+            document.getElementById('status-desc').textContent = desc;
+        }
+
+        function setCont(id, val) {
+            document.getElementById(id).textContent = val;
+        }
+
+        // ══════════════════════════════════
+        //  MIGRAÇÃO PRINCIPAL
+        // ══════════════════════════════════
+        async function executarMigracao(dryRun = false) {
+            const modo = dryRun ? '[SIMULAÇÃO]' : '[REAL]';
+
+            document.getElementById('btn-simular').disabled = true;
+            document.getElementById('btn-migrar').disabled = true;
+            document.getElementById('log').innerHTML = '';
+
+            setStatus('⏳', `Migrando... ${dryRun ? '(Simulação)' : ''}`, 'Aguarde, isso pode levar alguns segundos.');
+
+            let totalBases = 0, totalEdificacoes = 0, totalConfigs = 0, totalErros = 0;
+
+            try {
+                log(`${modo} Iniciando migração de estrutura de extintores...`, 'info');
+                log(`${modo} Modo: ${dryRun ? 'Simulação (nenhuma escrita será feita)' : 'REAL (dados serão gravados)'}`, dryRun ? 'warn' : 'ok');
+
+                // 1. Buscar todas as bases
+                logStep('LENDO BASES');
+                const basesSnap = await db.collection('bases').get();
+                totalBases = basesSnap.size;
+                setCont('cnt-bases', totalBases);
+                log(`${modo} Encontradas ${totalBases} bases.`, 'info');
+
+                // 2. Para cada base, migrar
+                for (const baseDoc of basesSnap.docs) {
+                    const baseId = baseDoc.id;
+                    const baseData = baseDoc.data();
+
+                    logStep(`BASE: ${baseData.nome || baseId} (${baseId})`);
+
+                    // ── 2a. Migrar edificacoes (map → subcoleção) ──
+                    const edificacoes = baseData.edificacoes;
+
+                    if (edificacoes && typeof edificacoes === 'object' && !Array.isArray(edificacoes)) {
+                        const nomes = Object.keys(edificacoes);
+                        log(`${modo} Edificações encontradas: ${nomes.join(', ')}`, 'info');
+
+                        for (const [nome, dados] of Object.entries(edificacoes)) {
+                            try {
+                                const nomeNormalizado = nome.trim(); // mantém o nome original como chave
+                                log(`${modo}   → Criando edificacoes/${nomeNormalizado}`, 'ok');
+
+                                if (!dryRun) {
+                                    await db
+                                        .collection('bases').doc(baseId)
+                                        .collection('edificacoes').doc(nomeNormalizado)
+                                        .set({
+                                            ...dados,
+                                            nome: dados.nome || nomeNormalizado,
+                                            migrado_em: new Date().toISOString()
+                                        });
+                                }
+
+                                totalEdificacoes++;
+                            } catch (e) {
+                                log(`${modo}   ❌ Erro na edificação "${nome}": ${e.message}`, 'err');
+                                totalErros++;
+                            }
+                        }
+                    } else {
+                        log(`${modo} Nenhum mapa de edificações encontrado — pulando.`, 'warn');
+                    }
+
+                    // ── 2b. Criar config_extintores ──
+                    const camposConfig = {
+                        modo_classificacao: baseData.modo_classificacao || null,
+                        opcoes_capacidade: baseData.opcoes_capacidade || null,
+                        opcoes_carga_nominal: baseData.opcoes_carga_nominal || null,
+                        historico_mudancas: baseData.historico_mudancas || [],
+                    };
+
+                    // Filtrar apenas campos que existem
+                    const configLimpa = {};
+                    for (const [k, v] of Object.entries(camposConfig)) {
+                        if (v !== null && v !== undefined) configLimpa[k] = v;
+                    }
+
+                    if (Object.keys(configLimpa).length > 0) {
+                        log(`${modo} Criando config_extintores com: ${Object.keys(configLimpa).join(', ')}`, 'info');
+
+                        if (!dryRun) {
+                            await db
+                                .collection('bases').doc(baseId)
+                                .collection('config_extintores').doc('dados')
+                                .set({
+                                    ...configLimpa,
+                                    migrado_em: new Date().toISOString()
+                                });
+                        }
+
+                        totalConfigs++;
+                    } else {
+                        log(`${modo} Nenhum campo de config encontrado — pulando config_extintores.`, 'warn');
+                    }
+
+                    // ── 2c. Remover campos antigos do documento raiz ──
+                    const camposParaRemover = {};
+                    const camposRemovidos = [];
+
+                    if (baseData.edificacoes) { camposParaRemover.edificacoes = firebase.firestore.FieldValue.delete(); camposRemovidos.push('edificacoes'); }
+                    if (baseData.modo_classificacao) { camposParaRemover.modo_classificacao = firebase.firestore.FieldValue.delete(); camposRemovidos.push('modo_classificacao'); }
+                    if (baseData.opcoes_capacidade) { camposParaRemover.opcoes_capacidade = firebase.firestore.FieldValue.delete(); camposRemovidos.push('opcoes_capacidade'); }
+                    if (baseData.opcoes_carga_nominal) { camposParaRemover.opcoes_carga_nominal = firebase.firestore.FieldValue.delete(); camposRemovidos.push('opcoes_carga_nominal'); }
+                    if (baseData.historico_mudancas) { camposParaRemover.historico_mudancas = firebase.firestore.FieldValue.delete(); camposRemovidos.push('historico_mudancas'); }
+
+                    if (camposRemovidos.length > 0) {
+                        log(`${modo} Removendo campos legados do doc raiz: ${camposRemovidos.join(', ')}`, 'warn');
+
+                        if (!dryRun) {
+                            await db.collection('bases').doc(baseId).update(camposParaRemover);
+                        }
+                    }
+
+                    log(`${modo} ✅ Base "${baseId}" concluída.`, 'ok');
+                }
+
+                // Resultado final
+                setCont('cnt-edificacoes', totalEdificacoes);
+                setCont('cnt-configs', totalConfigs);
+                setCont('cnt-erros', totalErros);
+
+                if (totalErros === 0) {
+                    setStatus('✅', `${dryRun ? 'Simulação' : 'Migração'} concluída!`,
+                        `${totalBases} bases processadas | ${totalEdificacoes} edificações | ${totalConfigs} configs`);
+                    log(`\n${modo} ✅ CONCLUÍDO! ${totalBases} bases, ${totalEdificacoes} edificações, ${totalConfigs} configs.`, 'ok');
+
+                    if (dryRun) {
+                        log(`${modo} ℹ️ Simulação bem-sucedida. Clique em "Iniciar Migração Real" para efetivar.`, 'info');
+                    }
+                } else {
+                    setStatus('⚠️', 'Migração com erros', `${totalErros} erro(s) encontrado(s). Verifique o log.`);
+                    log(`\n${modo} ⚠️ Concluído com ${totalErros} erro(s).`, 'warn');
+                }
+
+            } catch (error) {
+                setStatus('❌', 'Erro fatal', error.message);
+                log(`❌ ERRO FATAL: ${error.message}`, 'err');
+                console.error(error);
+                totalErros++;
+                setCont('cnt-erros', totalErros);
+            }
+
+            document.getElementById('btn-simular').disabled = false;
+            document.getElementById('btn-migrar').disabled = false;
+        }
+    </script>
+</body>
+
+</html>

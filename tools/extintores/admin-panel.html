@@ -770,18 +770,20 @@
             alert(`✅ Edificação renomeada!\n${extintoresDaEdificacao.length} extintores atualizados.`);
           }
 
-          // Atualizar edificações no documento da base
-          const edificacoesAtualizadas = { ...edificacoes };
-          delete edificacoesAtualizadas[nomeAntigo];
-          edificacoesAtualizadas[nomeNovo] = {
-            nome: nomeNovo,
-            descricao: descricao,
-            total_extintores: extintoresDaEdificacao.length,
-            atualizada_em: new Date().toISOString()
-          };
+          // Criar nova edificação na subcoleção
+          await db.collection('bases').doc(baseId)
+            .collection('edificacoes').doc(nomeNovo).set({
+              nome: nomeNovo,
+              descricao: descricao,
+              total_extintores: extintoresDaEdificacao.length,
+              atualizada_em: new Date().toISOString()
+            });
+
+          // Remover documento antigo da subcoleção
+          await db.collection('bases').doc(baseId)
+            .collection('edificacoes').doc(nomeAntigo).delete();
 
           await db.collection('bases').doc(baseId).update({
-            edificacoes: edificacoesAtualizadas,
             atualizado_em: new Date().toISOString()
           });
 
@@ -795,16 +797,16 @@
 
           const totalExt = todosExtintores.filter(e => e.edificacao === nomeNovo).length;
 
-          const edificacoesAtualizadas = { ...edificacoes };
-          edificacoesAtualizadas[nomeNovo] = {
-            nome: nomeNovo,
-            descricao: descricao,
-            total_extintores: totalExt,
-            ...(nomeAntigo ? { atualizada_em: new Date().toISOString() } : { criada_em: new Date().toISOString() })
-          };
+          // Gravar diretamente na subcoleção edificacoes/{nome}
+          await db.collection('bases').doc(baseId)
+            .collection('edificacoes').doc(nomeNovo).set({
+              nome: nomeNovo,
+              descricao: descricao,
+              total_extintores: totalExt,
+              ...(nomeAntigo ? { atualizada_em: new Date().toISOString() } : { criada_em: new Date().toISOString() })
+            });
 
           await db.collection('bases').doc(baseId).update({
-            edificacoes: edificacoesAtualizadas,
             atualizado_em: new Date().toISOString()
           });
 
@@ -853,13 +855,11 @@
         const base = await service.getBaseAtual();
         const baseId = base.id;
 
-        // Criar cópia das edificações sem a que será excluída
-        const edificacoesAtualizadas = { ...edificacoes };
-        delete edificacoesAtualizadas[nomeEdificacao];
+        // Excluir diretamente da subcoleção
+        await db.collection('bases').doc(baseId)
+          .collection('edificacoes').doc(nomeEdificacao).delete();
 
-        // Atualizar documento da base
         await db.collection('bases').doc(baseId).update({
-          edificacoes: edificacoesAtualizadas,
           atualizado_em: new Date().toISOString()
         });
 

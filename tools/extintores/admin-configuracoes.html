@@ -334,7 +334,8 @@
     // ══════════════════════════════════════════════════════════
     async function carregarDados() {
       baseAtual = await extintorService.getBaseAtual();
-      modoAtual = baseAtual.modo_classificacao;
+      const config = await extintorService.getConfigExtintores();
+      modoAtual = config.modo_classificacao || 'tipo_carga_nominal';
       modoSelecionado = modoAtual;
 
       // Atualizar interface
@@ -358,7 +359,8 @@
     }
 
     async function carregarHistorico() {
-      const historico = baseAtual.historico_mudancas || [];
+      const config = await extintorService.getConfigExtintores();
+      const historico = config.historico_mudancas || [];
       const container = document.getElementById('historico-lista');
 
       if (historico.length === 0) {
