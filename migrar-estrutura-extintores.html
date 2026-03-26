@@ -140,6 +140,9 @@
         </div>
     </div>
 
+    <!-- Importar o core -->
+    <script src="./js/core/base-service.js"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBS6l2v37JzVQrx4U7K_zdiCVRU7EYWrxg",
@@ -150,8 +153,20 @@
             appId: "1:340864161035:web:bba5069c82beadfe6c7e0e"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.firestore();
+
+        // ══════════════════════════════════
+        //  INIT BASE SERVICE
+        // ══════════════════════════════════
+        if (window.baseService) {
+            window.baseService.init({
+                db: firebase.firestore(),
+                auth: firebase.auth()
+            });
+        }
 
         // Desabilitar botões inicialmente
         document.getElementById('btn-simular').disabled = true;
@@ -214,17 +229,21 @@
                 log(`${modo} Iniciando migração de estrutura de extintores...`, 'info');
                 log(`${modo} Modo: ${dryRun ? 'Simulação (nenhuma escrita será feita)' : 'REAL (dados serão gravados)'}`, dryRun ? 'warn' : 'ok');
 
-                // 1. Buscar todas as bases
-                logStep('LENDO BASES');
-                const basesSnap = await db.collection('bases').get();
-                totalBases = basesSnap.size;
+                // 1. Buscar todas as bases acessíveis usando o baseService
+                logStep('LENDO BASES PERMITIDAS');
+                const bases = await window.baseService.getBasesPermitidas();
+                totalBases = bases.length;
+
+                if (totalBases === 0) {
+                    throw new Error("Nenhuma base permitida retornada para sua conta.");
+                }
+
                 setCont('cnt-bases', totalBases);
-                log(`${modo} Encontradas ${totalBases} bases.`, 'info');
+                log(`${modo} Encontradas ${totalBases} bases associadas.`, 'info');
 
                 // 2. Para cada base, migrar
-                for (const baseDoc of basesSnap.docs) {
-                    const baseId = baseDoc.id;
-                    const baseData = baseDoc.data();
+                for (const baseData of bases) {
+                    const baseId = baseData.id;
 
                     logStep(`BASE: ${baseData.nome || baseId} (${baseId})`);
 
