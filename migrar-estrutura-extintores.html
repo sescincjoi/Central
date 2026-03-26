@@ -153,6 +153,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Desabilitar botões inicialmente
+        document.getElementById('btn-simular').disabled = true;
+        document.getElementById('btn-migrar').disabled = true;
+
         // ══════════════════════════════════
         //  LOGGING
         // ══════════════════════════════════
@@ -164,6 +168,21 @@
             el.appendChild(div);
             el.scrollTop = el.scrollHeight;
         }
+
+        // ══════════════════════════════════
+        //  AUTH CHECK
+        // ══════════════════════════════════
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                log(`🔐 Usuário reconhecido: ${user.email}`, 'ok');
+                document.getElementById('btn-simular').disabled = false;
+                document.getElementById('btn-migrar').disabled = false;
+            } else {
+                log(`⛔ Não autenticado. Acesse o sistema na aba ao lado, faça login, e atualize esta página.`, 'err');
+                document.getElementById('btn-simular').disabled = true;
+                document.getElementById('btn-migrar').disabled = true;
+            }
+        });
 
         function logStep(msg) { log(`\n━━━ ${msg} ━━━`, 'step'); }
 
