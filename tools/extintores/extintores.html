@@ -1501,12 +1501,13 @@
       try {
         const service = inicializarExtintorService();
         const base = await service.getBaseAtual();
+        const configExt = await service.getConfigExtintores();
 
         console.log(`🔍 Carregando opções da base: ${base.nome} (${base.base})`);
 
-        const modoAtivo = base.modo_classificacao || 'tipo_carga_nominal';
-        const opcoesCapacidadeRaw = base.opcoes_capacidade || {};
-        const opcoesCargaNominalRaw = base.opcoes_carga_nominal || {};
+        const modoAtivo = configExt.modo_classificacao || base.modo_classificacao || 'tipo_carga_nominal';
+        const opcoesCapacidadeRaw = configExt.opcoes_capacidade || base.opcoes_capacidade || {};
+        const opcoesCargaNominalRaw = configExt.opcoes_carga_nominal || base.opcoes_carga_nominal || {};
 
         console.log('📦 opcoes_capacidade:', Object.keys(opcoesCapacidadeRaw));
         console.log('📦 opcoes_carga_nominal:', Object.keys(opcoesCargaNominalRaw));
